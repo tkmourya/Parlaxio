@@ -1,0 +1,6 @@
+{
+  "name": "CineStream",
+  "description": "An automated movie PWA with TMDB integration and direct client-side streaming.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

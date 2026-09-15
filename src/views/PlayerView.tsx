@@ -1,0 +1,662 @@
+import { ArrowLeft, Play, Bookmark, Check, Info, Server, X, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { getSmartRecommendations, getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos } from '../lib/tmdb';
+import { Movie, Cast, Episode, Video } from '../types';
+import { MovieCard } from '../components/MovieCard';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { useWatchHistory } from '../hooks/useWatchHistory';
+import { isInWatchlist, toggleWatchlist } from '../lib/storage';
+import { TrailerModal } from '../components/TrailerModal';
+
+const STREAM_SERVERS = [
+  {
+    id: 'vidlink_4k',
+    name: 'Server 1 (VidLink 4K Ultra HD)',
+    desc: '4K & 1080p Ultra HD (Fast Stream & Multi-Subtitles)',
+    quality: '4K Ultra HD',
+    badge: '4K UHD',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+      type === 'tv'
+        ? `https://vidlink.pro/tv/${id}/${s}/${e}`
+        : `https://vidlink.pro/movie/${id}`
+  },
+  {
+    id: 'autoembed_cinema',
+    name: 'Server 2 (AutoEmbed Cinema)',
+    desc: 'High Speed Multi-Source HD Player',
+    quality: '1080p Cinema',
+    badge: 'Fast HD',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+      type === 'tv'
+        ? `https://autoembed.co/tv/tmdb/${id}-${s}-${e}`
+        : `https://autoembed.co/movie/tmdb/${id}`
+  },
+  {
+    id: 'multiembed_hindi',
+    name: 'Server 3 (MultiEmbed Hindi)',
+    desc: 'Bollywood & Hollywood Hindi Dual Audio',
+    quality: '1080p Multi-Audio',
+    badge: 'Hindi Dub',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+      type === 'tv'
+        ? `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`
+        : `https://multiembed.mov/?video_id=${id}&tmdb=1`
+  },
+  {
+    id: 'twoembed_global',
+    name: 'Server 4 (2Embed Global)',
+    desc: 'Stable Worldwide CDN Streaming Node',
+    quality: '1080p Full HD',
+    badge: 'Global HD',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+      type === 'tv'
+        ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`
+        : `https://www.2embed.cc/embed/${id}`
+  },
+  {
+    id: 'vidsrc_net',
+    name: 'Server 5 (VidSrc)',
+    desc: 'VidSrc Reliable Streaming Network',
+    quality: '1080p HD',
+    badge: 'VidSrc',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+      type === 'tv'
+        ? `https://vidsrc.net/embed/tv?tmdb=${id}&season=${s}&episode=${e}`
+        : `https://vidsrc.net/embed/movie?tmdb=${id}`
+  },
+  {
+    id: 'embed_su',
+    name: 'Server 6 (Embed.su)',
+    desc: 'Alternative Fast CDN (Requires VPN in some regions)',
+    quality: '4K/1080p HD',
+    badge: 'Embed.su',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+      type === 'tv'
+        ? `https://embed.su/embed/tv/${id}/${s}/${e}`
+        : `https://embed.su/embed/movie/${id}`
+  }
+];
+
+interface PlayerViewProps {
+  media: { id: number; type: 'movie' | 'tv'; season?: number; episode?: number };
+  onBack: () => void;
+  onPlay: (id: number, type: 'movie' | 'tv') => void;
+}
+
+export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
+  const [details, setDetails] = useState<Movie | null>(null);
+  const [cast, setCast] = useState<Cast[]>([]);
+  const [recommended, setRecommended] = useState<Movie[]>([]);
+  const [saved, setSaved] = useState(false);
+  const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
+  const [isPlayingStream, setIsPlayingStream] = useState(true);
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
+
+  // 4KHDHub Scraper stream state
+  const [scrapedStreams, setScrapedStreams] = useState<any[]>([]);
+  const [selectedStreamIndex, setSelectedStreamIndex] = useState(0);
+  const [loadingScraper, setLoadingScraper] = useState(false);
+  
+  // TV specific state
+  const [season, setSeason] = useState(media.season || 1);
+  const [episode, setEpisode] = useState(media.episode || 1);
+  const [episodesList, setEpisodesList] = useState<Episode[]>([]);
+  
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const { addToHistory } = useWatchHistory();
+
+  // Load details and cast
+  useEffect(() => {
+    async function loadMainData() {
+      try {
+        const [detRes, credRes] = await Promise.all([
+          getMovieDetails(media.type, media.id),
+          getCredits(media.type, media.id)
+        ]);
+        
+        // Add to history
+        addToHistory({
+           id: detRes.id,
+           title: detRes.title || detRes.name,
+           name: detRes.name || detRes.title,
+           overview: detRes.overview,
+           poster_path: detRes.poster_path,
+           backdrop_path: detRes.backdrop_path,
+           vote_average: detRes.vote_average,
+           genre_ids: detRes.genres?.map((g: any) => g.id) || [],
+           media_type: media.type,
+           release_date: detRes.release_date,
+           first_air_date: detRes.first_air_date
+        });
+        
+        setDetails(detRes);
+        setCast(credRes.cast.slice(0, 10)); // top 10 cast
+      } catch(e) {
+        console.error(e);
+      }
+    }
+    loadMainData();
+  }, [media.id, media.type, addToHistory]);
+
+  // Load Watchlist state
+  useEffect(() => {
+    if (!details) return;
+    setSaved(isInWatchlist(details.id));
+    const handleUpdate = () => setSaved(isInWatchlist(details.id));
+    window.addEventListener('watchlist-updated', handleUpdate);
+    return () => window.removeEventListener('watchlist-updated', handleUpdate);
+  }, [details?.id]);
+
+  // Fetch 4KHDHub & serverless streams
+  useEffect(() => {
+    if (!details) return;
+    const movieTitle = details.title || details.name || '';
+    const movieYear = (details.release_date || details.first_air_date)?.split('-')[0] || '';
+    
+    setLoadingScraper(true);
+    fetch(`/api/stream?id=${media.id}&title=${encodeURIComponent(movieTitle)}&year=${movieYear}&type=${media.type}&season=${season}&episode=${episode}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.streams?.length > 0) {
+          setScrapedStreams(data.streams);
+          setSelectedStreamIndex(0);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoadingScraper(false));
+  }, [details?.id, details?.title, details?.name, media.type, media.id, season, episode]);
+
+  const handleSave = () => {
+    if (!details) return;
+    toggleWatchlist(details);
+    setSaved(!saved);
+  };
+
+  const handlePlayTrailer = async () => {
+    try {
+      const res = await getVideos(media.type, media.id);
+      const trailers = res.results.filter((v: Video) => v.type === 'Trailer' && v.site === 'YouTube');
+      if (trailers.length > 0) {
+        setTrailerKey(trailers[0].key);
+      } else {
+        alert("Trailer not available");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Load episodes if TV
+  useEffect(() => {
+    if (media.type === 'tv') {
+      getTvSeason(media.id, season).then(res => {
+        setEpisodesList(res.episodes || []);
+      }).catch(console.error);
+    }
+  }, [media.id, media.type, season]);
+
+  const loadRecommendations = useCallback(async (pageNum: number) => {
+    setLoadingRecs(true);
+    try {
+      const res = await getSmartRecommendations(media.type, media.id, pageNum);
+      setRecommended(prev => {
+        if (pageNum === 1) return res.results;
+        const newRecs = [...prev];
+        res.results.forEach(m => {
+          if (!newRecs.find(existing => existing.id === m.id)) {
+            newRecs.push(m);
+          }
+        });
+        return newRecs;
+      });
+      setHasMore(res.page < res.total_pages && res.page < 10);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingRecs(false);
+    }
+  }, [media.id, media.type]);
+
+  useEffect(() => {
+    setRecommended([]);
+    setPage(1);
+    setHasMore(true);
+    loadRecommendations(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [media.id, media.type, loadRecommendations]);
+
+  useEffect(() => {
+    if (page > 1) {
+      loadRecommendations(page);
+    }
+  }, [page, loadRecommendations]);
+
+  const lastElementRef = useInfiniteScroll(() => {
+    setPage(prev => prev + 1);
+  }, loadingRecs, hasMore);
+
+  const [selectedServer, setSelectedServer] = useState(0);
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false);
+
+  const activeServer = STREAM_SERVERS[selectedServer] || STREAM_SERVERS[0];
+  const streamUrl = activeServer.getUrl(media.id, media.type, season, episode);
+
+  const getAgeRating = () => {
+    if (!details) return null;
+    let rating = '';
+    if (media.type === 'movie' && (details as any).release_dates?.results) {
+      const release = (details as any).release_dates.results.find((r: any) => (r.iso_3166_1 === 'US' || r.iso_3166_1 === 'IN') && r.release_dates?.[0]?.certification);
+      rating = release?.release_dates?.[0]?.certification || '';
+    } else if (media.type === 'tv' && (details as any).content_ratings?.results) {
+      const contentRating = (details as any).content_ratings.results.find((r: any) => (r.iso_3166_1 === 'US' || r.iso_3166_1 === 'IN') && r.rating);
+      rating = contentRating?.rating || '';
+    }
+    return rating;
+  };
+  const ageRating = getAgeRating();
+
+  return (
+    <div className="fixed inset-0 z-50 bg-zinc-950 text-white overflow-y-auto hide-scrollbar animate-in fade-in duration-300">
+      
+      {/* Dedicated Player Top Navigation Bar (Frosted Glass, No Border, Icon-Only Buttons, High z-index) */}
+      <div className="sticky top-0 left-0 right-0 z-[100] bg-black/50 backdrop-blur-2xl px-4 md:px-8 py-2.5 flex items-center justify-between">
+        {/* Back Button (Icon Only) */}
+        <button 
+          onClick={onBack} 
+          className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+          title="Back"
+          aria-label="Back"
+        >
+          <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* Movie/Series Title & Year */}
+        <div className="text-xs md:text-sm font-semibold text-white/90 truncate max-w-xs md:max-w-md text-center">
+          {details?.title || details?.name}
+          {details && (details.release_date || details.first_air_date) && (
+            <span className="text-zinc-400 font-normal ml-1.5 text-xs">
+              ({(details.release_date || details.first_air_date).split('-')[0]})
+            </span>
+          )}
+        </div>
+
+        {/* Close Button (Icon Only) */}
+        <button 
+          onClick={onBack} 
+          className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+          title="Close Player"
+          aria-label="Close Player"
+        >
+          <X size={18} className="group-hover:rotate-90 transition-transform" />
+        </button>
+      </div>
+
+      {/* Cinema Video Player (Directly Below Top Bar - No Overlapping) */}
+      <div className="relative w-full aspect-video md:h-[75vh] lg:h-[80vh] bg-black">
+        {!isPlayingStream ? (
+          <div className="w-full h-full relative flex items-center justify-center group bg-zinc-900 overflow-hidden">
+            {details?.backdrop_path && (
+              <img 
+                src={getImageUrl(details.backdrop_path, 'original')} 
+                className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-40" 
+                alt={details.title || details.name} 
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/30 to-black/60" />
+            
+            <div className="relative z-10 flex flex-col items-center gap-3">
+              <button 
+                onClick={() => setIsPlayingStream(true)} 
+                className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-2xl text-white flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 group/play cursor-pointer"
+                title="Play Stream"
+                aria-label="Play Stream"
+              >
+                <Play fill="currentColor" size={28} className="ml-1 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover/play:scale-110" />
+              </button>
+              <span className="text-xs font-semibold text-zinc-300">Click to Play Stream</span>
+            </div>
+          </div>
+        ) : (
+          <div className="relative w-full h-full">
+            <iframe
+              id="movie-frame"
+              src={streamUrl}
+              className="w-full h-full border-0 bg-black"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              title="Stream Player"
+            />
+            {/* Close Stream Button */}
+            <button
+              onClick={() => setIsPlayingStream(false)}
+              className="absolute top-4 right-4 z-40 bg-black/70 hover:bg-black text-white text-xs font-semibold px-3.5 py-2 rounded-full border border-white/20 backdrop-blur-md transition-colors shadow-lg cursor-pointer"
+            >
+              Close Stream
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Full-Width Content Container */}
+      <div className="w-full px-4 md:px-12 lg:px-16 py-8 space-y-10">
+
+        {/* Details Section */}
+        {details && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">
+                    {details.title || details.name}
+                  </h1>
+                  <button 
+                    onClick={handleSave}
+                    className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 border backdrop-blur-md shrink-0 cursor-pointer ${
+                      saved 
+                        ? 'bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_15px_rgba(74,222,128,0.25)]' 
+                        : 'bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white border-white/10'
+                    }`}
+                    title={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
+                    aria-label={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
+                  >
+                    {saved ? <Check size={20} className="text-green-400" /> : <Bookmark size={20} />}
+                  </button>
+                </div>
+
+                {/* Metadata Pills */}
+                <div className="flex flex-wrap items-center gap-2.5 text-xs md:text-sm font-semibold text-zinc-300">
+                  <span className="text-green-400 bg-green-500/15 px-2.5 py-1 rounded-md border border-green-500/30">
+                    {(details.vote_average * 10).toFixed(0)}% Match
+                  </span>
+                  <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                    {(details.release_date || details.first_air_date)?.split('-')[0]}
+                  </span>
+                  {ageRating && (
+                    <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                      {ageRating}
+                    </span>
+                  )}
+                  {media.type === 'tv' && details.number_of_seasons && (
+                    <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                      {details.number_of_seasons} Season{details.number_of_seasons !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {details.runtime && (
+                    <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                      {Math.floor(details.runtime / 60)}h {details.runtime % 60}m
+                    </span>
+                  )}
+                  <span className="border border-white/20 px-2.5 py-1 rounded-md uppercase tracking-wider text-xs">
+                    {media.type}
+                  </span>
+                  <span className="border border-red-500/40 text-red-400 bg-red-500/10 px-2 py-0.5 rounded text-xs font-bold">
+                    HD
+                  </span>
+                </div>
+
+                {/* Genres */}
+                {details.genres && details.genres.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {details.genres.map(g => (
+                      <span key={g.id} className="text-xs text-zinc-400 font-medium px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                        {g.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons: Server Button + Quality Pills + Trailer Button */}
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                {/* Server Switcher Icon Button */}
+                <button
+                  onClick={() => setIsServerModalOpen(true)}
+                  className="px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center gap-2 text-xs font-bold transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer group"
+                  title="Change Stream Server"
+                  aria-label="Change Stream Server"
+                >
+                  <Server size={15} className="text-red-400 group-hover:scale-110 transition-transform" />
+                  <span>{activeServer.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-zinc-300">
+                    {activeServer.badge}
+                  </span>
+                </button>
+
+                {/* 4KHDHub Scraped Stream Quality & Audio Pills */}
+                {selectedServer === 0 && scrapedStreams.length > 1 && (
+                  <div className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-2xl border border-white/10 backdrop-blur-md shadow-md">
+                    {scrapedStreams.map((st, sIdx) => (
+                      <button
+                        key={sIdx}
+                        onClick={() => setSelectedStreamIndex(sIdx)}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          selectedStreamIndex === sIdx
+                            ? 'bg-red-600 text-white shadow-md'
+                            : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                        }`}
+                        title={`${st.quality} - ${st.audio}`}
+                      >
+                        <span>{st.badge || st.quality}</span>
+                        {st.audio?.includes('Hindi') && (
+                          <span className="text-[10px] text-amber-300 font-bold">हिंदी</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Trailer Button */}
+                <button 
+                  onClick={handlePlayTrailer}
+                  className="bg-white/5 hover:bg-white/10 border border-white/15 text-white transition-colors py-2 px-4 rounded-2xl flex items-center gap-2 text-xs font-semibold shadow-md cursor-pointer"
+                >
+                  <Info size={16} />
+                  <span>Trailer</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Overview / Synopsis (2-3 lines by default, tap to expand) */}
+            {details.overview && (
+              <div 
+                onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
+                className="cursor-pointer group/overview pt-2 max-w-5xl select-none"
+                role="button"
+                tabIndex={0}
+              >
+                <p className={`text-zinc-300 text-sm md:text-base leading-relaxed transition-all duration-300 opacity-90 ${isOverviewExpanded ? '' : 'line-clamp-2 md:line-clamp-3'}`}>
+                  {details.overview}
+                </p>
+                {details.overview.length > 120 && (
+                  <span className="inline-block mt-1 text-xs font-semibold text-zinc-400 group-hover/overview:text-white transition-colors">
+                    {isOverviewExpanded ? 'Show less' : 'More...'}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Top Cast Row */}
+            {cast.length > 0 && (
+              <div className="pt-4 border-t border-white/10">
+                <h3 className="text-xl font-bold text-white mb-4">Top Cast</h3>
+                <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-3 snap-x">
+                  {cast.map(c => (
+                    <div key={c.id} className="flex-shrink-0 w-24 snap-start text-center group">
+                      <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 border border-white/10 mb-2 shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:border-white/30">
+                        {c.profile_path ? (
+                          <img src={getImageUrl(c.profile_path, 'w500')} alt={c.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-zinc-600 font-medium text-xs bg-zinc-900">N/A</div>
+                        )}
+                      </div>
+                      <p className="text-white text-xs font-medium truncate group-hover:text-red-400 transition-colors">{c.name}</p>
+                      <p className="text-zinc-500 text-[10px] truncate">{c.character}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TV Show Episode Selector */}
+            {media.type === 'tv' && details?.number_of_seasons && (
+              <div className="pt-6 border-t border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-white text-xl">Episodes</h3>
+                  <div className="relative">
+                    <select 
+                      value={season} 
+                      onChange={(e) => { setSeason(Number(e.target.value)); setEpisode(1); }}
+                      className="appearance-none bg-zinc-900 border border-white/15 hover:border-white/30 text-white rounded-lg pl-4 pr-10 py-2 text-sm outline-none cursor-pointer shadow-lg transition-colors focus:ring-2 focus:ring-white/20"
+                    >
+                      {Array.from({ length: details.number_of_seasons }, (_, i) => i + 1).map(s => (
+                        <option key={s} value={s}>Season {s}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
+                  {episodesList.map(ep => (
+                    <button
+                      key={ep.id}
+                      onClick={() => { setEpisode(ep.episode_number); setIsPlayingStream(true); }}
+                      className={`flex items-start gap-3 p-2.5 rounded-xl text-left transition-all border ${episode === ep.episode_number ? 'bg-white/15 border-white/30 shadow-lg' : 'bg-zinc-900/60 border-white/5 hover:bg-white/5 hover:border-white/15'}`}
+                    >
+                      <div className="w-28 aspect-video bg-zinc-800 rounded-lg flex-shrink-0 overflow-hidden relative shadow-inner">
+                        {ep.still_path && <img src={getImageUrl(ep.still_path, 'w500')} className="w-full h-full object-cover" alt={ep.name} />}
+                        <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${episode === ep.episode_number ? 'opacity-100' : 'opacity-0 hover:opacity-100'}`}>
+                          <Play fill="white" size={18} />
+                        </div>
+                      </div>
+                      <div className="overflow-hidden flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <h4 className={`text-xs font-bold truncate ${episode === ep.episode_number ? 'text-white' : 'text-zinc-200'}`}>
+                            {ep.episode_number}. {ep.name}
+                          </h4>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">{ep.overview || ep.air_date}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* More Like This (Full-Width Recommendations) */}
+        {recommended.length > 0 && (
+          <div className="pt-8 border-t border-white/10">
+            <h2 className="text-2xl font-bold text-white mb-6">More Like This</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
+              {recommended.map((movie) => (
+                <MovieCard 
+                  key={movie.id} 
+                  movie={movie} 
+                  onPlay={onPlay} 
+                  defaultType={media.type} 
+                />
+              ))}
+            </div>
+            
+            {loadingRecs && (
+              <div className="flex justify-center py-10">
+                <Loader2 className="animate-spin text-white/50" size={32} />
+              </div>
+            )}
+            
+            <div ref={lastElementRef} className="h-10 w-full" />
+          </div>
+        )}
+      </div>
+
+      {/* Server Selection Modal Popup */}
+      {isServerModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsServerModalOpen(false)}
+        >
+          <div 
+            className="relative w-full max-w-md bg-zinc-900 border border-white/15 rounded-3xl p-6 shadow-2xl space-y-5 text-white animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-red-600/20 border border-red-500/30 text-red-400 flex items-center justify-center">
+                  <Server size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Select Stream Server</h3>
+                  <p className="text-xs text-zinc-400">Agar koi server na chale toh dusra server select karein</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsServerModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Server Cards */}
+            <div className="space-y-2.5">
+              {STREAM_SERVERS.map((srv, idx) => (
+                <div
+                  key={srv.id}
+                  onClick={() => {
+                    setSelectedServer(idx);
+                    setIsServerModalOpen(false);
+                  }}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                    selectedServer === idx
+                      ? 'bg-red-500/10 border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{srv.name}</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-zinc-300">
+                        {srv.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400">{srv.desc}</p>
+                  </div>
+
+                  {selectedServer === idx ? (
+                    <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                      <Check size={14} />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full border border-white/20 shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Server Tip */}
+            <p className="text-[11px] text-zinc-400 text-center">
+              💡 Tip: <span className="text-white font-medium">Server 1 (VidLink 4K)</span> fastest 4K Ultra HD stream deta hai. Hindi audio ke liye <span className="text-white font-medium">Server 3 (MultiEmbed)</span> select karein.
+            </p>
+
+            {/* Close */}
+            <button
+              onClick={() => setIsServerModalOpen(false)}
+              className="w-full py-2.5 rounded-xl bg-white text-black font-bold text-sm hover:bg-zinc-200 transition-colors shadow-lg cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      <TrailerModal trailerKey={trailerKey} onClose={() => setTrailerKey(null)} />
+    </div>
+  );
+}
