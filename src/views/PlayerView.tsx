@@ -10,8 +10,16 @@ import { TrailerModal } from '../components/TrailerModal';
 
 const STREAM_SERVERS = [
   {
+    id: '4khdhub',
+    name: 'Server 1 (4KHDHub Direct)',
+    desc: 'Direct 4K/1080p Stream from 4KHDHub (Ad-Free)',
+    quality: '4K Ultra HD',
+    badge: 'Direct',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) => ''
+  },
+  {
     id: 'vidlink_4k',
-    name: 'Server 1 (VidLink 4K Ultra HD)',
+    name: 'Server 2 (VidLink 4K Ultra HD)',
     desc: '4K & 1080p Ultra HD (Fast Stream & Multi-Subtitles)',
     quality: '4K Ultra HD',
     badge: '4K UHD',
@@ -22,7 +30,7 @@ const STREAM_SERVERS = [
   },
   {
     id: 'autoembed_cinema',
-    name: 'Server 2 (AutoEmbed Cinema)',
+    name: 'Server 3 (AutoEmbed Cinema)',
     desc: 'High Speed Multi-Source HD Player',
     quality: '1080p Cinema',
     badge: 'Fast HD',
@@ -33,7 +41,7 @@ const STREAM_SERVERS = [
   },
   {
     id: 'multiembed_hindi',
-    name: 'Server 3 (MultiEmbed Hindi)',
+    name: 'Server 4 (MultiEmbed Hindi)',
     desc: 'Bollywood & Hollywood Hindi Dual Audio',
     quality: '1080p Multi-Audio',
     badge: 'Hindi Dub',
@@ -44,7 +52,7 @@ const STREAM_SERVERS = [
   },
   {
     id: 'twoembed_global',
-    name: 'Server 4 (2Embed Global)',
+    name: 'Server 5 (2Embed Global)',
     desc: 'Stable Worldwide CDN Streaming Node',
     quality: '1080p Full HD',
     badge: 'Global HD',
@@ -55,7 +63,7 @@ const STREAM_SERVERS = [
   },
   {
     id: 'vidsrc_net',
-    name: 'Server 5 (VidSrc)',
+    name: 'Server 6 (VidSrc)',
     desc: 'VidSrc Reliable Streaming Network',
     quality: '1080p HD',
     badge: 'VidSrc',
@@ -63,17 +71,6 @@ const STREAM_SERVERS = [
       type === 'tv'
         ? `https://vidsrc.net/embed/tv?tmdb=${id}&season=${s}&episode=${e}`
         : `https://vidsrc.net/embed/movie?tmdb=${id}`
-  },
-  {
-    id: 'embed_su',
-    name: 'Server 6 (Embed.su)',
-    desc: 'Alternative Fast CDN (Requires VPN in some regions)',
-    quality: '4K/1080p HD',
-    badge: 'Embed.su',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
-      type === 'tv'
-        ? `https://embed.su/embed/tv/${id}/${s}/${e}`
-        : `https://embed.su/embed/movie/${id}`
   }
 ];
 
@@ -96,12 +93,12 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   const [scrapedStreams, setScrapedStreams] = useState<any[]>([]);
   const [selectedStreamIndex, setSelectedStreamIndex] = useState(0);
   const [loadingScraper, setLoadingScraper] = useState(false);
-  
+
   // TV specific state
   const [season, setSeason] = useState(media.season || 1);
   const [episode, setEpisode] = useState(media.episode || 1);
   const [episodesList, setEpisodesList] = useState<Episode[]>([]);
-  
+
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(false);
@@ -115,25 +112,25 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           getMovieDetails(media.type, media.id),
           getCredits(media.type, media.id)
         ]);
-        
+
         // Add to history
         addToHistory({
-           id: detRes.id,
-           title: detRes.title || detRes.name,
-           name: detRes.name || detRes.title,
-           overview: detRes.overview,
-           poster_path: detRes.poster_path,
-           backdrop_path: detRes.backdrop_path,
-           vote_average: detRes.vote_average,
-           genre_ids: detRes.genres?.map((g: any) => g.id) || [],
-           media_type: media.type,
-           release_date: detRes.release_date,
-           first_air_date: detRes.first_air_date
+          id: detRes.id,
+          title: detRes.title || detRes.name,
+          name: detRes.name || detRes.title,
+          overview: detRes.overview,
+          poster_path: detRes.poster_path,
+          backdrop_path: detRes.backdrop_path,
+          vote_average: detRes.vote_average,
+          genre_ids: detRes.genres?.map((g: any) => g.id) || [],
+          media_type: media.type,
+          release_date: detRes.release_date,
+          first_air_date: detRes.first_air_date
         });
-        
+
         setDetails(detRes);
         setCast(credRes.cast.slice(0, 10)); // top 10 cast
-      } catch(e) {
+      } catch (e) {
         console.error(e);
       }
     }
@@ -154,7 +151,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
     if (!details) return;
     const movieTitle = details.title || details.name || '';
     const movieYear = (details.release_date || details.first_air_date)?.split('-')[0] || '';
-    
+
     setLoadingScraper(true);
     fetch(`/api/stream?id=${media.id}&title=${encodeURIComponent(movieTitle)}&year=${movieYear}&type=${media.type}&season=${season}&episode=${episode}`)
       .then(res => res.json())
@@ -241,7 +238,11 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
 
   const activeServer = STREAM_SERVERS[selectedServer] || STREAM_SERVERS[0];
-  const streamUrl = activeServer.getUrl(media.id, media.type, season, episode);
+
+  // Override stream URL for 4KHDHub Auto-Select (Server 1)
+  const streamUrl = selectedServer === 0 && scrapedStreams.length > 0
+    ? scrapedStreams[selectedStreamIndex]?.url
+    : activeServer.getUrl(media.id, media.type, season, episode);
 
   const getAgeRating = () => {
     if (!details) return null;
@@ -259,12 +260,12 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-zinc-950 text-white overflow-y-auto hide-scrollbar animate-in fade-in duration-300">
-      
+
       {/* Dedicated Player Top Navigation Bar (Frosted Glass, No Border, Icon-Only Buttons, High z-index) */}
       <div className="sticky top-0 left-0 right-0 z-[100] bg-black/50 backdrop-blur-2xl px-4 md:px-8 py-2.5 flex items-center justify-between">
         {/* Back Button (Icon Only) */}
-        <button 
-          onClick={onBack} 
+        <button
+          onClick={onBack}
           className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer group"
           title="Back"
           aria-label="Back"
@@ -283,8 +284,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
         </div>
 
         {/* Close Button (Icon Only) */}
-        <button 
-          onClick={onBack} 
+        <button
+          onClick={onBack}
           className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer group"
           title="Close Player"
           aria-label="Close Player"
@@ -298,17 +299,17 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
         {!isPlayingStream ? (
           <div className="w-full h-full relative flex items-center justify-center group bg-zinc-900 overflow-hidden">
             {details?.backdrop_path && (
-              <img 
-                src={getImageUrl(details.backdrop_path, 'original')} 
-                className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-40" 
-                alt={details.title || details.name} 
+              <img
+                src={getImageUrl(details.backdrop_path, 'original')}
+                className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-40"
+                alt={details.title || details.name}
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/30 to-black/60" />
-            
+
             <div className="relative z-10 flex flex-col items-center gap-3">
-              <button 
-                onClick={() => setIsPlayingStream(true)} 
+              <button
+                onClick={() => setIsPlayingStream(true)}
                 className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-2xl text-white flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 group/play cursor-pointer"
                 title="Play Stream"
                 aria-label="Play Stream"
@@ -351,13 +352,12 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">
                     {details.title || details.name}
                   </h1>
-                  <button 
+                  <button
                     onClick={handleSave}
-                    className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 border backdrop-blur-md shrink-0 cursor-pointer ${
-                      saved 
-                        ? 'bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_15px_rgba(74,222,128,0.25)]' 
+                    className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 border backdrop-blur-md shrink-0 cursor-pointer ${saved
+                        ? 'bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_15px_rgba(74,222,128,0.25)]'
                         : 'bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white border-white/10'
-                    }`}
+                      }`}
                     title={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
                     aria-label={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
                   >
@@ -431,11 +431,10 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                       <button
                         key={sIdx}
                         onClick={() => setSelectedStreamIndex(sIdx)}
-                        className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          selectedStreamIndex === sIdx
+                        className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${selectedStreamIndex === sIdx
                             ? 'bg-red-600 text-white shadow-md'
                             : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                        }`}
+                          }`}
                         title={`${st.quality} - ${st.audio}`}
                       >
                         <span>{st.badge || st.quality}</span>
@@ -448,7 +447,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                 )}
 
                 {/* Trailer Button */}
-                <button 
+                <button
                   onClick={handlePlayTrailer}
                   className="bg-white/5 hover:bg-white/10 border border-white/15 text-white transition-colors py-2 px-4 rounded-2xl flex items-center gap-2 text-xs font-semibold shadow-md cursor-pointer"
                 >
@@ -460,7 +459,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
             {/* Overview / Synopsis (2-3 lines by default, tap to expand) */}
             {details.overview && (
-              <div 
+              <div
                 onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
                 className="cursor-pointer group/overview pt-2 max-w-5xl select-none"
                 role="button"
@@ -505,8 +504,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-white text-xl">Episodes</h3>
                   <div className="relative">
-                    <select 
-                      value={season} 
+                    <select
+                      value={season}
                       onChange={(e) => { setSeason(Number(e.target.value)); setEpisode(1); }}
                       className="appearance-none bg-zinc-900 border border-white/15 hover:border-white/30 text-white rounded-lg pl-4 pr-10 py-2 text-sm outline-none cursor-pointer shadow-lg transition-colors focus:ring-2 focus:ring-white/20"
                     >
@@ -515,11 +514,11 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                       ))}
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
                   {episodesList.map(ep => (
                     <button
@@ -555,21 +554,21 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
             <h2 className="text-2xl font-bold text-white mb-6">More Like This</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
               {recommended.map((movie) => (
-                <MovieCard 
-                  key={movie.id} 
-                  movie={movie} 
-                  onPlay={onPlay} 
-                  defaultType={media.type} 
+                <MovieCard
+                  key={movie.id}
+                  movie={movie}
+                  onPlay={onPlay}
+                  defaultType={media.type}
                 />
               ))}
             </div>
-            
+
             {loadingRecs && (
               <div className="flex justify-center py-10">
                 <Loader2 className="animate-spin text-white/50" size={32} />
               </div>
             )}
-            
+
             <div ref={lastElementRef} className="h-10 w-full" />
           </div>
         )}
@@ -577,11 +576,11 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
       {/* Server Selection Modal Popup */}
       {isServerModalOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setIsServerModalOpen(false)}
         >
-          <div 
+          <div
             className="relative w-full max-w-md bg-zinc-900 border border-white/15 rounded-3xl p-6 shadow-2xl space-y-5 text-white animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -613,11 +612,10 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                     setSelectedServer(idx);
                     setIsServerModalOpen(false);
                   }}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                    selectedServer === idx
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${selectedServer === idx
                       ? 'bg-red-500/10 border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
                       : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                  }`}
+                    }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
