@@ -138,16 +138,31 @@ export function useRouter() {
   };
 
   const navigateBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else if (route.playingMedia && route.detailsMedia) {
-      const targetUrl = `/${route.detailsMedia.type}/${route.detailsMedia.id}`;
-      window.history.pushState(null, '', targetUrl);
-      setRoute((prev) => ({ ...prev, playingMedia: null }));
-    } else {
+    if (route.playingMedia) {
+      // From Player → go to details or home (skip all iframe history entries)
+      if (route.detailsMedia) {
+        const targetUrl = `/${route.detailsMedia.type}/${route.detailsMedia.id}`;
+        window.history.replaceState(null, '', targetUrl);
+        setRoute((prev) => ({ ...prev, playingMedia: null }));
+      } else {
+        const targetUrl = route.tab === 'home' ? '/' : `/${route.tab}`;
+        window.history.replaceState(null, '', targetUrl);
+        setRoute((prev) => ({ ...prev, playingMedia: null, detailsMedia: null }));
+      }
+    } else if (route.detailsMedia) {
+      // From Details → go back to tab
       const targetUrl = route.tab === 'home' ? '/' : `/${route.tab}`;
-      window.history.pushState(null, '', targetUrl);
-      setRoute((prev) => ({ ...prev, detailsMedia: null, playingMedia: null }));
+      window.history.replaceState(null, '', targetUrl);
+      setRoute((prev) => ({ ...prev, detailsMedia: null }));
+    } else if (route.providerDetails) {
+      // From Provider → go back to home
+      window.history.replaceState(null, '', '/');
+      setRoute({ tab: 'home', detailsMedia: null, playingMedia: null, authMode: 'login' });
+    } else if (route.tab === 'auth') {
+      window.history.replaceState(null, '', '/');
+      setRoute({ tab: 'home', detailsMedia: null, playingMedia: null, authMode: 'login' });
+    } else {
+      window.history.back();
     }
   };
 
