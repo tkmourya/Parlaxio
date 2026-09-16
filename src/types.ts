@@ -15,6 +15,8 @@ export interface Movie {
   number_of_seasons?: number;
   genres?: { id: number; name: string }[];
   progress?: number; // Optional progress percentage (0-100) for watch history
+  season?: number;
+  episode?: number;
   translations?: {
     translations: {
       iso_3166_1: string;

@@ -97,7 +97,7 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <button 
             onClick={() => onPlay(movie.id, mediaType)}
-            className="bg-white text-black hover:bg-zinc-200 transition-colors font-bold py-2.5 px-6 md:py-3 md:px-8 rounded-full flex items-center gap-2 text-base md:text-lg shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+            className="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 hover:from-white hover:via-zinc-100 hover:to-zinc-300 text-black font-extrabold py-2.5 px-6 md:py-3 md:px-8 rounded-full flex items-center gap-2 text-base md:text-lg shadow-[0_4px_15px_rgba(255,255,255,0.2)] transition-all active:scale-95"
           >
             <Play fill="currentColor" size={20} className="md:w-6 md:h-6" />
             Play
@@ -105,7 +105,7 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
           
           <button 
             onClick={handlePlayTrailer}
-            className="bg-zinc-500/50 hover:bg-zinc-500/70 border border-white/20 backdrop-blur-md text-white transition-colors font-semibold py-2.5 px-6 md:py-3 md:px-8 rounded-full flex items-center gap-2 text-base md:text-lg shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+            className="bg-zinc-500/50 hover:bg-zinc-500/70 backdrop-blur-md text-white transition-colors font-semibold py-2.5 px-6 md:py-3 md:px-8 rounded-full flex items-center gap-2 text-base md:text-lg shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
           >
             <Info size={20} className="md:w-6 md:h-6" />
             Trailer
@@ -113,10 +113,10 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
 
           <button 
             onClick={handleSave}
-            className="bg-black/40 hover:bg-black/60 border border-white/20 backdrop-blur-md text-white transition-colors p-2.5 md:p-3.5 rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+            className="bg-black/40 hover:bg-black/60 border border-white/10 backdrop-blur-md text-white transition-colors p-2.5 md:p-3.5 rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
             title={saved ? "Remove from Watchlist" : "Add to Watchlist"}
           >
-            {saved ? <Check size={20} className="text-green-400 md:w-6 md:h-6" /> : <Bookmark size={20} className="md:w-6 md:h-6" />}
+            <Bookmark size={20} fill={saved ? "currentColor" : "none"} className="md:w-6 md:h-6" />
           </button>
         </div>
 

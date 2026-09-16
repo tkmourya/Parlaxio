@@ -1,7 +1,7 @@
 import { Film, Search, Flame, Settings, Tv, Zap, Bookmark, User } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 
-export type TabType = 'home' | 'movies' | 'series' | 'anime' | 'trending' | 'search' | 'settings' | 'watchlist' | 'auth';
+export type TabType = 'home' | 'movies' | 'series' | 'anime' | 'trending' | 'search' | 'settings' | 'watchlist' | 'auth' | 'provider';
 
 interface TopNavProps {
   currentTab: TabType;
@@ -14,6 +14,12 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
 
   return (
     <>
+      {/* Desktop Top Blur Overlay */}
+      <div 
+        className="hidden md:block fixed top-0 left-0 right-0 h-32 z-40 bg-gradient-to-b from-black/80 via-black/20 to-transparent pointer-events-none" 
+        style={{ backdropFilter: 'blur(8px)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)', maskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)' }}
+      ></div>
+
       <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 justify-center">
         <header className="bg-black/25 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-4 py-2 rounded-full flex items-center gap-3 transition-all">
           <div className="flex items-center gap-3">

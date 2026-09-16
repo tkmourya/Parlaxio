@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Play, Bookmark, Check, Film, Star, Clock, Info, Calendar, Sparkles } from 'lucide-react';
-import { getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos } from '../lib/tmdb';
+import { getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos, getCollection } from '../lib/tmdb';
 import { Movie, Cast, Episode, Video } from '../types';
 import { MovieCard } from '../components/MovieCard';
 import { isInWatchlist, toggleWatchlist } from '../lib/storage';
@@ -40,12 +40,31 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
         setCast(credRes.cast ? credRes.cast.slice(0, 12) : []);
         setSaved(isInWatchlist(detRes.id));
 
-        // Load recommendations
-        if (detRes.recommendations && detRes.recommendations.results) {
-          setRecommended(detRes.recommendations.results.slice(0, 12));
-        } else if (detRes.similar && detRes.similar.results) {
-          setRecommended(detRes.similar.results.slice(0, 12));
+        // Load Collection (e.g. Harry Potter parts)
+        let collectionItems: Movie[] = [];
+        if (detRes.belongs_to_collection) {
+          try {
+            const col = await getCollection(detRes.belongs_to_collection.id);
+            if (col && col.parts) {
+              collectionItems = col.parts.map((p: any) => ({ ...p, media_type: 'movie' }));
+            }
+          } catch (e) {
+            console.error(e);
+          }
         }
+
+        // Load recommendations
+        let recs: Movie[] = [];
+        if (detRes.recommendations && detRes.recommendations.results && detRes.recommendations.results.length > 0) {
+          recs = detRes.recommendations.results;
+        } else if (detRes.similar && detRes.similar.results) {
+          recs = detRes.similar.results;
+        }
+
+        // Combine Collection + Recommendations, filter duplicates, limit to 15
+        const combined = [...collectionItems, ...recs];
+        const uniqueMap = new Map(combined.map(item => [item.id, item]));
+        setRecommended(Array.from(uniqueMap.values()).slice(0, 15));
       } catch (err) {
         console.error('Failed to load movie details', err);
       } finally {
@@ -227,39 +246,31 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
             <div className="flex flex-wrap items-center gap-3 pt-3">
               <button 
                 onClick={() => onWatch(media.id, media.type, selectedSeason, 1)}
-                className="px-7 py-3.5 rounded-full bg-white text-black hover:bg-zinc-200 font-extrabold text-sm md:text-base flex items-center gap-2.5 shadow-2xl transition-all active:scale-95 cursor-pointer"
+                className="px-7 py-3.5 rounded-full bg-gradient-to-r from-white via-zinc-200 to-zinc-400 hover:from-white hover:via-zinc-100 hover:to-zinc-300 text-black font-extrabold text-sm md:text-base flex items-center gap-2.5 shadow-[0_4px_15px_rgba(255,255,255,0.2)] transition-all active:scale-95 cursor-pointer"
               >
                 <Play fill="black" size={18} />
                 <span>Watch Now</span>
               </button>
 
               <button 
-                onClick={handleToggleWatchlist}
-                className={`px-5 py-3.5 rounded-full border backdrop-blur-xl transition-all active:scale-95 cursor-pointer flex items-center gap-2 text-sm font-semibold ${
-                  saved 
-                    ? 'bg-green-500/15 border-green-500/30 text-green-400' 
-                    : 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
-                }`}
-              >
-                {saved ? (
-                  <>
-                    <Check size={18} />
-                    <span>In Watchlist</span>
-                  </>
-                ) : (
-                  <>
-                    <Bookmark size={18} />
-                    <span>Watchlist</span>
-                  </>
-                )}
-              </button>
-
-              <button 
                 onClick={handlePlayTrailer}
-                className="px-5 py-3.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-md"
+                className="px-5 py-3.5 rounded-full bg-white/5 hover:bg-white/10 text-white text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-md"
               >
                 <Info size={18} className="text-zinc-400" />
                 <span>Trailer</span>
+              </button>
+
+              <button 
+                onClick={handleToggleWatchlist}
+                title={saved ? "Remove from Watchlist" : "Add to Watchlist"}
+                className={`px-4 md:px-5 py-3.5 flex items-center justify-center gap-2 rounded-full backdrop-blur-xl transition-all active:scale-95 cursor-pointer shadow-md text-sm font-semibold ${
+                  saved 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-white/5 hover:bg-white/10 text-white'
+                }`}
+              >
+                <Bookmark size={18} fill={saved ? "currentColor" : "none"} />
+                <span className="hidden md:inline">{saved ? "Watchlisted" : "Watchlist"}</span>
               </button>
             </div>
 
@@ -267,7 +278,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
             {details.overview && (
               <div className="pt-3 space-y-1.5">
                 <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Storyline</h3>
-                <p className="text-zinc-300 text-sm md:text-base leading-relaxed max-w-3xl">
+                <p className="text-zinc-300 text-sm md:text-base leading-relaxed max-w-3xl line-clamp-3 md:line-clamp-4">
                   {details.overview}
                 </p>
               </div>
@@ -354,11 +365,11 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
         {/* Cast Section */}
         {cast.length > 0 && (
           <div className="space-y-4 pt-4 border-t border-white/10">
-            <h2 className="text-xl font-bold text-white">Top Cast</h2>
+            <h2 className="text-xl font-bold text-white">Cast</h2>
             <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-3">
               {cast.map(c => (
                 <div key={c.id} className="w-24 shrink-0 text-center space-y-1.5">
-                  <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 border border-white/10 shadow-md">
+                  <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 shadow-md">
                     {c.profile_path ? (
                       <img src={getImageUrl(c.profile_path, 'w500')} alt={c.name} className="w-full h-full object-cover" />
                     ) : (
@@ -375,15 +386,16 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
 
         {/* Recommendations / Similar Titles */}
         {recommended.length > 0 && (
-          <div className="space-y-4 pt-4 border-t border-white/10">
+          <div className="space-y-4 pt-4 border-t border-white/10 w-full overflow-hidden">
             <h2 className="text-xl font-bold text-white">More Like This</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {recommended.map(movie => (
-                <MovieCard 
-                  key={movie.id} 
-                  movie={movie} 
-                  onPlay={(id, type) => onSelectRelated(id, type)} 
-                />
+                <div key={movie.id} className="w-36 sm:w-40 md:w-48 flex-shrink-0 snap-start">
+                  <MovieCard 
+                    movie={movie} 
+                    onPlay={(id, type) => onSelectRelated(id, type)} 
+                  />
+                </div>
               ))}
             </div>
           </div>

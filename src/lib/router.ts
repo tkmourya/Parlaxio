@@ -6,6 +6,7 @@ export interface RouteState {
   detailsMedia: { id: number; type: 'movie' | 'tv' } | null;
   playingMedia: { id: number; type: 'movie' | 'tv'; season?: number; episode?: number } | null;
   authMode: 'login' | 'register';
+  providerDetails?: { id: string; name: string } | null;
 }
 
 /**
@@ -60,6 +61,27 @@ export function parsePath(pathname: string): RouteState {
     };
   }
 
+  const authMatch = cleanPath.match(/^\/(login|signup)$/);
+  if (authMatch) {
+    return {
+      tab: 'auth',
+      detailsMedia: null,
+      playingMedia: null,
+      authMode: authMatch[1] === 'login' ? 'login' : 'register'
+    };
+  }
+
+  const providerMatch = cleanPath.match(/^\/provider\/(\d+)\/(.*)$/);
+  if (providerMatch) {
+    return {
+      tab: 'provider',
+      detailsMedia: null,
+      playingMedia: null,
+      authMode: 'login',
+      providerDetails: { id: providerMatch[1], name: decodeURIComponent(providerMatch[2]) }
+    };
+  }
+
   // 3. Standard tab routes
   if (cleanPath === '/movies') return { tab: 'movies', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/series') return { tab: 'series', detailsMedia: null, playingMedia: null, authMode: 'login' };
@@ -68,11 +90,13 @@ export function parsePath(pathname: string): RouteState {
   if (cleanPath === '/search') return { tab: 'search', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/watchlist') return { tab: 'watchlist', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/settings') return { tab: 'settings', detailsMedia: null, playingMedia: null, authMode: 'login' };
-  if (cleanPath === '/auth' || cleanPath === '/login') return { tab: 'auth', detailsMedia: null, playingMedia: null, authMode: 'login' };
-  if (cleanPath === '/signup' || cleanPath === '/register') return { tab: 'auth', detailsMedia: null, playingMedia: null, authMode: 'register' };
   
-  // Default to home
-  return { tab: 'home', detailsMedia: null, playingMedia: null, authMode: 'login' };
+  return {
+    tab: 'home',
+    detailsMedia: null,
+    playingMedia: null,
+    authMode: 'login'
+  };
 }
 
 /**
@@ -134,15 +158,24 @@ export function useRouter() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const navigateProvider = (id: string, name: string) => {
+    const targetUrl = `/provider/${id}/${encodeURIComponent(name)}`;
+    window.history.pushState(null, '', targetUrl);
+    setRoute((prev) => ({ ...prev, tab: 'provider', detailsMedia: null, playingMedia: null, providerDetails: { id, name } }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return {
     currentTab: route.tab,
     detailsMedia: route.detailsMedia,
     playingMedia: route.playingMedia,
     authMode: route.authMode,
+    providerDetails: route.providerDetails,
     navigateTab,
     navigateDetails,
     navigatePlay,
     navigateBack,
-    navigateAuth
+    navigateAuth,
+    navigateProvider
   };
 }

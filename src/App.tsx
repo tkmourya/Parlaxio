@@ -9,6 +9,7 @@ import { PlayerView } from './views/PlayerView';
 import { DetailsView } from './views/DetailsView';
 import { SettingsView } from './views/SettingsView';
 import { AuthView } from './views/AuthView';
+import { ProviderView } from './views/ProviderView';
 import { BottomNav } from './components/BottomNav';
 import { TopNav } from './components/TopNav';
 import { SetupScreen } from './components/SetupScreen';
@@ -29,11 +30,13 @@ function AppContent() {
     detailsMedia,
     playingMedia, 
     authMode, 
+    providerDetails,
     navigateTab, 
     navigateDetails,
     navigatePlay, 
     navigateBack, 
-    navigateAuth 
+    navigateAuth,
+    navigateProvider
   } = useRouter();
 
   // Check if API key is configured
@@ -52,7 +55,7 @@ function AppContent() {
 
       {/* Main Content Area */}
       <main className="min-h-screen">
-        {currentTab === 'home' && <HomeView onPlay={navigateDetails} />}
+        {currentTab === 'home' && <HomeView onPlay={navigateDetails} onContinueWatch={navigatePlay} onProviderSelect={navigateProvider} />}
         {currentTab === 'movies' && <MoviesView onPlay={navigateDetails} />}
         {currentTab === 'series' && <SeriesView onPlay={navigateDetails} />}
         {currentTab === 'anime' && <AnimeView onPlay={navigateDetails} />}
@@ -60,6 +63,13 @@ function AppContent() {
         {currentTab === 'search' && <SearchView onPlay={navigateDetails} />}
         {currentTab === 'watchlist' && <WatchlistView onPlay={navigateDetails} />}
         {currentTab === 'settings' && <SettingsView onPlay={navigateDetails} onAuthClick={navigateAuth} />}
+        {currentTab === 'provider' && providerDetails && (
+          <ProviderView 
+            providerId={providerDetails.id} 
+            providerName={providerDetails.name} 
+            onPlay={navigateDetails} 
+          />
+        )}
         {currentTab === 'auth' && <AuthView initialMode={authMode} onComplete={() => navigateTab('home')} />}
       </main>
 

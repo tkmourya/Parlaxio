@@ -3,6 +3,7 @@ import { getTrending, getPopular, getTopRated, getBollywood, getPopularTV, getCo
 import { Movie } from '../types';
 import { Hero } from '../components/Hero';
 import { MovieRow } from '../components/MovieRow';
+import { ProviderCards } from '../components/ProviderCards';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { SubNav } from '../components/SubNav';
 import { MovieCard } from '../components/MovieCard';
@@ -21,7 +22,13 @@ const HOME_FILTERS = [
   { id: '10749', label: 'Romance' }
 ];
 
-export function HomeView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv') => void }) {
+interface HomeViewProps {
+  onPlay: (id: number, type: 'movie' | 'tv') => void;
+  onContinueWatch?: (id: number, type: 'movie' | 'tv', season?: number, episode?: number) => void;
+  onProviderSelect?: (id: string, name: string) => void;
+}
+
+export function HomeView({ onPlay, onContinueWatch, onProviderSelect }: HomeViewProps) {
   const [trending, setTrending] = useState<Movie[]>([]);
   const [popular, setPopular] = useState<Movie[]>([]);
   const [topRated, setTopRated] = useState<Movie[]>([]);
@@ -151,6 +158,12 @@ export function HomeView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv'
     <div className="flex flex-col w-full pb-8 animate-in fade-in duration-700">
       {filter === 'all' && topTrending.length > 0 && <Hero movies={topTrending} onPlay={onPlay} />}
       
+      {filter === 'all' && onProviderSelect && (
+        <div className="mt-8">
+          <ProviderCards onSelect={onProviderSelect} />
+        </div>
+      )}
+
       <div className={`${filter === 'all' ? 'pt-4 md:pt-10' : 'pt-24 md:pt-36 px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full'} relative z-20`}>
         <div className={filter === 'all' ? 'px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full mb-8' : 'mb-8'}>
           <SubNav filters={HOME_FILTERS} current={filter} onChange={setFilter} />
@@ -159,7 +172,7 @@ export function HomeView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv'
         {filter === 'all' ? (
           <>
             {history.length > 0 && (
-              <MovieRow title="Continue Watching" movies={history} onPlay={onPlay} />
+              <MovieRow title="Continue Watching" movies={history} onPlay={onContinueWatch || onPlay} />
             )}
             {/* Top 10 Today */}
             <MovieRow 

@@ -6,7 +6,7 @@ import { isInWatchlist, toggleWatchlist } from '../lib/storage';
 
 export interface MovieCardProps {
   movie: Movie;
-  onPlay: (id: number, type: 'movie' | 'tv') => void;
+  onPlay: (id: number, type: 'movie' | 'tv', season?: number, episode?: number) => void;
   defaultType?: 'movie' | 'tv';
 }
 
@@ -32,8 +32,8 @@ export function MovieCard({ movie, onPlay, defaultType = 'movie' }: MovieCardPro
   };
 
   return (
-    <div className="w-full flex flex-col group cursor-pointer" onClick={() => onPlay(movie.id, mediaType)}>
-      <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-zinc-900 border border-white/10 shadow-xl transition-all duration-300 md:group-hover:scale-105 md:group-hover:border-white/30 md:group-hover:shadow-2xl md:group-hover:z-30">
+    <div className="w-full flex flex-col group cursor-pointer" onClick={() => onPlay(movie.id, mediaType, movie.season, movie.episode)}>
+      <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-zinc-900 shadow-xl transition-all duration-300 md:group-hover:scale-105 md:group-hover:shadow-2xl md:group-hover:z-30">
         <img 
           src={getImageUrl(movie.poster_path)} 
           alt={title}

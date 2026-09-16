@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Righteous&amp;display=swap');
+      .text-logo {
+        font-family: 'Righteous', sans-serif;
+        font-size: 420px;
+        fill: url(#brandGradient);
+        text-anchor: middle;
+        dominant-baseline: central;
+      }
+    </style>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="30%" stop-color="#e4e4e7" />
+      <stop offset="60%" stop-color="#3f3f46" />
+      <stop offset="100%" stop-color="#000000" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="512" height="512" fill="#000000" />
+  
+  <text x="50%" y="50%" dy="0.1em" class="text-logo">P</text>
+</svg>

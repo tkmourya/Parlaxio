@@ -148,7 +148,9 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           genre_ids: detailsRef.current.genres?.map((g: any) => g.id) || [],
           media_type: media.type,
           release_date: detailsRef.current.release_date,
-          first_air_date: detailsRef.current.first_air_date
+          first_air_date: detailsRef.current.first_air_date,
+          season: media.type === 'tv' ? (media.season || season) : undefined,
+          episode: media.type === 'tv' ? (media.episode || episode) : undefined
         }, Math.floor(progress));
       }
     };
@@ -176,7 +178,9 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           genre_ids: detRes.genres?.map((g: any) => g.id) || [],
           media_type: media.type,
           release_date: detRes.release_date,
-          first_air_date: detRes.first_air_date
+          first_air_date: detRes.first_air_date,
+          season: media.type === 'tv' ? (media.season || season) : undefined,
+          episode: media.type === 'tv' ? (media.episode || episode) : undefined
         }, 5);
 
         setDetails(detRes);
@@ -506,11 +510,11 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
             {/* Top Cast Row */}
             {cast.length > 0 && (
               <div className="pt-4 border-t border-white/10">
-                <h3 className="text-xl font-bold text-white mb-4">Top Cast</h3>
+                <h3 className="text-xl font-bold text-white mb-4">Cast</h3>
                 <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-3 snap-x">
                   {cast.map(c => (
                     <div key={c.id} className="flex-shrink-0 w-24 snap-start text-center group">
-                      <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 border border-white/10 mb-2 shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:border-white/30">
+                      <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 mb-2 shadow-md transition-transform duration-300 group-hover:scale-105">
                         {c.profile_path ? (
                           <img src={getImageUrl(c.profile_path, 'w500')} alt={c.name} className="w-full h-full object-cover" />
                         ) : (
@@ -533,7 +537,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   <div className="relative">
                     <button
                       onClick={() => setIsSeasonDropdownOpen(!isSeasonDropdownOpen)}
-                      className="flex items-center gap-2 bg-zinc-900 border border-white/15 hover:border-white/30 text-white rounded-xl px-4 py-2.5 text-sm font-semibold outline-none cursor-pointer shadow-lg transition-colors focus:ring-2 focus:ring-white/20 min-w-[130px] justify-between group"
+                      className="flex items-center gap-2 bg-zinc-900/80 hover:bg-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-semibold outline-none cursor-pointer shadow-lg transition-colors min-w-[130px] justify-between group"
                     >
                       <span>Season {season}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-zinc-400 group-hover:text-white transition-all duration-300 ${isSeasonDropdownOpen ? '-rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
@@ -542,7 +546,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                     {isSeasonDropdownOpen && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setIsSeasonDropdownOpen(false)} />
-                        <div className="absolute right-0 top-full mt-2 w-36 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                        <div className="absolute right-0 top-full mt-2 w-36 bg-zinc-900 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
                           <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col p-1.5 gap-0.5">
                             {Array.from({ length: details.number_of_seasons }, (_, i) => i + 1).map(s => (
                               <button
@@ -569,7 +573,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                     <button
                       key={ep.id}
                       onClick={() => { setEpisode(ep.episode_number); setIsPlayingStream(true); }}
-                      className={`flex items-start gap-3 p-2.5 rounded-xl text-left transition-all border ${episode === ep.episode_number ? 'bg-white/15 border-white/30 shadow-lg' : 'bg-zinc-900/60 border-white/5 hover:bg-white/5 hover:border-white/15'}`}
+                      className={`flex items-start gap-3 p-2.5 rounded-xl text-left transition-all ${episode === ep.episode_number ? 'bg-white/15 shadow-lg' : 'bg-zinc-900/60 hover:bg-white/5'}`}
                     >
                       <div className="w-28 aspect-video bg-zinc-800 rounded-lg flex-shrink-0 overflow-hidden relative shadow-inner">
                         {ep.still_path && <img src={getImageUrl(ep.still_path, 'w500')} className="w-full h-full object-cover" alt={ep.name} />}

@@ -68,6 +68,53 @@ export const getCombinedByGenre = async (genreId: string, page = 1) => {
   return { results: combined, page, total_pages: Math.max(movies.total_pages || 1, tv.total_pages || 1) };
 };
 
+export const getMediaByProvider = async (providerId: string, filter: string = 'all', page = 1) => {
+  // Map provider IDs to their Web Series vs Daily TV Network IDs for better accuracy
+  const providerNetworks: Record<string, { web: string, tv: string }> = {
+    '8': { web: '213', tv: '' }, // Netflix (All Web)
+    '119': { web: '1024', tv: '' }, // Amazon (All Web)
+    '122': { web: '3919|3186', tv: '159|2179|8036' }, // Hotstar (Hotstar vs Star Plus/Star Bharat)
+    '220': { web: '31365', tv: '524|2532|4008' }, // JioCinema (Jio vs Colors/VOOT)
+    '283': { web: '1112', tv: '' }, // Crunchyroll
+  };
+
+  let moviePromise = Promise.resolve({ results: [], page: 1, total_pages: 1 });
+  let tvPromise = Promise.resolve({ results: [], page: 1, total_pages: 1 });
+
+  if (filter === 'all' || filter === 'movie') {
+    moviePromise = fetchFromTMDB<TMDBResponse>(`/discover/movie?with_watch_providers=${providerId}&watch_region=IN&sort_by=popularity.desc&page=${page}`).catch(() => ({ results: [], page: 1, total_pages: 1 }));
+  }
+  
+  if (filter === 'all' || filter === 'tv' || filter === 'anime' || filter === 'web-series' || filter === 'tv-shows') {
+    let genreFilter = '';
+    let networkQuery = `with_watch_providers=${providerId}&watch_region=IN`; // Default fallback
+
+    const netMap = providerNetworks[providerId];
+    
+    if (filter === 'all' || filter === 'tv') {
+      if (netMap) networkQuery = `with_networks=${netMap.web}${netMap.tv ? `|${netMap.tv}` : ''}`;
+    } else if (filter === 'web-series') {
+      if (netMap && netMap.web) networkQuery = `with_networks=${netMap.web}`;
+      genreFilter = '&without_genres=10766,10764,16';
+    } else if (filter === 'tv-shows') {
+      if (netMap && netMap.tv) {
+        networkQuery = `with_networks=${netMap.tv}`;
+      } else {
+        genreFilter = '&with_genres=10766|10764'; // Fallback to Soap/Reality if no specific TV networks
+      }
+    } else if (filter === 'anime') {
+      if (netMap) networkQuery = `with_networks=${netMap.web}${netMap.tv ? `|${netMap.tv}` : ''}`;
+      genreFilter = '&with_genres=16';
+    }
+
+    tvPromise = fetchFromTMDB<TMDBResponse>(`/discover/tv?${networkQuery}${genreFilter}&sort_by=popularity.desc&page=${page}`).catch(() => ({ results: [], page: 1, total_pages: 1 }));
+  }
+
+  const [movies, tv] = await Promise.all([moviePromise, tvPromise]);
+  const combined = [...movies.results, ...tv.results].sort((a, b) => b.popularity - a.popularity);
+  return { results: combined, page, total_pages: Math.max(movies.total_pages || 1, tv.total_pages || 1) };
+};
+
 export const getAnimeByFilter = (filter: string, page = 1) => {
   const base = '/discover/tv?with_original_language=ja&sort_by=popularity.desc';
   if (!isNaN(Number(filter)) && filter !== 'all') {
@@ -81,10 +128,11 @@ export const getAnimeByFilter = (filter: string, page = 1) => {
   }
 };
 
-export const getMovieDetails = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}?append_to_response=${type === 'movie' ? 'release_dates' : 'content_ratings'},translations`);
+export const getMovieDetails = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}?append_to_response=${type === 'movie' ? 'release_dates' : 'content_ratings'},translations,recommendations,similar`);
 export const getCredits = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}/credits`);
 export const getVideos = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}/videos`);
 export const getTvSeason = (id: number, season: number) => fetchFromTMDB<any>(`/tv/${id}/season/${season}`);
+export const getCollection = (collectionId: number) => fetchFromTMDB<any>(`/collection/${collectionId}`);
 
 export const getSmartRecommendations = async (type: 'movie' | 'tv', id: number, page = 1) => {
    try {
