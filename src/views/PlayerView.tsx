@@ -1,5 +1,5 @@
 import { ArrowLeft, Play, Bookmark, Check, Info, Server, X, Loader2 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSmartRecommendations, getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos } from '../lib/tmdb';
 import { Movie, Cast, Episode, Video } from '../types';
 import { MovieCard } from '../components/MovieCard';
@@ -107,6 +107,53 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   const { addToHistory } = useWatchHistory();
 
   // Load details and cast
+  const detailsRef = useRef<Movie | null>(null);
+  const playTimeRef = useRef(0);
+
+  // Track time spent watching
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlayingStream) {
+      interval = setInterval(() => {
+        playTimeRef.current += 1;
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlayingStream]);
+
+  // Save exact progress on unmount
+  useEffect(() => {
+    return () => {
+      if (detailsRef.current) {
+        // Calculate progress percentage
+        // Default runtime 120 mins if missing
+        const runtimeMins = detailsRef.current.runtime || 120; 
+        const totalSecs = runtimeMins * 60;
+        let progress = (playTimeRef.current / totalSecs) * 100;
+        
+        // If watched for less than 1 min, don't bump much
+        if (progress < 1) progress = 1;
+        // Cap at 95%
+        if (progress > 95) progress = 95;
+
+        // Add to history with real progress
+        addToHistory({
+          id: detailsRef.current.id,
+          title: detailsRef.current.title || detailsRef.current.name,
+          name: detailsRef.current.name || detailsRef.current.title,
+          overview: detailsRef.current.overview,
+          poster_path: detailsRef.current.poster_path,
+          backdrop_path: detailsRef.current.backdrop_path,
+          vote_average: detailsRef.current.vote_average,
+          genre_ids: detailsRef.current.genres?.map((g: any) => g.id) || [],
+          media_type: media.type,
+          release_date: detailsRef.current.release_date,
+          first_air_date: detailsRef.current.first_air_date
+        }, Math.floor(progress));
+      }
+    };
+  }, []);
+
   useEffect(() => {
     async function loadMainData() {
       try {
@@ -115,7 +162,9 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           getCredits(media.type, media.id)
         ]);
 
-        // Add to history
+        detailsRef.current = detRes;
+
+        // Add to history initially (progress will be 5%)
         addToHistory({
           id: detRes.id,
           title: detRes.title || detRes.name,
@@ -128,7 +177,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           media_type: media.type,
           release_date: detRes.release_date,
           first_air_date: detRes.first_air_date
-        });
+        }, 5);
 
         setDetails(detRes);
         setCast(credRes.cast.slice(0, 10)); // top 10 cast
@@ -137,7 +186,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
       }
     }
     loadMainData();
-  }, [media.id, media.type, addToHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [media.id, media.type]);
 
   // Load Watchlist state
   useEffect(() => {
@@ -226,6 +276,10 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   const activeServer = STREAM_SERVERS[selectedServer] || STREAM_SERVERS[0];
   const streamUrl = activeServer.getUrl(media.id, media.type, season, episode, media.isAnime);
 
+  const handlePlayStream = async () => {
+    setIsPlayingStream(true);
+  };
+
   const getAgeRating = () => {
     if (!details) return null;
     let rating = '';
@@ -292,7 +346,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
             <div className="relative z-10 flex flex-col items-center gap-3">
               <button
-                onClick={() => setIsPlayingStream(true)}
+                onClick={handlePlayStream}
                 className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-2xl text-white flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 group/play cursor-pointer"
                 title="Play Stream"
                 aria-label="Play Stream"
@@ -304,7 +358,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           </div>
         ) : (
           <div className="relative w-full h-full bg-zinc-950">
-            {/* Loading Indicator behind iframe */}
+            {/* Loading Indicator behind fallback iframe */}
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-500 z-0 pointer-events-none">
               <Loader2 className="w-8 h-8 animate-spin text-red-600" />
               <span className="text-sm font-medium animate-pulse">Connecting to Server...</span>
@@ -338,14 +392,15 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   </h1>
                   <button
                     onClick={handleSave}
-                    className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 border backdrop-blur-md shrink-0 cursor-pointer ${saved
-                        ? 'bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_15px_rgba(74,222,128,0.25)]'
-                        : 'bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white border-white/10'
-                      }`}
+                    className="transition-transform hover:scale-110 active:scale-95 cursor-pointer shrink-0 ml-2"
                     title={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
                     aria-label={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
                   >
-                    {saved ? <Check size={20} className="text-green-400" /> : <Bookmark size={20} />}
+                    {saved ? (
+                      <Bookmark size={30} className="text-white fill-white" />
+                    ) : (
+                      <Bookmark size={30} className="text-zinc-400 hover:text-white transition-colors" />
+                    )}
                   </button>
                 </div>
 
@@ -388,6 +443,20 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                         {g.name}
                       </span>
                     ))}
+                  </div>
+                )}
+
+                {/* Available Languages (Inferred from TMDB Translations) */}
+                {details.translations?.translations && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-sm text-zinc-400 font-medium mr-1">Languages:</span>
+                    <span className="text-sm text-zinc-300">
+                      {Array.from(new Set(
+                        details.translations.translations
+                          .filter((t: any) => ['hi', 'en', 'te', 'ta', 'ja', 'ko', 'es', 'fr', 'de'].includes(t.iso_639_1))
+                          .map((t: any) => t.english_name)
+                      )).join(', ')}
+                    </span>
                   </div>
                 )}
               </div>

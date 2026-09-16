@@ -12,20 +12,24 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const { login, register } = useAuth();
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !password) return;
 
     setLoading(true);
+    setMessage('');
+    setError('');
 
-    setTimeout(() => {
+    try {
       if (mode === 'forgot') {
+        // Simple mock for forgot password for now, or connect to Appwrite later
         setMessage(`Password reset link sent to ${email}`);
         setLoading(false);
         setTimeout(() => {
@@ -36,14 +40,20 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
       }
 
       if (mode === 'register') {
-        register(name.trim() || email.split('@')[0], email.trim());
+        if (!name.trim()) {
+          throw new Error('Name is required for registration.');
+        }
+        await register(name.trim(), email.trim(), password);
       } else {
-        login(email.trim(), name.trim());
+        await login(email.trim(), password);
       }
 
-      setLoading(false);
       onComplete();
-    }, 400);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during authentication.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -109,6 +119,12 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
         {message && (
           <div className="mb-4 p-3 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs text-center font-medium backdrop-blur-md">
             {message}
+          </div>
+        )}
+        
+        {error && (
+          <div className="mb-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center font-medium backdrop-blur-md">
+            {error}
           </div>
         )}
 

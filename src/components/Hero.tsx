@@ -77,7 +77,7 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
           key={movie.id} // force re-render for crisp fade
           src={getImageUrl(movie.backdrop_path, 'original')} 
           alt={title}
-          className="w-full h-full object-cover object-top md:object-[center_15%] animate-in fade-in duration-1000"
+          className="w-full h-full object-cover object-top md:object-[center_15%] animate-in fade-in duration-1000 text-transparent"
           referrerPolicy="no-referrer"
         />
         {/* Gradient Overlays for smooth blending into background */}

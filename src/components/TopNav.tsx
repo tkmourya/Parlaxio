@@ -78,7 +78,7 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
           <div className="pl-4 border-l border-white/10 flex items-center shrink-0">
             {user ? (
                <button onClick={() => onChange('settings')} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors border border-white/5 shadow-inner">
-                 <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
+                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white via-zinc-200 to-zinc-400 flex items-center justify-center text-[10px] font-bold text-black shadow-sm shadow-white/10">
                    {user.avatarInitials}
                  </div>
                  <span className="text-sm font-medium text-white max-w-[100px] truncate">{user.name}</span>
@@ -104,22 +104,22 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
               Parlaxio
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button 
               onClick={() => onChange('search')}
-              className={`p-2.5 rounded-full transition-all backdrop-blur-md ${currentTab === 'search' ? 'bg-white/20 text-white shadow-inner' : 'bg-black/40 text-white/90 hover:text-white border border-white/15'}`}
+              className={`p-2 rounded-full transition-transform active:scale-95 ${currentTab === 'search' ? 'text-white' : 'text-white/90 hover:text-white'}`}
             >
-              <Search size={20} />
+              <Search size={22} className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" />
             </button>
             {user ? (
-               <button onClick={() => onChange('settings')} className="p-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 transition-transform active:scale-95 shadow-md">
-                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-orange-400 flex items-center justify-center text-sm font-bold text-white">
+               <button onClick={() => onChange('settings')} className="p-0.5 rounded-full bg-transparent border border-white/20 transition-transform active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-white via-zinc-200 to-zinc-400 flex items-center justify-center text-sm font-bold text-black shadow-sm shadow-white/10">
                    {user.avatarInitials}
                  </div>
                </button>
             ) : (
-               <button onClick={() => onAuthClick('login')} className="p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-white/90 hover:text-white transition-all shadow-md">
-                 <User size={20} />
+               <button onClick={() => onAuthClick('login')} className="p-2 rounded-full transition-transform active:scale-95 text-white/90 hover:text-white">
+                 <User size={22} className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" />
                </button>
             )}
           </div>

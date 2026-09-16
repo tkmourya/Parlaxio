@@ -1,31 +1,75 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Movie } from '../types';
 import { MovieCard } from './MovieCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 interface MovieRowProps {
   title: string;
   movies: Movie[];
+  fetchFn?: (page: number) => Promise<any>;
   onPlay: (id: number, type: 'movie' | 'tv') => void;
   defaultType?: 'movie' | 'tv';
   isTop10?: boolean;
 }
 
-export function MovieRow({ title, movies, onPlay, defaultType = 'movie', isTop10 = false }: MovieRowProps) {
+export function MovieRow({ title, movies, fetchFn, onPlay, defaultType = 'movie', isTop10 = false }: MovieRowProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-
-  if (!movies.length) return null;
   
-  const displayMovies = isTop10 ? movies.slice(0, 10) : movies;
+  // Infinite Scroll State
+  const [localMovies, setLocalMovies] = useState<Movie[]>(movies);
+  const [page, setPage] = useState(2);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(!isTop10 && !!fetchFn);
+
+  useEffect(() => {
+    setLocalMovies(movies);
+    setPage(2);
+    setHasMore(!isTop10 && !!fetchFn);
+  }, [movies, isTop10, fetchFn]);
+
+  if (!localMovies.length) return null;
+  
+  const displayMovies = isTop10 ? localMovies.slice(0, 10) : localMovies;
+
+  const handleFetchMore = async () => {
+    if (!fetchFn || loadingMore || !hasMore || isTop10) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetchFn(page);
+      if (res && res.results) {
+        setLocalMovies(prev => {
+          const newMovies = [...prev];
+          res.results.forEach((m: Movie) => {
+            if (!newMovies.find(existing => existing.id === m.id)) {
+              newMovies.push(m);
+            }
+          });
+          return newMovies;
+        });
+        setPage(p => p + 1);
+        setHasMore(res.page < res.total_pages && res.page < 10); // cap at 10 pages for horizontal row
+      }
+    } catch (err) {
+      console.error(err);
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const updateScrollButtons = useCallback(() => {
     if (!rowRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = rowRef.current;
     setCanScrollLeft(scrollLeft > 10);
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-  }, []);
+
+    // Trigger fetch if within 500px of the end
+    if (scrollWidth - (scrollLeft + clientWidth) < 500 && hasMore && !loadingMore) {
+      handleFetchMore();
+    }
+  }, [hasMore, loadingMore, page, fetchFn, isTop10]);
 
   useEffect(() => {
     updateScrollButtons();
@@ -50,9 +94,12 @@ export function MovieRow({ title, movies, onPlay, defaultType = 'movie', isTop10
 
   return (
     <div className="relative mb-8 md:mb-12 group/row">
-      <h2 className="text-xl md:text-2xl font-bold text-white mb-4 px-4 md:px-12 lg:px-16 tracking-tight">
-        {title}
-      </h2>
+      <div className="flex items-center gap-3 mb-4 px-4 md:px-12 lg:px-16">
+        <div className="w-1 h-8 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500 shadow-[0_0_12px_rgba(255,255,255,0.3)]"></div>
+        <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+          {title}
+        </h2>
+      </div>
       
       {/* Desktop Left Scroll Button */}
       {canScrollLeft && (
@@ -110,6 +157,11 @@ export function MovieRow({ title, movies, onPlay, defaultType = 'movie', isTop10
             </div>
           </div>
         ))}
+        {loadingMore && (
+          <div className="flex-none flex items-center justify-center w-32 md:w-48">
+            <Loader2 className="animate-spin text-white/50" size={32} />
+          </div>
+        )}
       </div>
     </div>
   );

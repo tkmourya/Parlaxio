@@ -51,8 +51,9 @@ export function TrendingView({ onPlay }: { onPlay: (id: number, type: 'movie' | 
     <div className="px-4 md:px-12 pt-24 md:pt-36 pb-32 min-h-screen animate-in fade-in">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-orange-500/20 rounded-full border border-orange-500/30">
-            <Flame className="text-orange-500" size={28} />
+          <div className="w-1 h-12 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500 shadow-[0_0_12px_rgba(255,255,255,0.3)]"></div>
+          <div className="p-3 bg-white/10 rounded-full border border-white/20">
+            <Flame className="text-white" size={28} />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Trending Now</h1>
         </div>

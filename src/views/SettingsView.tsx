@@ -1,20 +1,24 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Shield, Bookmark, Play, ChevronRight, Check, 
   Trash2, Film, Zap, HardDrive, Volume2, Globe, 
-  ArrowLeft, LogOut, CheckCircle2, ChevronDown
+  ArrowLeft, LogOut, CheckCircle2, ChevronDown, Clock,
+  LayoutGrid, List
 } from 'lucide-react';
 import { WatchlistView } from './WatchlistView';
 import { useAuth } from '../lib/AuthContext';
 import { getWatchlist } from '../lib/storage';
+import { useWatchHistory } from '../hooks/useWatchHistory';
 
 interface SettingsViewProps {
   onPlay: (id: number, type: 'movie' | 'tv') => void;
+  onAuthClick: (mode: 'login' | 'register') => void;
 }
 
-export function SettingsView({ onPlay }: SettingsViewProps) {
-  // Navigation: null = settings list, 'watchlist' = opened watchlist
-  const [subView, setSubView] = useState<'watchlist' | null>(null);
+export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
+  // Navigation: null = settings list, 'watchlist' = opened watchlist, 'history' = opened history, 'profile' = profile editor
+  const [subView, setSubView] = useState<'watchlist' | 'history' | 'profile' | null>(null);
+  const [historyLayout, setHistoryLayout] = useState<'list' | 'grid'>('list');
 
   // Settings State
   const [autoplay, setAutoplay] = useState(true);
@@ -35,15 +39,32 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
   const [cacheSize, setCacheSize] = useState('24.6 MB');
   const [cacheCleared, setCacheCleared] = useState(false);
 
-  // Auth modal
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [inputName, setInputName] = useState('');
-  const [inputEmail, setInputEmail] = useState('');
-
   // Watchlist count
   const [watchlistCount, setWatchlistCount] = useState(0);
 
-  const { user, login, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
+  
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  useEffect(() => {
+    if (user) setProfileName(user.name);
+  }, [user]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileName.trim() || profileName === user?.name) return;
+    setIsUpdatingProfile(true);
+    try {
+      await updateProfile(profileName);
+      setSubView(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+  const { history, clearHistory } = useWatchHistory();
 
   useEffect(() => {
     setWatchlistCount(getWatchlist().length);
@@ -57,15 +78,6 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
     setCacheSize('0.0 KB');
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 3000);
-  };
-
-  const handleAuthSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!inputEmail.trim()) return;
-    login(inputEmail.trim(), inputName.trim() || inputEmail.split('@')[0]);
-    setIsAuthModalOpen(false);
-    setInputName('');
-    setInputEmail('');
   };
 
   const toggleExpand = (rowName: string) => {
@@ -92,6 +104,195 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
     );
   }
 
+  // If user tapped "Watch History"
+  if (subView === 'history') {
+    return (
+      <div className="px-4 md:px-8 lg:px-12 pt-24 md:pt-28 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+        <div className="flex items-center justify-between mb-6">
+          <button 
+            onClick={() => setSubView(null)}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
+          >
+            <ArrowLeft size={14} />
+            <span>Back to Settings</span>
+          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-zinc-400">{history.length} Titles</span>
+            
+            <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 hidden sm:flex">
+              <button 
+                onClick={() => setHistoryLayout('list')}
+                className={`p-1.5 rounded-md transition ${historyLayout === 'list' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                title="List View"
+              >
+                <List size={14} />
+              </button>
+              <button 
+                onClick={() => setHistoryLayout('grid')}
+                className={`p-1.5 rounded-md transition ${historyLayout === 'grid' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                title="Grid View"
+              >
+                <LayoutGrid size={14} />
+              </button>
+            </div>
+
+            {history.length > 0 && (
+              <button 
+                onClick={clearHistory}
+                className="text-[10px] uppercase font-bold tracking-wider text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-2 py-1 rounded-lg transition"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        {history.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+              <Clock size={24} className="text-zinc-500" />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">No Watch History</h3>
+            <p className="text-sm text-zinc-400">Movies and shows you watch will appear here.</p>
+          </div>
+        ) : (
+          <div className={historyLayout === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" : "flex flex-col gap-3"}>
+            {history.map((movie) => (
+              historyLayout === 'grid' ? (
+                <div 
+                  key={movie.id}
+                  onClick={() => onPlay(movie.id, movie.media_type || 'movie')}
+                  className="relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800"
+                >
+                  <img 
+                    src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Poster'} 
+                    alt={movie.title || movie.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <button className="w-full py-2 bg-white text-black font-bold text-xs rounded-lg flex items-center justify-center gap-1.5">
+                        <Play size={12} className="fill-current" /> Resume
+                      </button>
+                    </div>
+                  </div>
+                  {movie.progress !== undefined && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                      <div 
+                        className="h-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.8)] transition-all duration-300"
+                        style={{ width: `${movie.progress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div 
+                  key={movie.id}
+                  onClick={() => onPlay(movie.id, movie.media_type || 'movie')}
+                  className="group cursor-pointer flex items-center gap-4 bg-zinc-900/50 border border-white/5 p-2 rounded-xl hover:bg-white/5 transition"
+                >
+                  <div className="relative w-16 md:w-20 aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800 shrink-0">
+                    <img 
+                      src={movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Poster'} 
+                      alt={movie.title || movie.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {movie.progress !== undefined && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                        <div 
+                          className="h-full bg-red-600"
+                          style={{ width: `${movie.progress}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <h4 className="font-bold text-white text-sm md:text-base truncate">{movie.title || movie.name}</h4>
+                    {movie.progress !== undefined && (
+                      <p className="text-xs text-zinc-400 mt-1">{Math.floor(movie.progress)}% watched</p>
+                    )}
+                  </div>
+                  <div className="pr-3 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
+                    <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center pl-0.5 hover:scale-110 active:scale-95 transition-transform">
+                      <Play size={14} className="fill-current" />
+                    </button>
+                  </div>
+                </div>
+              )
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // If user tapped "Edit Profile"
+  if (subView === 'profile') {
+    return (
+      <div className="px-4 md:px-8 lg:px-12 pt-24 md:pt-28 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-xl mx-auto w-full">
+        <div className="mb-8 flex items-center gap-4">
+          <button 
+            onClick={() => setSubView(null)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <h1 className="text-2xl font-bold">Edit Profile</h1>
+        </div>
+
+        <div className="bg-zinc-900/80 border border-white/10 rounded-2xl p-6 md:p-8 backdrop-blur-xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-white via-zinc-200 to-zinc-400 flex items-center justify-center text-4xl md:text-5xl font-extrabold text-black shadow-lg shadow-white/10 mb-4">
+              {user ? user.avatarInitials : 'G'}
+            </div>
+            <p className="text-zinc-400 text-sm">Avatar is generated from your name</p>
+          </div>
+
+          <form onSubmit={handleUpdateProfile} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Display Name</label>
+              <input 
+                type="text" 
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                required
+                className="w-full bg-zinc-800/50 border border-white/10 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition placeholder:text-zinc-500"
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Email Address</label>
+              <input 
+                type="email" 
+                value={user?.email || ''}
+                disabled
+                className="w-full bg-zinc-800/30 border border-white/5 text-zinc-500 rounded-xl px-4 py-3 cursor-not-allowed"
+              />
+              <p className="text-xs text-zinc-500 mt-2">Email cannot be changed directly.</p>
+            </div>
+
+            <div className="pt-4 flex items-center gap-3">
+              <button 
+                type="button"
+                onClick={() => setSubView(null)}
+                className="flex-1 py-3 px-4 rounded-xl font-bold bg-white/5 hover:bg-white/10 text-white transition border border-white/10 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                disabled={isUpdatingProfile || profileName === user?.name}
+                className="flex-1 py-3 px-4 rounded-xl font-bold bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 md:px-8 lg:px-12 pt-24 md:pt-28 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
       
@@ -106,7 +307,7 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
         <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3.5 overflow-hidden">
-              <div className="w-11 h-11 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-sm font-bold text-zinc-200 shrink-0">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-white via-zinc-200 to-zinc-400 flex items-center justify-center text-sm font-bold text-black shrink-0 shadow-sm shadow-white/10">
                 {user ? user.avatarInitials : 'G'}
               </div>
               <div className="min-w-0">
@@ -114,27 +315,35 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
                   <h3 className="text-sm font-semibold text-white truncate">
                     {user ? user.name : 'Guest User'}
                   </h3>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.2 rounded-full bg-white/10 text-zinc-300 border border-white/10">
+                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-white/10 text-zinc-300 border border-white/10">
                     {user ? 'VIP' : 'Free'}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-400 truncate">
+                <p className="text-xs text-zinc-400 truncate mt-0.5">
                   {user ? user.email : 'Sign in to sync your watchlist'}
                 </p>
               </div>
             </div>
 
             {user ? (
-              <button 
-                onClick={logout}
-                className="text-xs text-zinc-400 hover:text-white font-medium px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
-              >
-                <LogOut size={13} />
-                <span>Sign Out</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button 
+                  onClick={() => setSubView('profile')}
+                  className="px-2.5 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-lg transition border border-white/10 cursor-pointer"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={logout}
+                  className="px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white font-medium rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center justify-center cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
             ) : (
               <button 
-                onClick={() => setIsAuthModalOpen(true)}
+                onClick={() => onAuthClick('login')}
                 className="text-xs text-white font-medium px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 transition shrink-0 cursor-pointer"
               >
                 Sign In
@@ -170,6 +379,30 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
                 <ChevronRight size={16} className="text-zinc-500" />
               </div>
             </button>
+
+            {/* Watch History Button */}
+            <button
+              onClick={() => setSubView('history')}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 flex items-center justify-center">
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-white block">Watch History</span>
+                  <span className="text-[11px] text-zinc-400">Continue watching your recent shows</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-zinc-300">
+                  {history.length}
+                </span>
+                <ChevronRight size={16} className="text-zinc-500" />
+              </div>
+            </button>
+
           </div>
         </div>
 
@@ -296,11 +529,11 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
 
               <button
                 onClick={() => setHdrEnabled(!hdrEnabled)}
-                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${hdrEnabled ? 'bg-green-500' : 'bg-zinc-700'}`}
+                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${hdrEnabled ? 'bg-gradient-to-r from-white via-zinc-200 to-zinc-400 shadow-inner' : 'bg-zinc-700'}`}
                 role="switch"
                 aria-checked={hdrEnabled}
               >
-                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${hdrEnabled ? 'left-5.5' : 'left-0.5'}`} />
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${hdrEnabled ? 'left-5.5 bg-black' : 'left-0.5 bg-white'}`} />
               </button>
             </div>
 
@@ -328,11 +561,11 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
 
               <button
                 onClick={() => setAutoplay(!autoplay)}
-                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${autoplay ? 'bg-green-500' : 'bg-zinc-700'}`}
+                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${autoplay ? 'bg-gradient-to-r from-white via-zinc-200 to-zinc-400 shadow-inner' : 'bg-zinc-700'}`}
                 role="switch"
                 aria-checked={autoplay}
               >
-                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${autoplay ? 'left-5.5' : 'left-0.5'}`} />
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${autoplay ? 'left-5.5 bg-black' : 'left-0.5 bg-white'}`} />
               </button>
             </div>
 
@@ -350,11 +583,11 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
 
               <button
                 onClick={() => setSkipIntro(!skipIntro)}
-                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${skipIntro ? 'bg-green-500' : 'bg-zinc-700'}`}
+                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${skipIntro ? 'bg-gradient-to-r from-white via-zinc-200 to-zinc-400 shadow-inner' : 'bg-zinc-700'}`}
                 role="switch"
                 aria-checked={skipIntro}
               >
-                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${skipIntro ? 'left-5.5' : 'left-0.5'}`} />
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${skipIntro ? 'left-5.5 bg-black' : 'left-0.5 bg-white'}`} />
               </button>
             </div>
 
@@ -372,11 +605,11 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
 
               <button
                 onClick={() => setHardwareAccel(!hardwareAccel)}
-                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${hardwareAccel ? 'bg-green-500' : 'bg-zinc-700'}`}
+                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${hardwareAccel ? 'bg-gradient-to-r from-white via-zinc-200 to-zinc-400 shadow-inner' : 'bg-zinc-700'}`}
                 role="switch"
                 aria-checked={hardwareAccel}
               >
-                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${hardwareAccel ? 'left-5.5' : 'left-0.5'}`} />
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${hardwareAccel ? 'left-5.5 bg-black' : 'left-0.5 bg-white'}`} />
               </button>
             </div>
 
@@ -516,7 +749,7 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
                   <Shield size={16} />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-white block">TMDB Service Status</span>
+                  <span className="text-sm font-medium text-white block">Service Status</span>
                   <span className="text-[11px] text-zinc-400">Online & verified API</span>
                 </div>
               </div>
@@ -538,63 +771,7 @@ export function SettingsView({ onPlay }: SettingsViewProps) {
 
       </div>
 
-      {/* Clean Minimal Auth Modal */}
-      {isAuthModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-zinc-900 border border-white/15 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">Sign In</h3>
-              <button 
-                onClick={() => setIsAuthModalOpen(false)}
-                className="text-zinc-400 hover:text-white text-sm font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
 
-            <form onSubmit={handleAuthSubmit} className="space-y-3">
-              <div>
-                <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">Name</label>
-                <input 
-                  type="text" 
-                  value={inputName} 
-                  onChange={(e) => setInputName(e.target.value)}
-                  placeholder="e.g. Alex Walker"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">Email</label>
-                <input 
-                  type="email" 
-                  required
-                  value={inputEmail} 
-                  onChange={(e) => setInputEmail(e.target.value)}
-                  placeholder="alex@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition"
-                />
-              </div>
-
-              <div className="pt-2 flex gap-2">
-                <button 
-                  type="button" 
-                  onClick={() => setIsAuthModalOpen(false)}
-                  className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="flex-1 py-2 rounded-xl bg-white text-black hover:bg-zinc-200 text-xs font-bold transition shadow-md cursor-pointer"
-                >
-                  Sign In
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
   );

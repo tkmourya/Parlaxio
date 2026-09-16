@@ -59,7 +59,7 @@ function AppContent() {
         {currentTab === 'trending' && <TrendingView onPlay={navigateDetails} />}
         {currentTab === 'search' && <SearchView onPlay={navigateDetails} />}
         {currentTab === 'watchlist' && <WatchlistView onPlay={navigateDetails} />}
-        {currentTab === 'settings' && <SettingsView onPlay={navigateDetails} />}
+        {currentTab === 'settings' && <SettingsView onPlay={navigateDetails} onAuthClick={navigateAuth} />}
         {currentTab === 'auth' && <AuthView initialMode={authMode} onComplete={() => navigateTab('home')} />}
       </main>
 

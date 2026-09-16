@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getTrending, getPopular, getTopRated, getBollywood, getPopularTV, getCombinedByGenre } from '../lib/tmdb';
+import { getTrending, getPopular, getTopRated, getBollywood, getPopularTV, getCombinedByGenre, getAnimeByFilter, getSeriesByFilter, getMoviesByFilter } from '../lib/tmdb';
 import { Movie } from '../types';
 import { Hero } from '../components/Hero';
 import { MovieRow } from '../components/MovieRow';
@@ -27,6 +27,12 @@ export function HomeView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv'
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [bollywood, setBollywood] = useState<Movie[]>([]);
   const [series, setSeries] = useState<Movie[]>([]);
+  const [anime, setAnime] = useState<Movie[]>([]);
+  const [korean, setKorean] = useState<Movie[]>([]);
+  const [hollywood, setHollywood] = useState<Movie[]>([]);
+  const [indianSeries, setIndianSeries] = useState<Movie[]>([]);
+  const [documentaries, setDocumentaries] = useState<Movie[]>([]);
+  const [action, setAction] = useState<Movie[]>([]);
   
   const [loading, setLoading] = useState(true);
   
@@ -42,18 +48,30 @@ export function HomeView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv'
   useEffect(() => {
     async function loadData() {
       try {
-        const [trendRes, popRes, topRes, bollyRes, seriesRes] = await Promise.all([
+        const [trendRes, popRes, topRes, bollyRes, seriesRes, animeRes, koreanRes, hollyRes, indianRes, docRes, actionRes] = await Promise.all([
           getTrending(),
           getPopular(),
           getTopRated(),
           getBollywood(),
-          getPopularTV()
+          getPopularTV(),
+          getAnimeByFilter('all'),
+          getSeriesByFilter('korean'),
+          getMoviesByFilter('hollywood'),
+          getSeriesByFilter('indian'),
+          getMoviesByFilter('99'),
+          getMoviesByFilter('28')
         ]);
         setTrending(trendRes.results);
         setPopular(popRes.results);
         setTopRated(topRes.results);
         setBollywood(bollyRes.results);
         setSeries(seriesRes.results);
+        setAnime(animeRes.results);
+        setKorean(koreanRes.results);
+        setHollywood(hollyRes.results);
+        setIndianSeries(indianRes.results);
+        setDocumentaries(docRes.results);
+        setAction(actionRes.results);
       } catch (err) {
         console.error("Failed to load TMDB data", err);
       } finally {
@@ -143,11 +161,105 @@ export function HomeView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv'
             {history.length > 0 && (
               <MovieRow title="Continue Watching" movies={history} onPlay={onPlay} />
             )}
-            <MovieRow title="Top 10 Trending Now" movies={trending.slice(5)} onPlay={onPlay} isTop10={true} />
-            <MovieRow title="Popular TV Series" movies={series} onPlay={onPlay} defaultType="tv" />
-            <MovieRow title="Bollywood Hits" movies={bollywood} onPlay={onPlay} defaultType="movie" />
-            <MovieRow title="Popular" movies={popular} onPlay={onPlay} />
-            <MovieRow title="Top Rated" movies={topRated} onPlay={onPlay} />
+            {/* Top 10 Today */}
+            <MovieRow 
+              title="Top 10 Today" 
+              movies={trending} 
+              onPlay={onPlay} 
+              isTop10={true}
+            />
+
+            {/* Trending Now */}
+            <MovieRow 
+              title="Trending Now" 
+              movies={trending} 
+              fetchFn={getTrending}
+              onPlay={onPlay} 
+            />
+
+            {/* Popular Movies */}
+            <MovieRow 
+              title="Popular on Parlaxio" 
+              movies={popular} 
+              fetchFn={getPopular}
+              onPlay={onPlay} 
+            />
+
+            {/* Critically Acclaimed */}
+            <MovieRow 
+              title="Critically Acclaimed" 
+              movies={topRated} 
+              fetchFn={getTopRated}
+              onPlay={onPlay} 
+            />
+
+            {/* Bollywood Hits */}
+            <MovieRow 
+              title="Bollywood Hits" 
+              movies={bollywood} 
+              fetchFn={getBollywood}
+              onPlay={onPlay} 
+            />
+
+            {/* Trending Series */}
+            <MovieRow 
+              title="Trending Series" 
+              movies={series} 
+              fetchFn={getPopularTV}
+              onPlay={onPlay} 
+              defaultType="tv"
+            />
+
+            {/* Anime Hits */}
+            <MovieRow 
+              title="Anime Hits" 
+              movies={anime} 
+              fetchFn={(page) => getAnimeByFilter('all', page)}
+              onPlay={onPlay} 
+              defaultType="tv"
+            />
+
+            {/* K-Dramas */}
+            <MovieRow 
+              title="K-Dramas" 
+              movies={korean} 
+              fetchFn={(page) => getSeriesByFilter('korean', page)}
+              onPlay={onPlay} 
+              defaultType="tv"
+            />
+
+            {/* Hollywood Blockbusters */}
+            <MovieRow 
+              title="Hollywood Blockbusters" 
+              movies={hollywood} 
+              fetchFn={(page) => getMoviesByFilter('hollywood', page)}
+              onPlay={onPlay} 
+            />
+
+            {/* Indian Web Series */}
+            <MovieRow 
+              title="Indian Web Series" 
+              movies={indianSeries} 
+              fetchFn={(page) => getSeriesByFilter('indian', page)}
+              onPlay={onPlay}
+              defaultType="tv" 
+            />
+
+            {/* Action Hits */}
+            <MovieRow 
+              title="Action Hits" 
+              movies={action} 
+              fetchFn={(page) => getMoviesByFilter('28', page)}
+              onPlay={onPlay} 
+            />
+
+            {/* Documentaries */}
+            <MovieRow 
+              title="Documentaries" 
+              movies={documentaries} 
+              fetchFn={(page) => getMoviesByFilter('99', page)}
+              onPlay={onPlay} 
+            />
           </>
         ) : (
           <div className="w-full">

@@ -81,7 +81,7 @@ export const getAnimeByFilter = (filter: string, page = 1) => {
   }
 };
 
-export const getMovieDetails = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}?append_to_response=${type === 'movie' ? 'release_dates' : 'content_ratings'}`);
+export const getMovieDetails = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}?append_to_response=${type === 'movie' ? 'release_dates' : 'content_ratings'},translations`);
 export const getCredits = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}/credits`);
 export const getVideos = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}/videos`);
 export const getTvSeason = (id: number, season: number) => fetchFromTMDB<any>(`/tv/${id}/season/${season}`);

@@ -37,7 +37,7 @@ export function MovieCard({ movie, onPlay, defaultType = 'movie' }: MovieCardPro
         <img 
           src={getImageUrl(movie.poster_path)} 
           alt={title}
-          className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110 text-transparent"
           loading="lazy"
           referrerPolicy="no-referrer"
         />

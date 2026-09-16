@@ -60,7 +60,7 @@ export function SearchView({ onPlay }: { onPlay: (id: number, type: 'movie' | 't
   }, loading, hasMore);
 
   return (
-    <div className="px-4 md:px-12 pt-8 md:pt-36 pb-32 min-h-screen animate-in fade-in">
+    <div className="px-4 md:px-12 pt-24 md:pt-36 pb-32 min-h-screen animate-in fade-in">
       <div className="max-w-3xl mx-auto">
         <div className="relative mb-10">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

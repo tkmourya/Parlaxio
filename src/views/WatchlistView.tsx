@@ -38,6 +38,7 @@ export function WatchlistView({
       <div className="w-full mx-auto">
         {!hideHeader && (
           <div className="flex items-center gap-3 mb-8">
+            <div className="w-1 h-12 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500 shadow-[0_0_12px_rgba(255,255,255,0.3)]"></div>
             <div className="p-3 bg-white/5 rounded-2xl border border-white/10 text-zinc-400">
               <Bookmark size={24} />
             </div>
