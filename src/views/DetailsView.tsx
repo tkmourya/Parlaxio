@@ -315,7 +315,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
                     <div className="flex gap-3">
                       <div className="relative w-28 aspect-video rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-white/10">
                         {ep.still_path ? (
-                          <img src={getImageUrl(ep.still_path, 'w300')} alt={ep.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <img src={getImageUrl(ep.still_path, 'w500')} alt={ep.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">No preview</div>
                         )}
@@ -331,8 +331,8 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
                         <h4 className="text-sm font-semibold text-white truncate group-hover:text-zinc-200 transition-colors">
                           {ep.name}
                         </h4>
-                        {ep.runtime && (
-                          <span className="text-[11px] text-zinc-500 block mt-0.5">{ep.runtime} mins</span>
+                        {(ep as any).runtime && (
+                          <span className="text-[11px] text-zinc-500 block mt-0.5">{(ep as any).runtime} mins</span>
                         )}
                       </div>
                     </div>
@@ -360,7 +360,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
                 <div key={c.id} className="w-24 shrink-0 text-center space-y-1.5">
                   <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 border border-white/10 shadow-md">
                     {c.profile_path ? (
-                      <img src={getImageUrl(c.profile_path, 'w185')} alt={c.name} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(c.profile_path, 'w500')} alt={c.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs font-medium">N/A</div>
                     )}
@@ -393,7 +393,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
 
       {/* Trailer Modal */}
       {trailerKey && (
-        <TrailerModal videoKey={trailerKey} onClose={() => setTrailerKey(null)} />
+        <TrailerModal trailerKey={trailerKey} onClose={() => setTrailerKey(null)} />
       )}
 
     </div>

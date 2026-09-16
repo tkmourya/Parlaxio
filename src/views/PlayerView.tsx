@@ -10,74 +10,79 @@ import { TrailerModal } from '../components/TrailerModal';
 
 const STREAM_SERVERS = [
   {
-    id: '4khdhub',
-    name: 'Server 1 (4KHDHub Direct)',
-    desc: 'Direct 4K/1080p Stream from 4KHDHub (Ad-Free)',
-    quality: '4K Ultra HD',
-    badge: 'Direct',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) => ''
-  },
-  {
     id: 'vidlink_4k',
-    name: 'Server 2 (VidLink 4K Ultra HD)',
-    desc: '4K & 1080p Ultra HD (Fast Stream & Multi-Subtitles)',
-    quality: '4K Ultra HD',
+    name: 'Server 1 (VidLink 4K)',
+    desc: '4K & 1080p Ultra HD (Fast Stream)',
+    quality: '4K UHD',
     badge: '4K UHD',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
-      type === 'tv'
-        ? `https://vidlink.pro/tv/${id}/${s}/${e}`
-        : `https://vidlink.pro/movie/${id}`
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
+      isAnime && type === 'tv'
+        ? `https://vidlink.pro/anime/${id}/${e}/dub?fallback=true&primaryColor=e50914&autoplay=1`
+        : type === 'tv'
+        ? `https://vidlink.pro/tv/${id}/${s}/${e}?primaryColor=e50914&autoplay=1`
+        : `https://vidlink.pro/movie/${id}?primaryColor=e50914&autoplay=1`
   },
   {
-    id: 'autoembed_cinema',
-    name: 'Server 3 (AutoEmbed Cinema)',
-    desc: 'High Speed Multi-Source HD Player',
-    quality: '1080p Cinema',
+    id: 'vidsrc_sbs',
+    name: 'Server 2 (VidSrc SBS)',
+    desc: 'High Speed Multi-Source HD',
+    quality: '1080p HD',
     badge: 'Fast HD',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
       type === 'tv'
-        ? `https://autoembed.co/tv/tmdb/${id}-${s}-${e}`
-        : `https://autoembed.co/movie/tmdb/${id}`
+        ? `https://vidsrc.sbs/embed/tv/${id}/${s}/${e}?autoplay=1&color=e50914`
+        : `https://vidsrc.sbs/embed/movie/${id}?autoplay=1&color=e50914`
   },
   {
-    id: 'multiembed_hindi',
-    name: 'Server 4 (MultiEmbed Hindi)',
-    desc: 'Bollywood & Hollywood Hindi Dual Audio',
-    quality: '1080p Multi-Audio',
-    badge: 'Hindi Dub',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
-      type === 'tv'
-        ? `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`
-        : `https://multiembed.mov/?video_id=${id}&tmdb=1`
-  },
-  {
-    id: 'twoembed_global',
-    name: 'Server 5 (2Embed Global)',
-    desc: 'Stable Worldwide CDN Streaming Node',
-    quality: '1080p Full HD',
+    id: 'twoembed_cc',
+    name: 'Server 3 (2Embed)',
+    desc: 'Stable Global CDN Node',
+    quality: '1080p HD',
     badge: 'Global HD',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
       type === 'tv'
         ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`
         : `https://www.2embed.cc/embed/${id}`
   },
   {
-    id: 'vidsrc_net',
-    name: 'Server 6 (VidSrc)',
-    desc: 'VidSrc Reliable Streaming Network',
+    id: 'vidsrc_buzz',
+    name: 'Server 4 (VidSrc Buzz)',
+    desc: 'Reliable Streaming Network',
     quality: '1080p HD',
     badge: 'VidSrc',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number) =>
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
       type === 'tv'
-        ? `https://vidsrc.net/embed/tv?tmdb=${id}&season=${s}&episode=${e}`
-        : `https://vidsrc.net/embed/movie?tmdb=${id}`
+        ? `https://vidsrc.buzz/embed/tv/${id}/${s}/${e}?autoplay=1&color=e50914`
+        : `https://vidsrc.buzz/embed/movie/${id}?autoplay=1&color=e50914`
+  },
+  {
+    id: 'vidsrc_cc',
+    name: 'Server 5 (VidSrc CC)',
+    desc: 'Reliable Streaming Network',
+    quality: '1080p HD',
+    badge: 'VidSrc',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
+      type === 'tv'
+        ? `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}?autoplay=1&color=e50914`
+        : `https://vidsrc.cc/v2/embed/movie/${id}?autoplay=1&color=e50914`
+  },
+  {
+    id: 'smashystream_hindi',
+    name: 'Server 6 (SmashyStream)',
+    desc: 'Multi-Audio & Hindi Dub',
+    quality: '1080p HD',
+    badge: 'Hindi Dub',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
+      type === 'tv'
+        ? `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&ep=${e}`
+        : `https://embed.smashystream.com/playere.php?tmdb=${id}`
   }
 ];
 
 interface PlayerViewProps {
-  media: { id: number; type: 'movie' | 'tv'; season?: number; episode?: number };
+  media: { id: number; type: 'movie' | 'tv'; isAnime?: boolean; season?: number; episode?: number };
   onBack: () => void;
-  onPlay: (id: number, type: 'movie' | 'tv') => void;
+  onPlay?: (id: number, type: 'movie' | 'tv') => void;
 }
 
 export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
@@ -89,10 +94,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   const [isPlayingStream, setIsPlayingStream] = useState(true);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
 
-  // 4KHDHub Scraper stream state
-  const [scrapedStreams, setScrapedStreams] = useState<any[]>([]);
-  const [selectedStreamIndex, setSelectedStreamIndex] = useState(0);
-  const [loadingScraper, setLoadingScraper] = useState(false);
+
 
   // TV specific state
   const [season, setSeason] = useState(media.season || 1);
@@ -146,24 +148,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
     return () => window.removeEventListener('watchlist-updated', handleUpdate);
   }, [details?.id]);
 
-  // Fetch 4KHDHub & serverless streams
-  useEffect(() => {
-    if (!details) return;
-    const movieTitle = details.title || details.name || '';
-    const movieYear = (details.release_date || details.first_air_date)?.split('-')[0] || '';
 
-    setLoadingScraper(true);
-    fetch(`/api/stream?id=${media.id}&title=${encodeURIComponent(movieTitle)}&year=${movieYear}&type=${media.type}&season=${season}&episode=${episode}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data?.streams?.length > 0) {
-          setScrapedStreams(data.streams);
-          setSelectedStreamIndex(0);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoadingScraper(false));
-  }, [details?.id, details?.title, details?.name, media.type, media.id, season, episode]);
 
   const handleSave = () => {
     if (!details) return;
@@ -236,13 +221,10 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
   const [selectedServer, setSelectedServer] = useState(0);
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
+  const [isSeasonDropdownOpen, setIsSeasonDropdownOpen] = useState(false);
 
   const activeServer = STREAM_SERVERS[selectedServer] || STREAM_SERVERS[0];
-
-  // Override stream URL for 4KHDHub Auto-Select (Server 1)
-  const streamUrl = selectedServer === 0 && scrapedStreams.length > 0
-    ? scrapedStreams[selectedStreamIndex]?.url
-    : activeServer.getUrl(media.id, media.type, season, episode);
+  const streamUrl = activeServer.getUrl(media.id, media.type, season, episode, media.isAnime);
 
   const getAgeRating = () => {
     if (!details) return null;
@@ -295,10 +277,11 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
       </div>
 
       {/* Cinema Video Player (Directly Below Top Bar - No Overlapping) */}
-      <div className="relative w-full aspect-video md:h-[75vh] lg:h-[80vh] bg-black">
-        {!isPlayingStream ? (
-          <div className="w-full h-full relative flex items-center justify-center group bg-zinc-900 overflow-hidden">
-            {details?.backdrop_path && (
+      <div className="w-full px-4 md:px-12 lg:px-16 py-2 md:py-4">
+        <div className="relative w-full aspect-video md:h-[75vh] lg:h-[80vh] bg-black rounded-xl md:rounded-2xl shadow-2xl border border-white/10" style={{ transform: 'translateZ(0)' }}>
+          {!isPlayingStream ? (
+            <div className="w-full h-full relative flex items-center justify-center group bg-zinc-900 rounded-xl md:rounded-2xl overflow-hidden">
+              {details?.backdrop_path && (
               <img
                 src={getImageUrl(details.backdrop_path, 'original')}
                 className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-40"
@@ -320,24 +303,25 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
             </div>
           </div>
         ) : (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full bg-zinc-950">
+            {/* Loading Indicator behind iframe */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-500 z-0 pointer-events-none">
+              <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+              <span className="text-sm font-medium animate-pulse">Connecting to Server...</span>
+            </div>
+
             <iframe
+              key={selectedServer}
               id="movie-frame"
               src={streamUrl}
-              className="w-full h-full border-0 bg-black"
+              className="absolute inset-0 w-full h-full border-0 z-10 rounded-xl md:rounded-2xl overflow-hidden"
               allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               title="Stream Player"
             />
-            {/* Close Stream Button */}
-            <button
-              onClick={() => setIsPlayingStream(false)}
-              className="absolute top-4 right-4 z-40 bg-black/70 hover:bg-black text-white text-xs font-semibold px-3.5 py-2 rounded-full border border-white/20 backdrop-blur-md transition-colors shadow-lg cursor-pointer"
-            >
-              Close Stream
-            </button>
           </div>
         )}
+      </div>
       </div>
 
       {/* Full-Width Content Container */}
@@ -366,33 +350,33 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                 </div>
 
                 {/* Metadata Pills */}
-                <div className="flex flex-wrap items-center gap-2.5 text-xs md:text-sm font-semibold text-zinc-300">
-                  <span className="text-green-400 bg-green-500/15 px-2.5 py-1 rounded-md border border-green-500/30">
+                <div className="flex items-center flex-wrap gap-2 text-xs md:text-sm font-medium text-zinc-300">
+                  <span className="text-green-400 font-bold bg-green-500/10 px-2 py-1 rounded border border-green-500/20 shadow-sm">
                     {(details.vote_average * 10).toFixed(0)}% Match
                   </span>
-                  <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                  <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
                     {(details.release_date || details.first_air_date)?.split('-')[0]}
                   </span>
                   {ageRating && (
-                    <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                    <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
                       {ageRating}
                     </span>
                   )}
                   {media.type === 'tv' && details.number_of_seasons && (
-                    <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                    <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
                       {details.number_of_seasons} Season{details.number_of_seasons !== 1 ? 's' : ''}
                     </span>
                   )}
                   {details.runtime && (
-                    <span className="bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                    <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
                       {Math.floor(details.runtime / 60)}h {details.runtime % 60}m
                     </span>
                   )}
-                  <span className="border border-white/20 px-2.5 py-1 rounded-md uppercase tracking-wider text-xs">
+                  <span className="border border-white/20 px-2 py-1 rounded uppercase tracking-wider text-[10px] font-bold shadow-sm">
                     {media.type}
                   </span>
-                  <span className="border border-red-500/40 text-red-400 bg-red-500/10 px-2 py-0.5 rounded text-xs font-bold">
-                    HD
+                  <span className="border border-amber-500/40 text-amber-400 bg-amber-500/10 px-2 py-1 rounded text-[10px] font-extrabold tracking-wider shadow-sm">
+                    4K UHD
                   </span>
                 </div>
 
@@ -408,43 +392,17 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                 )}
               </div>
 
-              {/* Action Buttons: Server Button + Quality Pills + Trailer Button */}
+              {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                {/* Server Switcher Icon Button */}
+                {/* Minimal Server Switcher Icon Button */}
                 <button
                   onClick={() => setIsServerModalOpen(true)}
-                  className="px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center gap-2 text-xs font-bold transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer group"
+                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer group"
                   title="Change Stream Server"
                   aria-label="Change Stream Server"
                 >
-                  <Server size={15} className="text-red-400 group-hover:scale-110 transition-transform" />
-                  <span>{activeServer.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-zinc-300">
-                    {activeServer.badge}
-                  </span>
+                  <Server size={18} className="group-hover:scale-110 transition-transform" />
                 </button>
-
-                {/* 4KHDHub Scraped Stream Quality & Audio Pills */}
-                {selectedServer === 0 && scrapedStreams.length > 1 && (
-                  <div className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-2xl border border-white/10 backdrop-blur-md shadow-md">
-                    {scrapedStreams.map((st, sIdx) => (
-                      <button
-                        key={sIdx}
-                        onClick={() => setSelectedStreamIndex(sIdx)}
-                        className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${selectedStreamIndex === sIdx
-                            ? 'bg-red-600 text-white shadow-md'
-                            : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                          }`}
-                        title={`${st.quality} - ${st.audio}`}
-                      >
-                        <span>{st.badge || st.quality}</span>
-                        {st.audio?.includes('Hindi') && (
-                          <span className="text-[10px] text-amber-300 font-bold">हिंदी</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 {/* Trailer Button */}
                 <button
@@ -504,18 +462,36 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-white text-xl">Episodes</h3>
                   <div className="relative">
-                    <select
-                      value={season}
-                      onChange={(e) => { setSeason(Number(e.target.value)); setEpisode(1); }}
-                      className="appearance-none bg-zinc-900 border border-white/15 hover:border-white/30 text-white rounded-lg pl-4 pr-10 py-2 text-sm outline-none cursor-pointer shadow-lg transition-colors focus:ring-2 focus:ring-white/20"
+                    <button
+                      onClick={() => setIsSeasonDropdownOpen(!isSeasonDropdownOpen)}
+                      className="flex items-center gap-2 bg-zinc-900 border border-white/15 hover:border-white/30 text-white rounded-xl px-4 py-2.5 text-sm font-semibold outline-none cursor-pointer shadow-lg transition-colors focus:ring-2 focus:ring-white/20 min-w-[130px] justify-between group"
                     >
-                      {Array.from({ length: details.number_of_seasons }, (_, i) => i + 1).map(s => (
-                        <option key={s} value={s}>Season {s}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                    </div>
+                      <span>Season {season}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-zinc-400 group-hover:text-white transition-all duration-300 ${isSeasonDropdownOpen ? '-rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
+                    </button>
+                    
+                    {isSeasonDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsSeasonDropdownOpen(false)} />
+                        <div className="absolute right-0 top-full mt-2 w-36 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                          <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col p-1.5 gap-0.5">
+                            {Array.from({ length: details.number_of_seasons }, (_, i) => i + 1).map(s => (
+                              <button
+                                key={s}
+                                onClick={() => {
+                                  setSeason(s);
+                                  setEpisode(1);
+                                  setIsSeasonDropdownOpen(false);
+                                }}
+                                className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${season === s ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+                              >
+                                Season {s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -612,27 +588,24 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                     setSelectedServer(idx);
                     setIsServerModalOpen(false);
                   }}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${selectedServer === idx
-                      ? 'bg-red-500/10 border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${selectedServer === idx
+                      ? 'bg-red-500/10 border-red-500/60 shadow-md'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
                     }`}
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">{srv.name}</span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-zinc-300">
-                        {srv.badge}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-400">{srv.desc}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-white">{srv.name}</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white/10 text-zinc-300">
+                      {srv.badge}
+                    </span>
                   </div>
 
                   {selectedServer === idx ? (
-                    <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <Check size={14} />
+                    <div className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                      <Check size={12} />
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-full border border-white/20 shrink-0" />
+                    <div className="w-5 h-5 rounded-full border border-white/20 shrink-0" />
                   )}
                 </div>
               ))}
