@@ -9,16 +9,24 @@ export const getImageUrl = (path: string | null, size: 'w500' | 'original' = 'w5
 };
 
 async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
-  if (!API_KEY) throw new Error('TMDB API Key is missing');
-  
-  const separator = endpoint.includes('?') ? '&' : '?';
-  const url = `${BASE_URL}${endpoint}${separator}api_key=${API_KEY}`;
-  
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`TMDB API Error: ${response.status}`);
+  const isDev = import.meta.env.DEV;
+
+  if (isDev && API_KEY) {
+    // LOCALHOST / DEV MODE: Call TMDB directly so you don't need Vercel CLI locally
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = `${BASE_URL}${endpoint}${separator}api_key=${API_KEY}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`TMDB API Error: ${response.status}`);
+    return response.json();
+  } else {
+    // PRODUCTION / VERCEL: Call our secure Serverless Function to hide the API key
+    const url = `/api/tmdb?path=${encodeURIComponent(endpoint)}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Vercel TMDB Proxy Error: ${response.status}`);
+    return response.json();
   }
-  return response.json();
 }
 
 export const getTrending = (page = 1) => fetchFromTMDB<TMDBResponse>(`/trending/movie/day?page=${page}`);
