@@ -25,7 +25,16 @@ const getProviderFilters = (providerId: string) => {
     ];
   }
 
-  // Default for Netflix, Prime, Hotstar
+  if (providerId === '122') {
+    // JioHotstar — TMDB has 0 anime results for this provider
+    return [
+      { id: 'all', label: 'All Content' },
+      { id: 'web-series', label: 'Web Series' },
+      { id: 'tv-shows', label: 'Daily TV Shows' }
+    ];
+  }
+
+  // Default for Netflix, Prime
   return [
     { id: 'all', label: 'All Content' },
     { id: 'movie', label: 'Movies' },

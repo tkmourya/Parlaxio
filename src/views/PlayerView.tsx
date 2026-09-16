@@ -335,8 +335,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
       </div>
 
       {/* Cinema Video Player (Directly Below Top Bar - No Overlapping) */}
-      <div className="w-full px-4 md:px-12 lg:px-16 py-2 md:py-4">
-        <div className="relative w-full aspect-video md:h-[75vh] lg:h-[80vh] bg-black rounded-xl md:rounded-2xl shadow-2xl border border-white/10" style={{ transform: 'translateZ(0)' }}>
+      <div className="w-full px-0 md:px-12 lg:px-16 py-0 md:py-4">
+        <div className="relative w-full h-[30vh] md:h-[75vh] lg:h-[80vh] bg-black rounded-none md:rounded-2xl shadow-2xl border-0 md:border md:border-white/10" style={{ transform: 'translateZ(0)' }}>
           {!isPlayingStream ? (
             <div className="w-full h-full relative flex items-center justify-center group bg-zinc-900 rounded-xl md:rounded-2xl overflow-hidden">
               {details?.backdrop_path && (
