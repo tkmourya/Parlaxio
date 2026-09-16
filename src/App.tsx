@@ -12,7 +12,6 @@ import { AuthView } from './views/AuthView';
 import { ProviderView } from './views/ProviderView';
 import { BottomNav } from './components/BottomNav';
 import { TopNav } from './components/TopNav';
-import { SetupScreen } from './components/SetupScreen';
 import { AuthProvider } from './lib/AuthContext';
 import { useRouter } from './lib/router';
 
@@ -39,12 +38,8 @@ function AppContent() {
     navigateProvider
   } = useRouter();
 
-  // Check if API key is configured
-  const apiKey = import.meta.env.VITE_TMDB_API_KEY;
-
-  if (!apiKey || apiKey === 'YOUR_FREE_TMDB_API_KEY') {
-    return <SetupScreen />;
-  }
+  // API Key is now handled securely by Vercel Serverless Function in production
+  // We no longer block the UI here.
 
   return (
     <div className="min-h-screen text-white selection:bg-white/30">
