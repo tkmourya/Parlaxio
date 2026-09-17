@@ -67,11 +67,11 @@ export function PWAPrompt() {
   if (needRefresh) {
     return (
       <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm animate-in slide-in-from-bottom-5 fade-in duration-300">
-        <div className="bg-zinc-900/95 backdrop-blur-xl border border-red-500/30 shadow-[0_10px_40px_rgba(220,38,38,0.2)] rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-500"></div>
+        <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/20 shadow-[0_10px_40px_rgba(255,255,255,0.1)] rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-white via-zinc-300 to-zinc-500"></div>
           
           <div className="flex items-start justify-between gap-3">
-            <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center shrink-0">
               <RefreshCw size={20} className="animate-spin-slow" />
             </div>
             <div className="flex-1 pt-0.5">
@@ -90,7 +90,7 @@ export function PWAPrompt() {
           
           <button
             onClick={() => updateServiceWorker(true)}
-            className="w-full py-2.5 rounded-xl font-bold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-lg shadow-red-600/20 transition cursor-pointer"
+            className="w-full py-2.5 rounded-xl font-bold bg-white hover:bg-zinc-200 text-black shadow-lg shadow-white/10 transition cursor-pointer"
           >
             Reload and Update
           </button>

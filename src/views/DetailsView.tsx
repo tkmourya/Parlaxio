@@ -226,7 +226,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
                 {media.type === 'tv' ? 'Series' : 'Movie'}
               </span>
 
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/15 border border-red-500/30 text-red-400">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/15 border border-red-500/30 text-red-400 flex items-center">
                 4K ULTRA HD
               </span>
             </div>
@@ -243,33 +243,33 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
             )}
 
             {/* Action Buttons (Watch Now + Watchlist + Trailer) */}
-            <div className="flex flex-wrap items-center gap-3 pt-3">
+            <div className="flex flex-wrap items-center gap-2.5 pt-3">
               <button 
                 onClick={() => onWatch(media.id, media.type, selectedSeason, 1)}
-                className="px-7 py-3.5 rounded-full bg-gradient-to-r from-white via-zinc-200 to-zinc-400 hover:from-white hover:via-zinc-100 hover:to-zinc-300 text-black font-extrabold text-sm md:text-base flex items-center gap-2.5 shadow-[0_4px_15px_rgba(255,255,255,0.2)] transition-all active:scale-95 cursor-pointer"
+                className="px-5 md:px-7 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-white via-zinc-200 to-zinc-400 hover:from-white hover:via-zinc-100 hover:to-zinc-300 text-black font-extrabold text-[13px] md:text-base flex items-center gap-2 shadow-[0_4px_15px_rgba(255,255,255,0.2)] transition-all active:scale-95 cursor-pointer"
               >
-                <Play fill="black" size={18} />
+                <Play fill="black" size={16} className="md:w-[18px] md:h-[18px]" />
                 <span>Watch Now</span>
               </button>
 
               <button 
                 onClick={handlePlayTrailer}
-                className="px-5 py-3.5 rounded-full bg-white/5 hover:bg-white/10 text-white text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-md"
+                className="px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-white/5 hover:bg-white/10 text-white text-[13px] md:text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-md"
               >
-                <Info size={18} className="text-zinc-400" />
+                <Info size={16} className="text-zinc-400 md:w-[18px] md:h-[18px]" />
                 <span>Trailer</span>
               </button>
 
               <button 
                 onClick={handleToggleWatchlist}
                 title={saved ? "Remove from Watchlist" : "Add to Watchlist"}
-                className={`px-4 md:px-5 py-3.5 flex items-center justify-center gap-2 rounded-full backdrop-blur-xl transition-all active:scale-95 cursor-pointer shadow-md text-sm font-semibold ${
+                className={`w-[42px] h-[42px] md:w-auto md:px-5 md:py-3.5 flex items-center justify-center gap-2 rounded-full backdrop-blur-xl transition-all active:scale-95 cursor-pointer shadow-md text-[13px] md:text-sm font-semibold shrink-0 ${
                   saved 
                     ? 'bg-white/20 text-white' 
                     : 'bg-white/5 hover:bg-white/10 text-white'
                 }`}
               >
-                <Bookmark size={18} fill={saved ? "currentColor" : "none"} />
+                <Bookmark size={16} className="md:w-[18px] md:h-[18px]" fill={saved ? "currentColor" : "none"} />
                 <span className="hidden md:inline">{saved ? "Watchlisted" : "Watchlist"}</span>
               </button>
             </div>

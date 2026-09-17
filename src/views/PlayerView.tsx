@@ -434,7 +434,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   <span className="border border-white/20 px-2 py-1 rounded uppercase tracking-wider text-[10px] font-bold shadow-sm">
                     {media.type}
                   </span>
-                  <span className="border border-amber-500/40 text-amber-400 bg-amber-500/10 px-2 py-1 rounded text-[10px] font-extrabold tracking-wider shadow-sm">
+                  <span className="border border-amber-500/40 text-amber-400 bg-amber-500/10 px-2 py-1 rounded text-[10px] font-extrabold tracking-wider shadow-sm flex items-center">
                     4K UHD
                   </span>
                 </div>
@@ -630,13 +630,13 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           onClick={() => setIsServerModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-md bg-zinc-900 border border-white/15 rounded-3xl p-6 shadow-2xl space-y-5 text-white animate-in zoom-in-95 duration-200"
+            className="relative w-full max-w-md bg-black/60 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-[0_10px_40px_rgba(255,255,255,0.1)] space-y-5 text-white animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-red-600/20 border border-red-500/30 text-red-400 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-2xl bg-white/10 border border-white/20 text-white flex items-center justify-center">
                   <Server size={18} />
                 </div>
                 <div>
@@ -662,7 +662,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                     setIsServerModalOpen(false);
                   }}
                   className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${selectedServer === idx
-                    ? 'bg-red-500/10 border-red-500/60 shadow-md'
+                    ? 'bg-gradient-to-r from-zinc-800 to-zinc-900 border-white/40 shadow-[0_4px_12px_rgba(255,255,255,0.1)]'
                     : 'bg-white/5 border-white/10 hover:bg-white/10'
                     }`}
                 >
@@ -674,8 +674,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   </div>
 
                   {selectedServer === idx ? (
-                    <div className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <Check size={12} />
+                    <div className="w-5 h-5 rounded-full bg-white text-black flex items-center justify-center shrink-0 shadow-md">
+                      <Check size={12} strokeWidth={3} />
                     </div>
                   ) : (
                     <div className="w-5 h-5 rounded-full border border-white/20 shrink-0" />
@@ -685,8 +685,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
             </div>
 
             {/* Server Tip */}
-            <p className="text-[11px] text-zinc-400 text-center">
-              💡 Tip: <span className="text-white font-medium">Server 1 (VidLink 4K)</span> fastest 4K Ultra HD stream deta hai. Hindi audio ke liye <span className="text-white font-medium">Server 3 (MultiEmbed)</span> select karein.
+            <p className="text-[11px] text-zinc-400 text-center leading-relaxed">
+              💡 Tip: Hindi Dubbing & 4K Ultra HD experience ke liye <span className="text-white font-bold bg-white/10 px-1.5 py-0.5 rounded border border-white/20 shadow-sm">Server 2 (VidSrc SBS)</span> select karein.
             </p>
 
             {/* Close */}
