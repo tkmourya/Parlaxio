@@ -97,9 +97,9 @@ function AppContent() {
         {currentTab === 'livetv' && <LiveTVView onBack={() => navigateTab('home')} onRequireAuth={() => setShowAuthPrompt(true)} />}
         
         {/* Legal Pages */}
-        {currentTab === 'privacy' && <PrivacyPolicyView onBack={() => navigateTab('settings')} />}
-        {currentTab === 'terms' && <TermsView onBack={() => navigateTab('settings')} />}
-        {currentTab === 'legal' && <LegalDMCAView onBack={() => navigateTab('settings')} />}
+        {currentTab === 'privacy' && <PrivacyPolicyView onBack={navigateBack} />}
+        {currentTab === 'terms' && <TermsView onBack={navigateBack} />}
+        {currentTab === 'legal' && <LegalDMCAView onBack={navigateBack} />}
       </main>
 
       {/* Bottom Nav for Mobile (Hidden on Player, Details, Auth, and Settings/LiveTV/Legal) */}
