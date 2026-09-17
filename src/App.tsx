@@ -16,6 +16,7 @@ import { PrivacyPolicyView, TermsView, LegalDMCAView } from './views/LegalViews'
 import { BottomNav } from './components/BottomNav';
 import { AuthPromptModal } from './components/AuthPromptModal';
 import { TopNav } from './components/TopNav';
+import { PWAPrompt } from './components/PWAPrompt';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { useRouter } from './lib/router';
 
@@ -144,6 +145,9 @@ function AppContent() {
           }}
         />
       )}
+
+      {/* PWA Update and Install Prompts */}
+      <PWAPrompt />
     </div>
   );
 }
