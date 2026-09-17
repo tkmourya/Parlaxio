@@ -20,9 +20,15 @@ export default defineConfig(() => {
           display: 'standalone',
           icons: [
             {
-              src: 'icon.svg',
-              sizes: 'any',
-              type: 'image/svg+xml',
+              src: '/logo_px.jpg',
+              sizes: '192x192',
+              type: 'image/jpeg',
+              purpose: 'any maskable'
+            },
+            {
+              src: '/logo_px.jpg',
+              sizes: '512x512',
+              type: 'image/jpeg',
               purpose: 'any maskable'
             }
           ]
