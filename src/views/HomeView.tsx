@@ -8,7 +8,7 @@ import { useWatchHistory } from '../hooks/useWatchHistory';
 import { SubNav } from '../components/SubNav';
 import { MovieCard } from '../components/MovieCard';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Tv, Signal } from 'lucide-react';
 
 const HOME_FILTERS = [
   { id: 'all', label: 'All' },
@@ -26,9 +26,10 @@ interface HomeViewProps {
   onPlay: (id: number, type: 'movie' | 'tv') => void;
   onContinueWatch?: (id: number, type: 'movie' | 'tv', season?: number, episode?: number) => void;
   onProviderSelect?: (id: string, name: string) => void;
+  onLiveTVClick?: () => void;
 }
 
-export function HomeView({ onPlay, onContinueWatch, onProviderSelect }: HomeViewProps) {
+export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVClick }: HomeViewProps) {
   const [trending, setTrending] = useState<Movie[]>([]);
   const [popular, setPopular] = useState<Movie[]>([]);
   const [topRated, setTopRated] = useState<Movie[]>([]);
@@ -160,11 +161,11 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect }: HomeView
       
       {filter === 'all' && onProviderSelect && (
         <div className="mt-8">
-          <ProviderCards onSelect={onProviderSelect} />
+          <ProviderCards onSelect={onProviderSelect} onLiveTVClick={onLiveTVClick} />
         </div>
       )}
 
-      <div className={`${filter === 'all' ? 'pt-4 md:pt-10' : 'pt-24 md:pt-36 px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full'} relative z-20`}>
+      <div className={`${filter === 'all' ? 'pt-8 md:pt-10' : 'pt-24 md:pt-36 px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full'} relative z-20`}>
         <div className={filter === 'all' ? 'px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full mb-8' : 'mb-8'}>
           <SubNav filters={HOME_FILTERS} current={filter} onChange={setFilter} />
         </div>

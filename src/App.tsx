@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { HomeView } from './views/HomeView';
 import { SearchView } from './views/SearchView';
 import { TrendingView } from './views/TrendingView';
@@ -10,6 +11,7 @@ import { DetailsView } from './views/DetailsView';
 import { SettingsView } from './views/SettingsView';
 import { AuthView } from './views/AuthView';
 import { ProviderView } from './views/ProviderView';
+import { LiveTVView } from './views/LiveTVView';
 import { BottomNav } from './components/BottomNav';
 import { TopNav } from './components/TopNav';
 import { AuthProvider } from './lib/AuthContext';
@@ -24,6 +26,7 @@ export default function App() {
 }
 
 function AppContent() {
+  const [hideSettingsNav, setHideSettingsNav] = useState(false);
   const { 
     currentTab, 
     detailsMedia,
@@ -43,21 +46,27 @@ function AppContent() {
 
   return (
     <div className="min-h-screen text-white selection:bg-white/30">
-      {/* Top Nav for Desktop (Hidden on Player, Details, and Auth views) */}
-      {!playingMedia && !detailsMedia && currentTab !== 'auth' && (
+      {/* Top Nav for Desktop (Hidden on Player, Details, Auth, and Settings/LiveTV) */}
+      {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && (
         <TopNav currentTab={currentTab} onChange={navigateTab} onAuthClick={navigateAuth} />
       )}
 
       {/* Main Content Area */}
       <main className="min-h-screen">
-        {currentTab === 'home' && <HomeView onPlay={navigateDetails} onContinueWatch={navigatePlay} onProviderSelect={navigateProvider} />}
+        {currentTab === 'home' && <HomeView onPlay={navigateDetails} onContinueWatch={navigatePlay} onProviderSelect={navigateProvider} onLiveTVClick={() => navigateTab('livetv')} />}
         {currentTab === 'movies' && <MoviesView onPlay={navigateDetails} />}
         {currentTab === 'series' && <SeriesView onPlay={navigateDetails} />}
         {currentTab === 'anime' && <AnimeView onPlay={navigateDetails} />}
         {currentTab === 'trending' && <TrendingView onPlay={navigateDetails} />}
         {currentTab === 'search' && <SearchView onPlay={navigateDetails} />}
         {currentTab === 'watchlist' && <WatchlistView onPlay={navigateDetails} />}
-        {currentTab === 'settings' && <SettingsView onPlay={navigateDetails} onAuthClick={navigateAuth} />}
+        {currentTab === 'settings' && (
+          <SettingsView 
+            onPlay={navigateDetails} 
+            onAuthClick={navigateAuth} 
+            onSubViewChange={setHideSettingsNav}
+          />
+        )}
         {currentTab === 'provider' && providerDetails && (
           <ProviderView 
             providerId={providerDetails.id} 
@@ -66,10 +75,11 @@ function AppContent() {
           />
         )}
         {currentTab === 'auth' && <AuthView initialMode={authMode} onComplete={() => navigateTab('home')} />}
+        {currentTab === 'livetv' && <LiveTVView onBack={() => navigateTab('home')} />}
       </main>
 
-      {/* Bottom Nav for Mobile (Hidden on Player, Details, and Auth views) */}
-      {!playingMedia && !detailsMedia && currentTab !== 'auth' && (
+      {/* Bottom Nav for Mobile (Hidden on Player, Details, Auth, and Settings/LiveTV) */}
+      {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && (
         <BottomNav currentTab={currentTab} onChange={navigateTab} />
       )}
 

@@ -90,6 +90,7 @@ export function parsePath(pathname: string): RouteState {
   if (cleanPath === '/search') return { tab: 'search', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/watchlist') return { tab: 'watchlist', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/settings') return { tab: 'settings', detailsMedia: null, playingMedia: null, authMode: 'login' };
+  if (cleanPath === '/livetv') return { tab: 'livetv', detailsMedia: null, playingMedia: null, authMode: 'login' };
   
   return {
     tab: 'home',

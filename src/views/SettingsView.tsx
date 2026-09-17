@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  Shield, Bookmark, Play, ChevronRight, Check, 
-  Trash2, Film, Zap, HardDrive, Volume2, Globe, 
-  ArrowLeft, LogOut, CheckCircle2, ChevronDown, Clock,
+import {
+  Shield, Bookmark, Play, ChevronRight, Check,
+  Trash2, Film, Zap, HardDrive, Volume2, Globe,
+  ArrowLeft, LogOut, CheckCircle2, ChevronDown, Clock, User,
   LayoutGrid, List
 } from 'lucide-react';
 import { WatchlistView } from './WatchlistView';
@@ -13,19 +13,28 @@ import { useWatchHistory } from '../hooks/useWatchHistory';
 interface SettingsViewProps {
   onPlay: (id: number, type: 'movie' | 'tv') => void;
   onAuthClick: (mode: 'login' | 'register') => void;
+  onSubViewChange?: (isSubView: boolean) => void;
 }
 
-export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
-  // Navigation: null = settings list, 'watchlist' = opened watchlist, 'history' = opened history, 'profile' = profile editor
-  const [subView, setSubView] = useState<'watchlist' | 'history' | 'profile' | null>(null);
+export function SettingsView({ onPlay, onAuthClick, onSubViewChange }: SettingsViewProps) {
+  // Navigation: null = settings list, 'watchlist' = opened watchlist, 'history' = opened history, 'profile' = profile editor, 'profile-view' = profile view
+  const [subView, setSubView] = useState<'watchlist' | 'history' | 'profile' | 'profile-view' | null>(null);
   const [historyLayout, setHistoryLayout] = useState<'list' | 'grid'>('list');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // Notify parent (App.tsx) when a subview opens/closes to hide navbars
+  useEffect(() => {
+    if (onSubViewChange) {
+      onSubViewChange(subView !== null);
+    }
+  }, [subView, onSubViewChange]);
 
   // Settings State
   const [autoplay, setAutoplay] = useState(true);
   const [skipIntro, setSkipIntro] = useState(true);
   const [hdrEnabled, setHdrEnabled] = useState(true);
   const [hardwareAccel, setHardwareAccel] = useState(true);
-  
+
   // Selectable options
   const [videoQuality, setVideoQuality] = useState('4K (2160p)');
   const [streamingServer, setStreamingServer] = useState('Server 1 (Fast)');
@@ -43,7 +52,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
   const [watchlistCount, setWatchlistCount] = useState(0);
 
   const { user, logout, updateProfile } = useAuth();
-  
+
   const [profileName, setProfileName] = useState(user?.name || '');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
@@ -84,12 +93,38 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
     setExpandedRow(expandedRow === rowName ? null : rowName);
   };
 
+  const logoutModal = showLogoutConfirm && (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 backdrop-blur-2xl">
+        <h3 className="text-xl font-bold text-white mb-2">Sign Out</h3>
+        <p className="text-sm text-zinc-300 mb-6">Are you sure you want to sign out of your account?</p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowLogoutConfirm(false)}
+            className="flex-1 py-2.5 rounded-xl font-medium bg-white/10 hover:bg-white/20 border border-white/5 text-white transition cursor-pointer backdrop-blur-md"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              setShowLogoutConfirm(false);
+              logout();
+            }}
+            className="flex-1 py-2.5 rounded-xl font-medium bg-red-600/80 hover:bg-red-500 border border-red-500/50 text-white transition shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer backdrop-blur-md"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // If user tapped "My Watchlist", render Watchlist in list layout with clean back button
   if (subView === 'watchlist') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-24 md:pt-28 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
-          <button 
+          <button
             onClick={() => setSubView(null)}
             className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
           >
@@ -107,9 +142,9 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
   // If user tapped "Watch History"
   if (subView === 'history') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-24 md:pt-28 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
-          <button 
+          <button
             onClick={() => setSubView(null)}
             className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
           >
@@ -118,16 +153,16 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
           </button>
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-zinc-400">{history.length} Titles</span>
-            
+
             <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 hidden sm:flex">
-              <button 
+              <button
                 onClick={() => setHistoryLayout('list')}
                 className={`p-1.5 rounded-md transition ${historyLayout === 'list' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
                 title="List View"
               >
                 <List size={14} />
               </button>
-              <button 
+              <button
                 onClick={() => setHistoryLayout('grid')}
                 className={`p-1.5 rounded-md transition ${historyLayout === 'grid' ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
                 title="Grid View"
@@ -137,7 +172,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
             </div>
 
             {history.length > 0 && (
-              <button 
+              <button
                 onClick={clearHistory}
                 className="text-[10px] uppercase font-bold tracking-wider text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-2 py-1 rounded-lg transition"
               >
@@ -159,13 +194,13 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
           <div className={historyLayout === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" : "flex flex-col gap-3"}>
             {history.map((movie) => (
               historyLayout === 'grid' ? (
-                <div 
+                <div
                   key={movie.id}
                   onClick={() => onPlay(movie.id, movie.media_type || 'movie')}
                   className="relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800"
                 >
-                  <img 
-                    src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Poster'} 
+                  <img
+                    src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Poster'}
                     alt={movie.title || movie.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
@@ -178,7 +213,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
                   </div>
                   {movie.progress !== undefined && (
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                      <div 
+                      <div
                         className="h-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.8)] transition-all duration-300"
                         style={{ width: `${movie.progress}%` }}
                       />
@@ -186,20 +221,20 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
                   )}
                 </div>
               ) : (
-                <div 
+                <div
                   key={movie.id}
                   onClick={() => onPlay(movie.id, movie.media_type || 'movie')}
                   className="group cursor-pointer flex items-center gap-4 bg-zinc-900/50 border border-white/5 p-2 rounded-xl hover:bg-white/5 transition"
                 >
                   <div className="relative w-16 md:w-20 aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-                    <img 
-                      src={movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Poster'} 
+                    <img
+                      src={movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Poster'}
                       alt={movie.title || movie.name}
                       className="w-full h-full object-cover"
                     />
                     {movie.progress !== undefined && (
                       <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                        <div 
+                        <div
                           className="h-full bg-red-600"
                           style={{ width: `${movie.progress}%` }}
                         />
@@ -226,13 +261,108 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
     );
   }
 
+  // If user tapped "Profile View"
+  if (subView === 'profile-view') {
+    const memberSince = user?.createdAt
+      ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'N/A';
+
+    return (
+      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full flex flex-col justify-start md:justify-center">
+        <div className="mb-8 flex items-center gap-4">
+          <button
+            onClick={() => setSubView(null)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <h1 className="text-2xl font-bold">My Profile</h1>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 md:gap-8 items-stretch">
+          {/* LEFT COLUMN: Avatar + Name + Email */}
+          <div className="md:bg-zinc-900/80 md:border md:border-white/10 md:rounded-2xl p-2 md:p-8 md:backdrop-blur-xl flex flex-col items-center justify-center text-center h-full">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-white via-zinc-200 to-zinc-400 flex items-center justify-center text-5xl font-extrabold text-black shadow-lg shadow-white/10 mb-4">
+                {user ? user.avatarInitials : 'G'}
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">{user ? user.name : 'Guest User'}</h2>
+              <p className="text-sm text-zinc-400 mt-1 break-all w-full">{user ? user.email : 'Not signed in'}</p>
+              {user?.plan && (
+                <span className="mt-4 text-[10px] font-bold uppercase px-3 py-1.5 rounded-full bg-gradient-to-r from-white/10 to-white/5 text-zinc-200 border border-white/10 tracking-wider">
+                  {user.plan}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Info, Stats, Actions */}
+          <div className="flex flex-col gap-4">
+            {/* Account Info & Stats */}
+            <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md">
+              <div className="flex items-center justify-between p-4">
+                <span className="text-sm text-zinc-400">Member Since</span>
+                <span className="text-sm font-medium text-white">{memberSince}</span>
+              </div>
+              <div className="flex items-center justify-between p-4">
+                <span className="text-sm text-zinc-400">Account ID</span>
+                <span className="text-xs font-mono text-zinc-500 truncate max-w-[160px] md:max-w-xs">{user?.id || 'N/A'}</span>
+              </div>
+              <div className="flex items-center justify-between p-4">
+                <span className="text-sm text-zinc-400">My Watchlist</span>
+                <span className="text-sm font-medium text-white">{watchlistCount} Titles</span>
+              </div>
+              <div className="flex items-center justify-between p-4">
+                <span className="text-sm text-zinc-400">Watch History</span>
+                <span className="text-sm font-medium text-white">{history.length} Watched</span>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md mt-2">
+              <button
+                onClick={() => setSubView('profile')}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/[0.04] transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 flex items-center justify-center">
+                    <User size={16} />
+                  </div>
+                  <span className="text-sm font-medium text-white">Edit Profile</span>
+                </div>
+                <ChevronRight size={16} className="text-zinc-500" />
+              </button>
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/[0.04] transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center">
+                    <LogOut size={16} />
+                  </div>
+                  <span className="text-sm font-medium text-red-400">Sign Out</span>
+                </div>
+              </button>
+            </div>
+
+            {/* App Info */}
+            <div className="text-left mt-2 pl-2">
+              <p className="text-[11px] text-zinc-500 font-medium">Parlaxio v2.4.0 <span className="mx-1">•</span> Powered by TMDB</p>
+            </div>
+          </div>
+        </div>
+        {logoutModal}
+      </div>
+    );
+  }
+
   // If user tapped "Edit Profile"
   if (subView === 'profile') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-24 md:pt-28 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-xl mx-auto w-full">
+      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-xl mx-auto w-full flex flex-col justify-start md:justify-center">
         <div className="mb-8 flex items-center gap-4">
-          <button 
-            onClick={() => setSubView(null)}
+          <button
+            onClick={() => setSubView(user ? 'profile-view' : null)}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
           >
             <ArrowLeft size={18} />
@@ -240,7 +370,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
           <h1 className="text-2xl font-bold">Edit Profile</h1>
         </div>
 
-        <div className="bg-zinc-900/80 border border-white/10 rounded-2xl p-6 md:p-8 backdrop-blur-xl">
+        <div className="md:bg-zinc-900/80 md:border md:border-white/10 md:rounded-2xl p-2 md:p-8 md:backdrop-blur-xl">
           <div className="flex flex-col items-center mb-8">
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-white via-zinc-200 to-zinc-400 flex items-center justify-center text-4xl md:text-5xl font-extrabold text-black shadow-lg shadow-white/10 mb-4">
               {user ? user.avatarInitials : 'G'}
@@ -251,8 +381,8 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
           <form onSubmit={handleUpdateProfile} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">Display Name</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
                 required
@@ -262,8 +392,8 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">Email Address</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 value={user?.email || ''}
                 disabled
                 className="w-full bg-zinc-800/30 border border-white/5 text-zinc-500 rounded-xl px-4 py-3 cursor-not-allowed"
@@ -272,19 +402,19 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
             </div>
 
             <div className="pt-4 flex items-center gap-3">
-              <button 
+              <button
                 type="button"
-                onClick={() => setSubView(null)}
+                onClick={() => setSubView(user ? 'profile-view' : null)}
                 className="flex-1 py-3 px-4 rounded-xl font-bold bg-white/5 hover:bg-white/10 text-white transition border border-white/10 cursor-pointer"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 disabled={isUpdatingProfile || profileName === user?.name}
                 className="flex-1 py-3 px-4 rounded-xl font-bold bg-red-600 hover:bg-red-500 text-white transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                {isUpdatingProfile ? 'Saving...' : 'Save'}
               </button>
             </div>
           </form>
@@ -294,10 +424,16 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
   }
 
   return (
-    <div className="px-4 md:px-8 lg:px-12 pt-24 md:pt-28 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
-      
-      {/* Minimal Header without subtext */}
-      <div className="mb-6">
+    <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+
+      {/* Minimal Header with Back Button */}
+      <div className="mb-6 flex items-center gap-4">
+        <button
+          onClick={() => window.history.back()}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <h1 className="text-2xl font-bold tracking-tight text-white">Settings</h1>
       </div>
 
@@ -306,7 +442,10 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
         {/* 1. Profile / Account Row */}
         <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3.5 overflow-hidden">
+            <div
+              className={`flex items-center gap-3.5 overflow-hidden ${user ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              onClick={() => user && setSubView('profile-view')}
+            >
               <div className="w-11 h-11 rounded-full bg-gradient-to-br from-white via-zinc-200 to-zinc-400 flex items-center justify-center text-sm font-bold text-black shrink-0 shadow-sm shadow-white/10">
                 {user ? user.avatarInitials : 'G'}
               </div>
@@ -327,14 +466,9 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
 
             {user ? (
               <div className="flex items-center gap-2 shrink-0">
-                <button 
-                  onClick={() => setSubView('profile')}
-                  className="px-2.5 py-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 rounded-lg transition border border-white/10 cursor-pointer"
-                >
-                  Edit
-                </button>
-                <button 
-                  onClick={logout}
+
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
                   className="px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white font-medium rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center justify-center cursor-pointer"
                   title="Sign Out"
                 >
@@ -342,7 +476,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
                 </button>
               </div>
             ) : (
-              <button 
+              <button
                 onClick={() => onAuthClick('login')}
                 className="text-xs text-white font-medium px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 transition shrink-0 cursor-pointer"
               >
@@ -412,10 +546,10 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
             Video & Streaming
           </span>
           <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md">
-            
+
             {/* Resolution Row */}
             <div>
-              <button 
+              <button
                 onClick={() => toggleExpand('resolution')}
                 className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"
               >
@@ -466,7 +600,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
 
             {/* Server Row */}
             <div>
-              <button 
+              <button
                 onClick={() => toggleExpand('server')}
                 className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"
               >
@@ -546,7 +680,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
             Playback Automation
           </span>
           <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md">
-            
+
             {/* Autoplay Row */}
             <div className="flex items-center justify-between p-3.5">
               <div className="flex items-center gap-3">
@@ -622,10 +756,10 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
             Audio & Subtitles
           </span>
           <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md">
-            
+
             {/* Audio Output */}
             <div>
-              <button 
+              <button
                 onClick={() => toggleExpand('audio')}
                 className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"
               >
@@ -666,7 +800,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
 
             {/* Subtitle Size */}
             <div>
-              <button 
+              <button
                 onClick={() => toggleExpand('subtitle')}
                 className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"
               >
@@ -714,7 +848,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
             Storage & System
           </span>
           <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md">
-            
+
             {/* Clear Cache */}
             <div className="flex items-center justify-between p-3.5">
               <div className="flex items-center gap-3">
@@ -771,8 +905,7 @@ export function SettingsView({ onPlay, onAuthClick }: SettingsViewProps) {
 
       </div>
 
-
-
+      {logoutModal}
     </div>
   );
 }

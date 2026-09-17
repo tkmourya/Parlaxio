@@ -1,7 +1,7 @@
 import { Film, Search, Flame, Settings, Tv, Zap, Bookmark, User } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 
-export type TabType = 'home' | 'movies' | 'series' | 'anime' | 'trending' | 'search' | 'settings' | 'watchlist' | 'auth' | 'provider';
+export type TabType = 'home' | 'movies' | 'series' | 'anime' | 'trending' | 'search' | 'settings' | 'watchlist' | 'auth' | 'provider' | 'livetv';
 
 interface TopNavProps {
   currentTab: TabType;
