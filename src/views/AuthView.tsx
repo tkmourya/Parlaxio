@@ -233,7 +233,13 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
             </button>
           </div>
         ) : (
-          <div className="mt-6 pt-5 border-t border-white/5 text-center">
+          <div className="mt-6 pt-5 border-t border-white/5 text-center flex flex-col items-center gap-3">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[10px] sm:text-xs text-zinc-500">
+              <button onClick={() => { window.history.pushState(null, '', '/privacy'); window.dispatchEvent(new Event('popstate')); }} className="hover:text-zinc-300 transition-colors cursor-pointer">Privacy Policy</button>
+              <button onClick={() => { window.history.pushState(null, '', '/terms'); window.dispatchEvent(new Event('popstate')); }} className="hover:text-zinc-300 transition-colors cursor-pointer">Terms & Conditions</button>
+              <button onClick={() => { window.history.pushState(null, '', '/legal'); window.dispatchEvent(new Event('popstate')); }} className="hover:text-zinc-300 transition-colors cursor-pointer">Legal & DMCA</button>
+            </div>
+            <p className="text-[10px] text-zinc-600">By continuing, you agree to our Terms and Policies.</p>
           </div>
         )}
 

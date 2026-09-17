@@ -91,6 +91,9 @@ export function parsePath(pathname: string): RouteState {
   if (cleanPath === '/watchlist') return { tab: 'watchlist', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/settings') return { tab: 'settings', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/livetv') return { tab: 'livetv', detailsMedia: null, playingMedia: null, authMode: 'login' };
+  if (cleanPath === '/privacy') return { tab: 'privacy', detailsMedia: null, playingMedia: null, authMode: 'login' };
+  if (cleanPath === '/terms') return { tab: 'terms', detailsMedia: null, playingMedia: null, authMode: 'login' };
+  if (cleanPath === '/legal') return { tab: 'legal', detailsMedia: null, playingMedia: null, authMode: 'login' };
   
   return {
     tab: 'home',
@@ -139,6 +142,13 @@ export function useRouter() {
   };
 
   const navigateBack = () => {
+    // If we have an internal history state (from our pushState), use native back
+    // to preserve scroll positions automatically.
+    if (window.history.state && window.history.state.prevPath) {
+      window.history.back();
+      return;
+    }
+
     if (route.playingMedia) {
       // From Player → go to details or home (skip all iframe history entries)
       if (route.detailsMedia) {

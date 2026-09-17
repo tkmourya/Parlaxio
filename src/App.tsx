@@ -12,6 +12,7 @@ import { SettingsView } from './views/SettingsView';
 import { AuthView } from './views/AuthView';
 import { ProviderView } from './views/ProviderView';
 import { LiveTVView } from './views/LiveTVView';
+import { PrivacyPolicyView, TermsView, LegalDMCAView } from './views/LegalViews';
 import { BottomNav } from './components/BottomNav';
 import { AuthPromptModal } from './components/AuthPromptModal';
 import { TopNav } from './components/TopNav';
@@ -63,8 +64,8 @@ function AppContent() {
 
   return (
     <div className="min-h-screen text-white selection:bg-white/30">
-      {/* Top Nav for Desktop (Hidden on Player, Details, Auth, and Settings/LiveTV) */}
-      {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && (
+      {/* Top Nav for Desktop (Hidden on Player, Details, Auth, and Settings/LiveTV/Legal) */}
+      {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && currentTab !== 'privacy' && currentTab !== 'terms' && currentTab !== 'legal' && (
         <TopNav currentTab={currentTab} onChange={navigateTab} onAuthClick={navigateAuth} />
       )}
 
@@ -82,6 +83,7 @@ function AppContent() {
             onPlay={navigateDetails} 
             onAuthClick={navigateAuth} 
             onSubViewChange={setHideSettingsNav}
+            onNavigate={navigateTab}
           />
         )}
         {currentTab === 'provider' && providerDetails && (
@@ -93,10 +95,15 @@ function AppContent() {
         )}
         {currentTab === 'auth' && <AuthView initialMode={authMode} onComplete={() => navigateTab('home')} />}
         {currentTab === 'livetv' && <LiveTVView onBack={() => navigateTab('home')} onRequireAuth={() => setShowAuthPrompt(true)} />}
+        
+        {/* Legal Pages */}
+        {currentTab === 'privacy' && <PrivacyPolicyView onBack={() => navigateTab('settings')} />}
+        {currentTab === 'terms' && <TermsView onBack={() => navigateTab('settings')} />}
+        {currentTab === 'legal' && <LegalDMCAView onBack={() => navigateTab('settings')} />}
       </main>
 
-      {/* Bottom Nav for Mobile (Hidden on Player, Details, Auth, and Settings/LiveTV) */}
-      {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && (
+      {/* Bottom Nav for Mobile (Hidden on Player, Details, Auth, and Settings/LiveTV/Legal) */}
+      {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && currentTab !== 'privacy' && currentTab !== 'terms' && currentTab !== 'legal' && (
         <BottomNav currentTab={currentTab} onChange={navigateTab} />
       )}
 

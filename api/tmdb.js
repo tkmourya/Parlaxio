@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     
     // Allow CORS if needed, though Vercel handles it for same-domain
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate'); // optional caching
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=86400'); // 5 mins cache, 24h background revalidate
     
     res.status(response.status).json(data);
   } catch (error) {

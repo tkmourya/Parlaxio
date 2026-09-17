@@ -14,9 +14,10 @@ interface SettingsViewProps {
   onPlay: (id: number, type: 'movie' | 'tv') => void;
   onAuthClick: (mode: 'login' | 'register') => void;
   onSubViewChange?: (isSubView: boolean) => void;
+  onNavigate?: (tab: any) => void;
 }
 
-export function SettingsView({ onPlay, onAuthClick, onSubViewChange }: SettingsViewProps) {
+export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate }: SettingsViewProps) {
   // Navigation: null = settings list, 'watchlist' = opened watchlist, 'history' = opened history, 'profile' = profile editor, 'profile-view' = profile view
   const [subView, setSubView] = useState<'watchlist' | 'history' | 'profile' | 'profile-view' | null>(null);
   const [historyLayout, setHistoryLayout] = useState<'list' | 'grid'>('list');
@@ -842,7 +843,47 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange }: SettingsV
           </div>
         </div>
 
-        {/* 6. Storage & System Data */}
+        {/* 6. Legal & Information */}
+        <div>
+          <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider px-2 mb-2 block">
+            Legal & Information
+          </span>
+          <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md">
+            
+            <button
+              onClick={() => onNavigate && onNavigate('privacy')}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer"
+            >
+              <div className="flex items-center gap-3 text-sm font-medium text-white">
+                Privacy Policy
+              </div>
+              <ChevronRight size={15} className="text-zinc-500" />
+            </button>
+
+            <button
+              onClick={() => onNavigate && onNavigate('terms')}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer"
+            >
+              <div className="flex items-center gap-3 text-sm font-medium text-white">
+                Terms & Conditions
+              </div>
+              <ChevronRight size={15} className="text-zinc-500" />
+            </button>
+
+            <button
+              onClick={() => onNavigate && onNavigate('legal')}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer"
+            >
+              <div className="flex items-center gap-3 text-sm font-medium text-white">
+                Legal & DMCA
+              </div>
+              <ChevronRight size={15} className="text-zinc-500" />
+            </button>
+
+          </div>
+        </div>
+
+        {/* 7. Storage & System Data */}
         <div>
           <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider px-2 mb-2 block">
             Storage & System

@@ -8,25 +8,42 @@ export const getImageUrl = (path: string | null, size: 'w500' | 'original' = 'w5
   return `https://image.tmdb.org/t/p/${size}${path}`;
 };
 
-async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
-  const isDev = import.meta.env.DEV;
+const apiCache = new Map<string, Promise<any>>();
 
-  if (isDev && API_KEY) {
-    // LOCALHOST / DEV MODE: Call TMDB directly so you don't need Vercel CLI locally
-    const separator = endpoint.includes('?') ? '&' : '?';
-    const url = `${BASE_URL}${endpoint}${separator}api_key=${API_KEY}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`TMDB API Error: ${response.status}`);
-    return response.json();
-  } else {
-    // PRODUCTION / VERCEL: Call our secure Serverless Function to hide the API key
-    const url = `/api/tmdb?path=${encodeURIComponent(endpoint)}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Vercel TMDB Proxy Error: ${response.status}`);
-    return response.json();
+async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
+  if (apiCache.has(endpoint)) {
+    return apiCache.get(endpoint) as Promise<T>;
   }
+
+  const fetchPromise = (async () => {
+    const isDev = import.meta.env.DEV;
+
+    if (isDev && API_KEY) {
+      // LOCALHOST / DEV MODE: Call TMDB directly
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const url = `${BASE_URL}${endpoint}${separator}api_key=${API_KEY}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`TMDB API Error: ${response.status}`);
+      return response.json();
+    } else {
+      // PRODUCTION / VERCEL: Call our secure Serverless Function
+      const url = `/api/tmdb?path=${encodeURIComponent(endpoint)}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Vercel TMDB Proxy Error: ${response.status}`);
+      return response.json();
+    }
+  })();
+
+  apiCache.set(endpoint, fetchPromise);
+
+  // If fetch fails, remove from cache so we can retry next time
+  fetchPromise.catch(() => {
+    apiCache.delete(endpoint);
+  });
+
+  return fetchPromise;
 }
 
 export const getTrending = (page = 1) => fetchFromTMDB<TMDBResponse>(`/trending/movie/day?page=${page}`);

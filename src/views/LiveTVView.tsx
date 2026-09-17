@@ -3,6 +3,8 @@ import { ArrowLeft, LayoutGrid, List, Play, Search, Tv } from 'lucide-react';
 import { LivePlayer } from '../components/LivePlayer';
 import { useAuth } from '../lib/AuthContext';
 
+let cachedChannels: Channel[] | null = null;
+
 export interface Channel {
   id: string;
   name: string;
@@ -35,6 +37,12 @@ export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
 
   useEffect(() => {
     async function fetchChannels() {
+      if (cachedChannels) {
+        setChannels(cachedChannels);
+        setLoading(false);
+        return;
+      }
+
       try {
         // comma lagakar aur bhi .m3u links add kar sakte hain
         const playlists = [
@@ -80,6 +88,7 @@ export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
 
         // Remove exact duplicates if any
         const uniqueChannels = Array.from(new Map(allParsedChannels.map(item => [item.url, item])).values());
+        cachedChannels = uniqueChannels;
         setChannels(uniqueChannels);
       } catch (error) {
         console.error("Failed to load IPTV channels:", error);
@@ -105,26 +114,40 @@ export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
   // Extract unique groups based on CURRENT tier only
   const groups = ['All', ...Array.from(new Set(channels.filter(c => (tier === 'Premium' ? isPremium(c.name) : !isPremium(c.name))).map(c => c.group)))].filter(Boolean);
 
-  if (playingChannel) {
-    return (
-      <LivePlayer
-        url={playingChannel.url}
-        poster={playingChannel.logo}
-        onClose={() => setPlayingChannel(null)}
-      />
-    );
-  }
+  useEffect(() => {
+    const handlePopState = () => {
+      if (playingChannel) {
+        setPlayingChannel(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [playingChannel]);
 
   const handleChannelClick = (channel: Channel) => {
     if (!user && onRequireAuth) {
       onRequireAuth();
       return;
     }
+    if (!playingChannel) {
+      window.history.pushState({ livePlayer: true }, '');
+    }
     setPlayingChannel(channel);
   };
 
   return (
-    <div className="px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-7xl mx-auto w-full">
+    <>
+      {playingChannel && (
+        <LivePlayer
+          url={playingChannel.url}
+          poster={playingChannel.logo}
+          onClose={() => {
+            setPlayingChannel(null);
+            window.history.back();
+          }}
+        />
+      )}
+      <div className={`px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-7xl mx-auto w-full ${playingChannel ? 'hidden' : ''}`}>
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
 
@@ -297,5 +320,6 @@ export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
         </div>
       )}
     </div>
+    </>
   );
 }
