@@ -34,8 +34,19 @@ const STREAM_SERVERS = [
         : `https://vidsrc.sbs/embed/movie/${id}?autoplay=1&color=e50914`
   },
   {
+    id: 'vidcore',
+    name: 'Server 3 (VidCore)',
+    desc: 'Alternative Fast Server',
+    quality: '1080p HD',
+    badge: 'Core',
+    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
+      type === 'tv'
+        ? `https://www.vidcore.org/embed/tv/${id}/${s}/${e}`
+        : `https://www.vidcore.org/embed/movie/${id}`
+  },
+  {
     id: 'twoembed_cc',
-    name: 'Server 3 (2Embed)',
+    name: 'Server 4 (2Embed)',
     desc: 'Stable Global CDN Node',
     quality: '1080p HD',
     badge: 'Global HD',
@@ -46,7 +57,7 @@ const STREAM_SERVERS = [
   },
   {
     id: 'vidsrc_buzz',
-    name: 'Server 4 (VidSrc Buzz)',
+    name: 'Server 5 (VidSrc Buzz)',
     desc: 'Reliable Streaming Network',
     quality: '1080p HD',
     badge: 'VidSrc',
@@ -57,7 +68,7 @@ const STREAM_SERVERS = [
   },
   {
     id: 'vidsrc_cc',
-    name: 'Server 5 (VidSrc CC)',
+    name: 'Server 6 (VidSrc CC)',
     desc: 'Reliable Streaming Network',
     quality: '1080p HD',
     badge: 'VidSrc',
@@ -68,7 +79,7 @@ const STREAM_SERVERS = [
   },
   {
     id: 'smashystream_hindi',
-    name: 'Server 6 (SmashS)',
+    name: 'Server 7 (SmashS)',
     desc: 'Multi-Audio & Hindi Dub',
     quality: '1080p HD',
     badge: 'HiDub',
@@ -630,7 +641,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           onClick={() => setIsServerModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-md bg-black/60 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 shadow-[0_10px_40px_rgba(255,255,255,0.1)] space-y-5 text-white animate-in zoom-in-95 duration-200"
+            className="relative w-full max-w-md md:max-w-2xl bg-black/60 backdrop-blur-2xl rounded-3xl p-6 shadow-[0_10px_40px_rgba(255,255,255,0.1)] space-y-5 text-white animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -641,7 +652,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">Select Stream Server</h3>
-                  <p className="text-xs text-zinc-400">Agar koi server na chale toh dusra server select karein</p>
+                  <p className="text-xs text-zinc-400">If a server doesn't work, please select another one</p>
                 </div>
               </div>
               <button
@@ -653,7 +664,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
             </div>
 
             {/* Server Cards */}
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[60vh] md:max-h-none overflow-y-auto custom-scrollbar pr-1 md:pr-0">
               {STREAM_SERVERS.map((srv, idx) => (
                 <div
                   key={srv.id}
@@ -661,9 +672,9 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                     setSelectedServer(idx);
                     setIsServerModalOpen(false);
                   }}
-                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${selectedServer === idx
-                    ? 'bg-gradient-to-r from-zinc-800 to-zinc-900 border-white/40 shadow-[0_4px_12px_rgba(255,255,255,0.1)]'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                  className={`p-3 rounded-2xl transition-all cursor-pointer flex items-center justify-between gap-3 ${selectedServer === idx
+                    ? 'bg-gradient-to-r from-zinc-800 to-zinc-900 shadow-[0_4px_12px_rgba(255,255,255,0.1)]'
+                    : 'bg-white/5 hover:bg-white/10'
                     }`}
                 >
                   <div className="flex items-center gap-2">
@@ -686,7 +697,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
             {/* Server Tip */}
             <p className="text-[11px] text-zinc-400 text-center leading-relaxed">
-              💡 Tip: Hindi Dubbing & 4K Ultra HD experience ke liye <span className="text-white font-bold bg-white/10 px-1.5 py-0.5 rounded border border-white/20 shadow-sm">Server 2 (VidSrc SBS)</span> select karein.
+              💡 Tip: For Hindi Dubbing & 4K Ultra HD experience, select <span className="text-white font-bold bg-white/10 px-1.5 py-0.5 rounded border border-white/20 shadow-sm">Server 2 (VidSrc SBS)</span>.
             </p>
 
             {/* Close */}
