@@ -5,9 +5,19 @@
 }
 
 html, body {
-  background-color: #000;
+  background-color: #000000 !important;
   color: #fff;
   overscroll-behavior-y: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Fix for Android PWA 1px status bar gap glitch */
+#root {
+  background-color: #000000;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-shadow: 0 -2px 0 0 #000000; /* Absorbs any top sub-pixel gap */
 }
 
 .font-brand {
