@@ -58,7 +58,7 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
 
   return (
     <div className="min-h-screen flex items-center justify-center px-0 sm:px-4 relative pt-0 sm:pt-24 pb-0 sm:pb-20">
-      
+
       {/* Frosted Ambient Smokey Grey Atmosphere */}
       <div className="fixed top-1/4 left-1/3 -z-10 w-[28rem] h-[28rem] bg-zinc-600/15 rounded-full blur-[160px] pointer-events-none" />
       <div className="fixed bottom-1/4 right-1/3 -z-10 w-[28rem] h-[28rem] bg-zinc-800/25 rounded-full blur-[160px] pointer-events-none" />
@@ -66,9 +66,9 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
 
       {/* Full page on mobile, Frosted Glass Card on desktop */}
       <div className="w-full min-h-screen sm:min-h-0 sm:max-w-md bg-zinc-950 sm:bg-black/25 backdrop-blur-2xl border-0 sm:border sm:border-white/10 p-6 sm:p-9 rounded-none sm:rounded-3xl shadow-none sm:shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative z-10 flex flex-col justify-center animate-in fade-in duration-300">
-        
+
         {/* Back Button */}
-        <button 
+        <button
           onClick={onComplete}
           className="absolute top-6 left-6 text-zinc-400 hover:text-white transition-colors cursor-pointer p-1.5 rounded-full hover:bg-white/10"
           title="Back"
@@ -94,22 +94,20 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
             <button
               type="button"
               onClick={() => setMode('login')}
-              className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
-                mode === 'login' 
-                  ? 'bg-white/20 text-white shadow-inner border border-white/15' 
+              className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${mode === 'login'
+                  ? 'bg-white/20 text-white shadow-inner border border-white/15'
                   : 'text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => setMode('register')}
-              className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
-                mode === 'register' 
-                  ? 'bg-white/20 text-white shadow-inner border border-white/15' 
+              className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${mode === 'register'
+                  ? 'bg-white/20 text-white shadow-inner border border-white/15'
                   : 'text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               Create Account
             </button>
@@ -121,7 +119,7 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
             {message}
           </div>
         )}
-        
+
         {error && (
           <div className="mb-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center font-medium backdrop-blur-md">
             {error}
@@ -136,31 +134,31 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
-                <input 
-                  required 
-                  type="text" 
-                  placeholder="e.g. Alex Walker" 
-                  value={name} 
-                  onChange={e => setName(e.target.value)} 
-                  className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all" 
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. Alex Walker"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                 />
               </div>
             </div>
           )}
-          
+
           <div>
             <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">
               Email Address
             </label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
-              <input 
-                required 
-                type="email" 
-                placeholder="name@example.com" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all" 
+              <input
+                required
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
               />
             </div>
           </div>
@@ -172,9 +170,9 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
                   Password
                 </label>
                 {mode === 'login' && (
-                  <button 
-                    type="button" 
-                    onClick={() => setMode('forgot')} 
+                  <button
+                    type="button"
+                    onClick={() => setMode('forgot')}
                     className="text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer"
                   >
                     Forgot?
@@ -183,13 +181,13 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
-                <input 
-                  required 
-                  type={showPassword ? 'text' : 'password'} 
-                  placeholder="••••••••••••" 
-                  value={password} 
-                  onChange={e => setPassword(e.target.value)} 
-                  className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all" 
+                <input
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                 />
                 <button
                   type="button"
@@ -202,8 +200,8 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-2.5 rounded-2xl transition-all active:scale-[0.99] shadow-lg text-sm mt-4 flex items-center justify-center gap-2 cursor-pointer"
           >
@@ -227,8 +225,8 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
 
         {mode === 'forgot' ? (
           <div className="mt-5 text-center">
-            <button 
-              onClick={() => setMode('login')} 
+            <button
+              onClick={() => setMode('login')}
               className="text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
               ← Back to Sign In
@@ -236,12 +234,6 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
           </div>
         ) : (
           <div className="mt-6 pt-5 border-t border-white/5 text-center">
-            <button 
-              onClick={onComplete} 
-              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
-            >
-              Continue as Guest →
-            </button>
           </div>
         )}
 

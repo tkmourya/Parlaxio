@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-// @ts-expect-error - Plyr types don't declare a default export
+// - Plyr types don't declare a default export
 import Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
 import Hls from 'hls.js';
@@ -198,7 +198,7 @@ export function LivePlayer({ url, poster, onClose }: LivePlayerProps) {
             videoRef.current.currentTime = videoRef.current.duration || 999999;
           }
         }}
-        className={`absolute bottom-24 md:bottom-28 right-4 md:right-8 z-[110] px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] md:text-xs font-bold text-white tracking-widest uppercase hover:bg-black/60 transition-all duration-300 flex items-center gap-2 ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`absolute top-4 md:top-6 right-4 md:right-6 z-[110] px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] md:text-xs font-bold text-white tracking-widest uppercase hover:bg-black/60 transition-all duration-300 flex items-center gap-2 ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         title="Jump to Live"
       >

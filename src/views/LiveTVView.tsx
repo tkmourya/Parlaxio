@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, LayoutGrid, List, Play, Search, Tv } from 'lucide-react';
 import { LivePlayer } from '../components/LivePlayer';
+import { useAuth } from '../lib/AuthContext';
 
 export interface Channel {
   id: string;
@@ -12,9 +13,11 @@ export interface Channel {
 
 interface LiveTVViewProps {
   onBack: () => void;
+  onRequireAuth?: () => void;
 }
 
-export function LiveTVView({ onBack }: LiveTVViewProps) {
+export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
+  const { user } = useAuth();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
@@ -112,6 +115,14 @@ export function LiveTVView({ onBack }: LiveTVViewProps) {
     );
   }
 
+  const handleChannelClick = (channel: Channel) => {
+    if (!user && onRequireAuth) {
+      onRequireAuth();
+      return;
+    }
+    setPlayingChannel(channel);
+  };
+
   return (
     <div className="px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-7xl mx-auto w-full">
       {/* Header */}
@@ -132,7 +143,7 @@ export function LiveTVView({ onBack }: LiveTVViewProps) {
         </div>
 
         {/* 2. Free/Premium Toggle */}
-        <div className="flex bg-zinc-900 rounded-full p-1 border border-white/10 self-start lg:self-center shrink-0">
+        <div className="flex bg-zinc-900 rounded-full p-1 self-start lg:self-center shrink-0">
           <button
             onClick={() => { setTier('Free'); setSelectedGroup('All'); }}
             className={`px-5 py-1.5 text-sm rounded-full transition ${tier === 'Free' ? 'bg-white/15 text-white font-medium' : 'text-zinc-500 hover:text-zinc-300'}`}
@@ -156,10 +167,10 @@ export function LiveTVView({ onBack }: LiveTVViewProps) {
               placeholder="Search channels..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-900 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-red-500 transition"
+              className="w-full bg-zinc-900 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition"
             />
           </div>
-          <div className="flex bg-zinc-900 rounded-xl p-1 border border-white/10 shrink-0">
+          <div className="flex bg-zinc-900 rounded-xl p-1 shrink-0">
             <button
               onClick={() => setLayout('grid')}
               className={`p-1.5 rounded-lg transition ${layout === 'grid' ? 'bg-white/15 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
@@ -184,9 +195,9 @@ export function LiveTVView({ onBack }: LiveTVViewProps) {
           <button
             key={group}
             onClick={() => setSelectedGroup(group)}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${selectedGroup === group
-                ? 'bg-red-600 border-red-500 text-white'
-                : 'bg-zinc-900/50 border-white/10 text-zinc-400 hover:text-white hover:bg-white/5'
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedGroup === group
+                ? 'bg-red-600 text-white'
+                : 'bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
           >
             {group}
@@ -198,7 +209,7 @@ export function LiveTVView({ onBack }: LiveTVViewProps) {
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 animate-pulse">
           {[...Array(12)].map((_, i) => (
-            <div key={i} className="aspect-video bg-zinc-900 rounded-xl border border-white/5"></div>
+            <div key={i} className="aspect-video bg-zinc-900 rounded-xl"></div>
           ))}
         </div>
       ) : filteredChannels.length === 0 ? (
@@ -217,15 +228,15 @@ export function LiveTVView({ onBack }: LiveTVViewProps) {
             layout === 'grid' ? (
               <div
                 key={channel.id}
-                onClick={() => setPlayingChannel(channel)}
-                className="group relative bg-zinc-900 border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-white/30 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50"
+                onClick={() => handleChannelClick(channel)}
+                className="group relative bg-zinc-900 ring-1 ring-white/10 rounded-xl overflow-hidden cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50 hover:ring-white/20"
               >
                 <div className="aspect-video bg-black flex items-center justify-center p-4 relative">
                   {channel.logo ? (
                     <img
                       src={channel.logo}
                       alt={channel.name}
-                      className="max-w-full max-h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                      className="max-w-full max-h-full object-contain"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                         (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
@@ -251,10 +262,10 @@ export function LiveTVView({ onBack }: LiveTVViewProps) {
             ) : (
               <div
                 key={channel.id}
-                onClick={() => setPlayingChannel(channel)}
-                className="group flex items-center gap-4 bg-zinc-900/50 border border-white/10 p-3 rounded-xl hover:bg-white/5 hover:border-white/20 transition cursor-pointer"
+                onClick={() => handleChannelClick(channel)}
+                className="group flex items-center gap-4 bg-zinc-900/50 p-3 rounded-xl ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition cursor-pointer"
               >
-                <div className="w-24 aspect-video bg-black rounded-lg flex items-center justify-center p-2 relative shrink-0">
+                <div className="w-20 sm:w-24 aspect-video bg-black rounded-lg flex items-center justify-center p-1 sm:p-2 relative shrink-0">
                   {channel.logo ? (
                     <img
                       src={channel.logo}

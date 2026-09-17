@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HomeView } from './views/HomeView';
 import { SearchView } from './views/SearchView';
 import { TrendingView } from './views/TrendingView';
@@ -13,8 +13,9 @@ import { AuthView } from './views/AuthView';
 import { ProviderView } from './views/ProviderView';
 import { LiveTVView } from './views/LiveTVView';
 import { BottomNav } from './components/BottomNav';
+import { AuthPromptModal } from './components/AuthPromptModal';
 import { TopNav } from './components/TopNav';
-import { AuthProvider } from './lib/AuthContext';
+import { AuthProvider, useAuth } from './lib/AuthContext';
 import { useRouter } from './lib/router';
 
 export default function App() {
@@ -26,6 +27,8 @@ export default function App() {
 }
 
 function AppContent() {
+  const { user, loading } = useAuth();
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [hideSettingsNav, setHideSettingsNav] = useState(false);
   const { 
     currentTab, 
@@ -44,6 +47,20 @@ function AppContent() {
   // API Key is now handled securely by Vercel Serverless Function in production
   // We no longer block the UI here.
 
+  useEffect(() => {
+    if (!loading && playingMedia && !user) {
+      setShowAuthPrompt(true);
+    }
+  }, [playingMedia, user, loading]);
+
+  const handlePlay = (id: number, type: 'movie' | 'tv', season?: number, episode?: number) => {
+    if (!user) {
+      setShowAuthPrompt(true);
+      return;
+    }
+    navigatePlay(id, type, season, episode);
+  };
+
   return (
     <div className="min-h-screen text-white selection:bg-white/30">
       {/* Top Nav for Desktop (Hidden on Player, Details, Auth, and Settings/LiveTV) */}
@@ -53,7 +70,7 @@ function AppContent() {
 
       {/* Main Content Area */}
       <main className="min-h-screen">
-        {currentTab === 'home' && <HomeView onPlay={navigateDetails} onContinueWatch={navigatePlay} onProviderSelect={navigateProvider} onLiveTVClick={() => navigateTab('livetv')} />}
+        {currentTab === 'home' && <HomeView onPlay={navigateDetails} onContinueWatch={handlePlay} onProviderSelect={navigateProvider} onLiveTVClick={() => navigateTab('livetv')} />}
         {currentTab === 'movies' && <MoviesView onPlay={navigateDetails} />}
         {currentTab === 'series' && <SeriesView onPlay={navigateDetails} />}
         {currentTab === 'anime' && <AnimeView onPlay={navigateDetails} />}
@@ -75,7 +92,7 @@ function AppContent() {
           />
         )}
         {currentTab === 'auth' && <AuthView initialMode={authMode} onComplete={() => navigateTab('home')} />}
-        {currentTab === 'livetv' && <LiveTVView onBack={() => navigateTab('home')} />}
+        {currentTab === 'livetv' && <LiveTVView onBack={() => navigateTab('home')} onRequireAuth={() => setShowAuthPrompt(true)} />}
       </main>
 
       {/* Bottom Nav for Mobile (Hidden on Player, Details, Auth, and Settings/LiveTV) */}
@@ -89,21 +106,36 @@ function AppContent() {
           <DetailsView 
             media={detailsMedia} 
             onBack={navigateBack} 
-            onWatch={navigatePlay}
+            onWatch={handlePlay}
             onSelectRelated={navigateDetails}
           />
         </div>
       )}
 
       {/* Fullscreen Video Player Modal */}
-      {playingMedia && (
+      {playingMedia && user && (
         <div className="fixed inset-0 z-50 bg-black">
           <PlayerView 
             media={playingMedia} 
             onBack={navigateBack} 
-            onPlay={navigatePlay}
+            onPlay={handlePlay}
           />
         </div>
+      )}
+
+      {/* Beautiful Auth Prompt Modal */}
+      {showAuthPrompt && (
+        <AuthPromptModal 
+          onClose={() => setShowAuthPrompt(false)}
+          onLogin={() => {
+            setShowAuthPrompt(false);
+            navigateAuth('login');
+          }}
+          onRegister={() => {
+            setShowAuthPrompt(false);
+            navigateAuth('register');
+          }}
+        />
       )}
     </div>
   );
