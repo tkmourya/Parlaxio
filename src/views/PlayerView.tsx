@@ -11,23 +11,23 @@ import { TrailerModal } from '../components/TrailerModal';
 const STREAM_SERVERS = [
   {
     id: 'vidlink_4k',
-    name: 'Server 1 (VidLink 4K)',
+    name: 'Server 1 (VidLink)',
     desc: '4K & 1080p Ultra HD (Fast Stream)',
     quality: '4K UHD',
-    badge: '4K UHD',
+    badge: 'HD',
     getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
       isAnime && type === 'tv'
         ? `https://vidlink.pro/anime/${id}/${e}/dub?fallback=true&primaryColor=e50914&autoplay=1`
         : type === 'tv'
-        ? `https://vidlink.pro/tv/${id}/${s}/${e}?primaryColor=e50914&autoplay=1`
-        : `https://vidlink.pro/movie/${id}?primaryColor=e50914&autoplay=1`
+          ? `https://vidlink.pro/tv/${id}/${s}/${e}?primaryColor=e50914&autoplay=1`
+          : `https://vidlink.pro/movie/${id}?primaryColor=e50914&autoplay=1`
   },
   {
     id: 'vidsrc_sbs',
     name: 'Server 2 (VidSrc SBS)',
     desc: 'High Speed Multi-Source HD',
     quality: '1080p HD',
-    badge: 'Fast HD',
+    badge: 'UHD',
     getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
       type === 'tv'
         ? `https://vidsrc.sbs/embed/tv/${id}/${s}/${e}?autoplay=1&color=e50914`
@@ -68,10 +68,10 @@ const STREAM_SERVERS = [
   },
   {
     id: 'smashystream_hindi',
-    name: 'Server 6 (SmashyStream)',
+    name: 'Server 6 (SmashS)',
     desc: 'Multi-Audio & Hindi Dub',
     quality: '1080p HD',
-    badge: 'Hindi Dub',
+    badge: 'HiDub',
     getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
       type === 'tv'
         ? `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&ep=${e}`
@@ -127,10 +127,10 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
       if (detailsRef.current) {
         // Calculate progress percentage
         // Default runtime 120 mins if missing
-        const runtimeMins = detailsRef.current.runtime || 120; 
+        const runtimeMins = detailsRef.current.runtime || 120;
         const totalSecs = runtimeMins * 60;
         let progress = (playTimeRef.current / totalSecs) * 100;
-        
+
         // If watched for less than 1 min, don't bump much
         if (progress < 1) progress = 1;
         // Cap at 95%
@@ -340,46 +340,46 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           {!isPlayingStream ? (
             <div className="w-full h-full relative flex items-center justify-center group bg-zinc-900 rounded-none md:rounded-2xl overflow-hidden">
               {details?.backdrop_path && (
-              <img
-                src={getImageUrl(details.backdrop_path, 'original')}
-                className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-40"
-                alt={details.title || details.name}
+                <img
+                  src={getImageUrl(details.backdrop_path, 'original')}
+                  className="absolute inset-0 w-full h-full object-cover opacity-60 transition-opacity duration-700 group-hover:opacity-40"
+                  alt={details.title || details.name}
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/30 to-black/60" />
+
+              <div className="relative z-10 flex flex-col items-center gap-3">
+                <button
+                  onClick={handlePlayStream}
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-2xl text-white flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 group/play cursor-pointer"
+                  title="Play Stream"
+                  aria-label="Play Stream"
+                >
+                  <Play fill="currentColor" size={28} className="ml-1 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover/play:scale-110" />
+                </button>
+                <span className="text-xs font-semibold text-zinc-300">Click to Play Stream</span>
+              </div>
+            </div>
+          ) : (
+            <div className="relative w-full h-full bg-zinc-950">
+              {/* Loading Indicator behind fallback iframe */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-500 z-0 pointer-events-none">
+                <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+                <span className="text-sm font-medium animate-pulse">Connecting to Server...</span>
+              </div>
+
+              <iframe
+                key={selectedServer}
+                id="movie-frame"
+                src={streamUrl}
+                className="absolute inset-0 w-full h-full border-0 z-10 rounded-none md:rounded-2xl overflow-hidden"
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                title="Stream Player"
               />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/30 to-black/60" />
-
-            <div className="relative z-10 flex flex-col items-center gap-3">
-              <button
-                onClick={handlePlayStream}
-                className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-2xl text-white flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 group/play cursor-pointer"
-                title="Play Stream"
-                aria-label="Play Stream"
-              >
-                <Play fill="currentColor" size={28} className="ml-1 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover/play:scale-110" />
-              </button>
-              <span className="text-xs font-semibold text-zinc-300">Click to Play Stream</span>
             </div>
-          </div>
-        ) : (
-          <div className="relative w-full h-full bg-zinc-950">
-            {/* Loading Indicator behind fallback iframe */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-500 z-0 pointer-events-none">
-              <Loader2 className="w-8 h-8 animate-spin text-red-600" />
-              <span className="text-sm font-medium animate-pulse">Connecting to Server...</span>
-            </div>
-
-            <iframe
-              key={selectedServer}
-              id="movie-frame"
-              src={streamUrl}
-              className="absolute inset-0 w-full h-full border-0 z-10 rounded-none md:rounded-2xl overflow-hidden"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              title="Stream Player"
-            />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       </div>
 
       {/* Full-Width Content Container */}
@@ -542,7 +542,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                       <span>Season {season}</span>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-zinc-400 group-hover:text-white transition-all duration-300 ${isSeasonDropdownOpen ? '-rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
                     </button>
-                    
+
                     {isSeasonDropdownOpen && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setIsSeasonDropdownOpen(false)} />
@@ -662,8 +662,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                     setIsServerModalOpen(false);
                   }}
                   className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${selectedServer === idx
-                      ? 'bg-red-500/10 border-red-500/60 shadow-md'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    ? 'bg-red-500/10 border-red-500/60 shadow-md'
+                    : 'bg-white/5 border-white/10 hover:bg-white/10'
                     }`}
                 >
                   <div className="flex items-center gap-2">
