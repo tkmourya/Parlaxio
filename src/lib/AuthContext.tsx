@@ -77,6 +77,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await account.createEmailPasswordSession(email, password);
       await checkSession();
     } catch (error: any) {
+      // If a session is already active, just sync the user state and return success
+      if (error?.message?.includes('prohibited when a session is active') || error?.code === 401) {
+         console.log("Session already active, syncing session state...");
+         await checkSession();
+         return;
+      }
       console.error('Login error:', error);
       throw error;
     }

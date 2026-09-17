@@ -13,11 +13,19 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const { login, register } = useAuth();
+  const { login, register, user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
+
+  useEffect(() => {
+    // If the user is already logged in and we somehow landed on AuthView,
+    // automatically complete the auth flow to hide the view.
+    if (user && !authLoading) {
+      onComplete();
+    }
+  }, [user, authLoading, onComplete]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -50,7 +58,22 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
 
       onComplete();
     } catch (err: any) {
-      setError(err.message || 'An error occurred during authentication.');
+      const errorMsg = err.message || '';
+      
+      // Make technical Appwrite errors user-friendly
+      if (errorMsg.includes('Rate limit')) {
+        setError('Too many attempts. Please wait a few minutes and try again.');
+      } else if (errorMsg.includes('Invalid credentials')) {
+        setError('Incorrect email or password. Please try again.');
+      } else if (errorMsg.includes('already exists')) {
+        setError('An account with this email already exists. Please Sign In.');
+      } else if (errorMsg.includes('prohibited when a session is active')) {
+        // Fallback just in case our AuthContext check misses it
+        setError('You are already logged in. Redirecting...');
+        setTimeout(() => onComplete(), 1500);
+      } else {
+        setError(errorMsg || 'An error occurred during authentication.');
+      }
     } finally {
       setLoading(false);
     }
