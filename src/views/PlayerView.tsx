@@ -1,4 +1,4 @@
-import { ArrowLeft, Play, Bookmark, Check, Info, Server, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Play, Bookmark, Check, Info, Server, X, Loader2, Star } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSmartRecommendations, getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos } from '../lib/tmdb';
 import { Movie, Cast, Episode, Video } from '../types';
@@ -295,17 +295,27 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
     setIsPlayingStream(true);
   };
 
+  const handleCustomBack = () => {
+    onBack();
+  };
+
   const getAgeRating = () => {
     if (!details) return null;
     let rating = '';
     if (media.type === 'movie' && (details as any).release_dates?.results) {
-      const release = (details as any).release_dates.results.find((r: any) => (r.iso_3166_1 === 'US' || r.iso_3166_1 === 'IN') && r.release_dates?.[0]?.certification);
-      rating = release?.release_dates?.[0]?.certification || '';
+      const usRelease = (details as any).release_dates.results.find((r: any) => r.iso_3166_1 === 'US');
+      const inRelease = (details as any).release_dates.results.find((r: any) => r.iso_3166_1 === 'IN');
+      const release = usRelease || inRelease;
+      
+      if (release) {
+        const validDate = release.release_dates?.find((d: any) => d.certification && d.certification !== '');
+        if (validDate) rating = validDate.certification;
+      }
     } else if (media.type === 'tv' && (details as any).content_ratings?.results) {
       const contentRating = (details as any).content_ratings.results.find((r: any) => (r.iso_3166_1 === 'US' || r.iso_3166_1 === 'IN') && r.rating);
       rating = contentRating?.rating || '';
     }
-    return rating;
+    return rating || (details.adult ? '18+' : 'U/A 16+');
   };
   const ageRating = getAgeRating();
 
@@ -316,7 +326,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
       <div className="sticky top-0 left-0 right-0 z-[100] bg-black/50 backdrop-blur-2xl px-4 md:px-8 py-2.5 flex items-center justify-between">
         {/* Back Button (Icon Only) */}
         <button
-          onClick={onBack}
+          onClick={handleCustomBack}
           className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer group"
           title="Back"
           aria-label="Back"
@@ -336,7 +346,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
         {/* Close Button (Icon Only) */}
         <button
-          onClick={onBack}
+          onClick={handleCustomBack}
           className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer group"
           title="Close Player"
           aria-label="Close Player"
@@ -405,79 +415,83 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">
                     {details.title || details.name}
                   </h1>
-                  <button
-                    onClick={handleSave}
-                    className="transition-transform hover:scale-110 active:scale-95 cursor-pointer shrink-0 ml-2"
-                    title={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
-                    aria-label={saved ? 'Saved to Watchlist' : 'Add to Watchlist'}
-                  >
-                    {saved ? (
-                      <Bookmark size={30} className="text-white fill-white" />
-                    ) : (
-                      <Bookmark size={30} className="text-zinc-400 hover:text-white transition-colors" />
-                    )}
-                  </button>
                 </div>
 
-                {/* Metadata Pills */}
-                <div className="flex items-center flex-wrap gap-2 text-xs md:text-sm font-medium text-zinc-300">
-                  <span className="text-green-400 font-bold bg-green-500/10 px-2 py-1 rounded border border-green-500/20 shadow-sm">
-                    {(details.vote_average * 10).toFixed(0)}% Match
-                  </span>
-                  <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
-                    {(details.release_date || details.first_air_date)?.split('-')[0]}
-                  </span>
+                {/* Metadata row */}
+                <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm font-semibold text-zinc-300">
+                  {/* Match tag removed */}
+
+                  {details.vote_average > 0 && (
+                    <div className="flex items-center gap-1 text-white font-bold">
+                      <Star size={14} fill="currentColor" />
+                      <span>{details.vote_average.toFixed(1)}</span>
+                    </div>
+                  )}
+
+                  {(details.release_date || details.first_air_date) && (
+                    <>
+                      {details.vote_average > 0 && <span className="text-zinc-600">&bull;</span>}
+                      <span>{(details.release_date || details.first_air_date)?.split('-')[0]}</span>
+                    </>
+                  )}
+
                   {ageRating && (
-                    <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
-                      {ageRating}
-                    </span>
+                    <>
+                      <span className="text-zinc-600">&bull;</span>
+                      <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold bg-zinc-800 text-zinc-300 uppercase">
+                        {ageRating}
+                      </span>
+                    </>
                   )}
+                  
                   {media.type === 'tv' && details.number_of_seasons && (
-                    <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
-                      {details.number_of_seasons} Season{details.number_of_seasons !== 1 ? 's' : ''}
-                    </span>
+                    <>
+                      <span className="text-zinc-600">&bull;</span>
+                      <span>{details.number_of_seasons} Season{details.number_of_seasons !== 1 ? 's' : ''}</span>
+                    </>
                   )}
-                  {details.runtime && (
-                    <span className="bg-white/5 px-2 py-1 rounded border border-white/10 shadow-sm">
-                      {Math.floor(details.runtime / 60)}h {details.runtime % 60}m
-                    </span>
+                  
+                  {details.runtime && details.runtime > 0 && (
+                    <>
+                      <span className="text-zinc-600">&bull;</span>
+                      <span>{Math.floor(details.runtime / 60)}h {details.runtime % 60}m</span>
+                    </>
                   )}
-                  <span className="border border-white/20 px-2 py-1 rounded uppercase tracking-wider text-[10px] font-bold shadow-sm">
-                    {media.type}
+
+                  <span className="text-zinc-600">&bull;</span>
+                  <span className="uppercase text-xs font-bold text-zinc-400">
+                    {media.type === 'tv' ? 'Series' : 'Movie'}
                   </span>
-                  <span className="border border-amber-500/40 text-amber-400 bg-amber-500/10 px-2 py-1 rounded text-[10px] font-extrabold tracking-wider shadow-sm flex items-center">
-                    4K UHD
+
+                  <span className="text-zinc-600">&bull;</span>
+                  <span className="text-xs font-extrabold bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-transparent">
+                    4K
                   </span>
                 </div>
 
                 {/* Genres */}
                 {details.genres && details.genres.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {details.genres.map(g => (
-                      <span key={g.id} className="text-xs text-zinc-400 font-medium px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                        {g.name}
-                      </span>
-                    ))}
+                  <div className="pt-1 text-xs md:text-sm text-zinc-400 font-medium break-words">
+                    {details.genres.map((g: any) => g.name).join(' • ')}
                   </div>
                 )}
 
-                {/* Available Languages (Inferred from TMDB Translations) */}
-                {details.translations?.translations && (
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-sm text-zinc-400 font-medium mr-1">Languages:</span>
-                    <span className="text-sm text-zinc-300">
-                      {Array.from(new Set(
-                        details.translations.translations
-                          .filter((t: any) => ['hi', 'en', 'te', 'ta', 'ja', 'ko', 'es', 'fr', 'de'].includes(t.iso_639_1))
-                          .map((t: any) => t.english_name)
-                      )).join(', ')}
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button 
+                  onClick={handleSave}
+                  title={saved ? "Remove from Watchlist" : "Add to Watchlist"}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer group ${
+                    saved 
+                      ? 'bg-white/20 text-white border border-white/20' 
+                      : 'bg-white/10 hover:bg-white/20 border border-white/15 text-white'
+                  }`}
+                >
+                  <Bookmark size={18} fill={saved ? "currentColor" : "none"} className={!saved ? 'group-hover:scale-110 transition-transform' : ''} />
+                </button>
+                
                 {/* Minimal Server Switcher Icon Button */}
                 <button
                   onClick={() => setIsServerModalOpen(true)}
@@ -486,15 +500,6 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   aria-label="Change Stream Server"
                 >
                   <Server size={18} className="group-hover:scale-110 transition-transform" />
-                </button>
-
-                {/* Trailer Button */}
-                <button
-                  onClick={handlePlayTrailer}
-                  className="bg-white/5 hover:bg-white/10 border border-white/15 text-white transition-colors py-2 px-4 rounded-2xl flex items-center gap-2 text-xs font-semibold shadow-md cursor-pointer"
-                >
-                  <Info size={16} />
-                  <span>Trailer</span>
                 </button>
               </div>
             </div>
@@ -583,7 +588,10 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   {episodesList.map(ep => (
                     <button
                       key={ep.id}
-                      onClick={() => { setEpisode(ep.episode_number); setIsPlayingStream(true); }}
+                      onClick={() => { 
+                        setEpisode(ep.episode_number); 
+                        setIsPlayingStream(true);
+                      }}
                       className={`flex items-start gap-3 p-2.5 rounded-xl text-left transition-all ${episode === ep.episode_number ? 'bg-white/15 shadow-lg' : 'bg-zinc-900/60 hover:bg-white/5'}`}
                     >
                       <div className="w-28 aspect-video bg-zinc-800 rounded-lg flex-shrink-0 overflow-hidden relative shadow-inner">

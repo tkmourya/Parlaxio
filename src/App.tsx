@@ -20,6 +20,44 @@ import { PWAPrompt } from './components/PWAPrompt';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { useRouter } from './lib/router';
 
+function useDoubleBackToExit() {
+  const [showExitToast, setShowExitToast] = useState(false);
+
+  useEffect(() => {
+    // Only initialize this logic once
+    if (!window.history.state?.isWorkingState && !window.history.state?.isAppRoot) {
+      window.history.replaceState({ isAppRoot: true }, '', window.location.pathname);
+      window.history.pushState({ isWorkingState: true }, '', window.location.pathname);
+    }
+
+    let lastBackPressTime = 0;
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (e.state && e.state.isAppRoot) {
+        const currentTime = Date.now();
+        if (currentTime - lastBackPressTime < 2000) {
+          // Allow exit
+          window.history.back();
+        } else {
+          // Prevent exit, show toast, and restore working state
+          lastBackPressTime = currentTime;
+          setShowExitToast(true);
+          window.history.pushState({ isWorkingState: true }, '', window.location.pathname);
+          
+          setTimeout(() => {
+            setShowExitToast(false);
+          }, 2000);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  return showExitToast;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -32,6 +70,7 @@ function AppContent() {
   const { user, loading } = useAuth();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [hideSettingsNav, setHideSettingsNav] = useState(false);
+  const showExitToast = useDoubleBackToExit();
   const { 
     currentTab, 
     detailsMedia,
@@ -126,7 +165,7 @@ function AppContent() {
           <PlayerView 
             media={playingMedia} 
             onBack={navigateBack} 
-            onPlay={handlePlay}
+            onPlay={navigateDetails}
           />
         </div>
       )}
@@ -148,6 +187,15 @@ function AppContent() {
 
       {/* PWA Update and Install Prompts */}
       <PWAPrompt />
+
+      {/* Double Back to Exit Toast */}
+      {showExitToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-zinc-800/90 backdrop-blur-md text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg border border-white/10">
+            Press back again to exit
+          </div>
+        </div>
+      )}
     </div>
   );
 }

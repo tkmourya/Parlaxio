@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getTrending, getPopular, getTopRated, getBollywood, getPopularTV, getCombinedByGenre, getAnimeByFilter, getSeriesByFilter, getMoviesByFilter } from '../lib/tmdb';
+import { getTrending, getPopular, getTopRated, getBollywood, getSouthIndian, getPopularTV, getCombinedByGenre, getAnimeByFilter, getSeriesByFilter, getMoviesByFilter } from '../lib/tmdb';
 import { Movie } from '../types';
 import { Hero } from '../components/Hero';
 import { MovieRow } from '../components/MovieRow';
@@ -39,6 +39,8 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
   const [korean, setKorean] = useState<Movie[]>([]);
   const [hollywood, setHollywood] = useState<Movie[]>([]);
   const [indianSeries, setIndianSeries] = useState<Movie[]>([]);
+  const [southIndian, setSouthIndian] = useState<Movie[]>([]);
+  const [southSeries, setSouthSeries] = useState<Movie[]>([]);
   const [documentaries, setDocumentaries] = useState<Movie[]>([]);
   const [action, setAction] = useState<Movie[]>([]);
   
@@ -56,16 +58,18 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
   useEffect(() => {
     async function loadData() {
       try {
-        const [trendRes, popRes, topRes, bollyRes, seriesRes, animeRes, koreanRes, hollyRes, indianRes, docRes, actionRes] = await Promise.all([
+        const [trendRes, popRes, topRes, bollyRes, southRes, seriesRes, animeRes, koreanRes, hollyRes, indianRes, southSeriesRes, docRes, actionRes] = await Promise.all([
           getTrending(),
           getPopular(),
           getTopRated(),
           getBollywood(),
+          getSouthIndian(),
           getPopularTV(),
           getAnimeByFilter('all'),
           getSeriesByFilter('korean'),
           getMoviesByFilter('hollywood'),
           getSeriesByFilter('indian'),
+          getSeriesByFilter('south_indian'),
           getMoviesByFilter('99'),
           getMoviesByFilter('28')
         ]);
@@ -73,11 +77,13 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
         setPopular(popRes.results);
         setTopRated(topRes.results);
         setBollywood(bollyRes.results);
+        setSouthIndian(southRes.results);
         setSeries(seriesRes.results);
         setAnime(animeRes.results);
         setKorean(koreanRes.results);
         setHollywood(hollyRes.results);
         setIndianSeries(indianRes.results);
+        setSouthSeries(southSeriesRes.results);
         setDocumentaries(docRes.results);
         setAction(actionRes.results);
       } catch (err) {
@@ -215,6 +221,14 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
               onPlay={onPlay} 
             />
 
+            {/* South Indian Hits */}
+            <MovieRow 
+              title="South Indian Hits" 
+              movies={southIndian} 
+              fetchFn={getSouthIndian}
+              onPlay={onPlay} 
+            />
+
             {/* Trending Series */}
             <MovieRow 
               title="Trending Series" 
@@ -255,6 +269,15 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
               title="Indian Web Series" 
               movies={indianSeries} 
               fetchFn={(page) => getSeriesByFilter('indian', page)}
+              onPlay={onPlay}
+              defaultType="tv" 
+            />
+
+            {/* South Indian Web Series */}
+            <MovieRow 
+              title="South Indian Web Series" 
+              movies={southSeries} 
+              fetchFn={(page) => getSeriesByFilter('south_indian', page)}
               onPlay={onPlay}
               defaultType="tv" 
             />

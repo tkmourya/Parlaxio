@@ -16,6 +16,7 @@ const FILTERS = [
   { id: '16', label: 'Animation' },
   { id: 'korean', label: 'K-Drama' },
   { id: 'indian', label: 'Indian' },
+  { id: 'south_indian', label: 'South Indian' },
   { id: 'western', label: 'Western' }
 ];
 

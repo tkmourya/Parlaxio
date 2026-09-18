@@ -53,6 +53,7 @@ export const searchMovies = (query: string, page = 1) => fetchFromTMDB<TMDBRespo
 
 // New Endpoints
 export const getBollywood = (page = 1) => fetchFromTMDB<TMDBResponse>(`/discover/movie?with_original_language=hi&region=IN&sort_by=popularity.desc&page=${page}`);
+export const getSouthIndian = (page = 1) => fetchFromTMDB<TMDBResponse>(`/discover/movie?with_original_language=ta|te|ml|kn&region=IN&sort_by=popularity.desc&page=${page}`);
 export const getPopularTV = (page = 1) => fetchFromTMDB<TMDBResponse>(`/tv/popular?page=${page}`);
 export const getTrendingTV = (page = 1) => fetchFromTMDB<TMDBResponse>(`/trending/tv/day?page=${page}`);
 export const getRecommendations = (type: 'movie' | 'tv', id: number, page = 1) => fetchFromTMDB<TMDBResponse>(`/${type}/${id}/recommendations?page=${page}`);
@@ -65,6 +66,7 @@ export const getMoviesByFilter = (filter: string, page = 1) => {
   switch(filter) {
     case 'hollywood': return fetchFromTMDB<TMDBResponse>(`/discover/movie?with_original_language=en&region=US&sort_by=popularity.desc&page=${page}`);
     case 'bollywood': return fetchFromTMDB<TMDBResponse>(`/discover/movie?with_original_language=hi&region=IN&sort_by=popularity.desc&page=${page}`);
+    case 'south_indian': return fetchFromTMDB<TMDBResponse>(`/discover/movie?with_original_language=ta|te|ml|kn&region=IN&sort_by=popularity.desc&page=${page}`);
     case 'hindi': return fetchFromTMDB<TMDBResponse>(`/discover/movie?with_original_language=hi&sort_by=popularity.desc&page=${page}`);
     default: return getPopular(page);
   }
@@ -76,6 +78,7 @@ export const getSeriesByFilter = (filter: string, page = 1) => {
   }
   switch(filter) {
     case 'indian': return fetchFromTMDB<TMDBResponse>(`/discover/tv?with_original_language=hi&with_origin_country=IN&with_networks=213|1024|3919|196|1104|19106|3186&sort_by=popularity.desc&page=${page}`);
+    case 'south_indian': return fetchFromTMDB<TMDBResponse>(`/discover/tv?with_original_language=ta|te|ml|kn&with_origin_country=IN&with_networks=213|1024|3919|196|1104|19106|3186&sort_by=popularity.desc&page=${page}`);
     case 'korean': return fetchFromTMDB<TMDBResponse>(`/discover/tv?with_original_language=ko&with_origin_country=KR&sort_by=popularity.desc&page=${page}`);
     case 'japanese': return fetchFromTMDB<TMDBResponse>(`/discover/tv?with_original_language=ja&with_origin_country=JP&without_genres=16&sort_by=popularity.desc&page=${page}`);
     case 'western': return fetchFromTMDB<TMDBResponse>(`/discover/tv?with_original_language=en&with_origin_country=US|GB&sort_by=popularity.desc&page=${page}`);

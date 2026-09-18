@@ -17,6 +17,7 @@ const FILTERS = [
   { id: '10749', label: 'Romance' },
   { id: '16', label: 'Animation' },
   { id: 'bollywood', label: 'Bollywood' },
+  { id: 'south_indian', label: 'South Indian' },
   { id: 'hollywood', label: 'Hollywood' }
 ];
 

@@ -20,6 +20,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
+  const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
 
   // TV specific state
   const [selectedSeason, setSelectedSeason] = useState(1);
@@ -137,6 +138,26 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
   const runtimeHours = details.runtime ? Math.floor(details.runtime / 60) : 0;
   const runtimeMinutes = details.runtime ? details.runtime % 60 : 0;
 
+  const getAgeRating = () => {
+    if (!details) return null;
+    let rating = '';
+    if (media.type === 'movie' && (details as any).release_dates?.results) {
+      const usRelease = (details as any).release_dates.results.find((r: any) => r.iso_3166_1 === 'US');
+      const inRelease = (details as any).release_dates.results.find((r: any) => r.iso_3166_1 === 'IN');
+      const release = usRelease || inRelease;
+      
+      if (release) {
+        const validDate = release.release_dates?.find((d: any) => d.certification && d.certification !== '');
+        if (validDate) rating = validDate.certification;
+      }
+    } else if (media.type === 'tv' && (details as any).content_ratings?.results) {
+      const contentRating = (details as any).content_ratings.results.find((r: any) => (r.iso_3166_1 === 'US' || r.iso_3166_1 === 'IN') && r.rating);
+      rating = contentRating?.rating || '';
+    }
+    return rating || (details.adult ? '18+' : 'U/A 16+');
+  };
+  const ageRating = getAgeRating();
+
   return (
     <div className="min-h-screen bg-black text-white pb-32 animate-in fade-in duration-300">
       
@@ -162,18 +183,18 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
         )}
         
         {/* Cinematic Vignette Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/10 to-transparent" />
       </div>
 
       {/* Content Body */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 md:px-12 -mt-36 md:-mt-52 space-y-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 md:px-12 -mt-44 md:-mt-60 space-y-10">
         
         {/* Main Header Info Box */}
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
           
           {/* Poster Card */}
-          <div className="w-36 sm:w-48 md:w-56 aspect-[2/3] rounded-2xl overflow-hidden bg-zinc-900 border border-white/15 shadow-2xl shrink-0 hidden sm:block">
+          <div className="w-36 sm:w-48 md:w-56 aspect-[2/3] rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 shadow-lg shrink-0 hidden sm:block">
             {details.poster_path ? (
               <img 
                 src={getImageUrl(details.poster_path, 'w500')} 
@@ -186,7 +207,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
           </div>
 
           {/* Details & Actions */}
-          <div className="space-y-4 max-w-3xl flex-1">
+          <div className="space-y-4 max-w-3xl flex-1 min-w-0 w-full">
             
             {/* Title */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
@@ -194,51 +215,90 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
             </h1>
 
             {/* Badges & Meta row */}
-            <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-zinc-300">
+            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm font-semibold text-zinc-300">
               {details.vote_average > 0 && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-bold">
-                  <Star size={13} fill="currentColor" />
+                <div className="flex items-center gap-1 text-yellow-500 font-bold">
+                  <Star size={14} fill="currentColor" />
                   <span>{details.vote_average.toFixed(1)}</span>
                 </div>
               )}
 
               {releaseYear && (
-                <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 flex items-center gap-1">
-                  <Calendar size={12} className="text-zinc-400" />
-                  {releaseYear}
-                </span>
+                <>
+                  <span className="text-zinc-600">&bull;</span>
+                  <span>{releaseYear}</span>
+                </>
               )}
 
               {media.type === 'tv' && details.number_of_seasons && (
-                <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10">
-                  {details.number_of_seasons} Season{details.number_of_seasons !== 1 ? 's' : ''}
-                </span>
+                <>
+                  <span className="text-zinc-600">&bull;</span>
+                  <span>{details.number_of_seasons} Season{details.number_of_seasons !== 1 ? 's' : ''}</span>
+                </>
+              )}
+
+              {ageRating && (
+                <>
+                  <span className="text-zinc-600">&bull;</span>
+                  <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold bg-zinc-800 text-zinc-300 uppercase">
+                    {ageRating}
+                  </span>
+                </>
               )}
 
               {details.runtime && details.runtime > 0 && (
-                <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/10 flex items-center gap-1">
-                  <Clock size={12} className="text-zinc-400" />
-                  {runtimeHours > 0 ? `${runtimeHours}h ` : ''}{runtimeMinutes}m
-                </span>
+                <>
+                  <span className="text-zinc-600">&bull;</span>
+                  <span>{runtimeHours > 0 ? `${runtimeHours}h ` : ''}{runtimeMinutes}m</span>
+                </>
               )}
 
-              <span className="px-2 py-0.5 rounded uppercase text-[10px] font-bold bg-white/10 text-zinc-300 border border-white/10">
+              <span className="hidden md:inline text-zinc-600">&bull;</span>
+              <span className="hidden md:inline uppercase text-xs font-bold text-zinc-400">
                 {media.type === 'tv' ? 'Series' : 'Movie'}
               </span>
 
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/15 border border-red-500/30 text-red-400 flex items-center">
-                4K ULTRA HD
+              <span className="text-zinc-600">&bull;</span>
+              <span className="text-xs font-extrabold bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-transparent">
+                4K
               </span>
             </div>
 
             {/* Genres */}
             {details.genres && details.genres.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {details.genres.map(g => (
-                  <span key={g.id} className="text-xs text-zinc-400 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                    {g.name}
-                  </span>
-                ))}
+              <div className="pt-1 text-xs md:text-sm text-zinc-400 font-medium break-words">
+                {details.genres.map(g => g.name).join(' • ')}
+              </div>
+            )}
+
+            {/* Available Languages (Inferred from TMDB Translations) */}
+            {details.translations?.translations && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-xs md:text-sm text-zinc-400 mr-1">Languages:</span>
+                <span className="text-xs md:text-sm text-zinc-400">
+                  {Array.from(new Set(
+                    details.translations.translations
+                      .filter((t: any) => ['hi', 'en', 'te', 'ta', 'ja', 'ko', 'es', 'fr', 'de'].includes(t.iso_639_1))
+                      .map((t: any) => t.english_name)
+                  )).join(', ')}
+                </span>
+              </div>
+            )}
+
+            {/* Synopsis / Storyline */}
+            {details.overview && (
+              <div className="pt-2 space-y-1">
+                <p className={`text-zinc-400 text-sm md:text-base leading-relaxed max-w-3xl ${!isOverviewExpanded ? 'line-clamp-3 md:line-clamp-4' : ''}`}>
+                  {details.overview}
+                </p>
+                {details.overview.length > 150 && (
+                  <button 
+                    onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
+                    className="text-white text-xs font-bold mt-1 hover:underline cursor-pointer"
+                  >
+                    {isOverviewExpanded ? 'Show Less' : 'Show More'}
+                  </button>
+                )}
               </div>
             )}
 
@@ -273,16 +333,6 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
                 <span className="hidden md:inline">{saved ? "Watchlisted" : "Watchlist"}</span>
               </button>
             </div>
-
-            {/* Synopsis / Storyline */}
-            {details.overview && (
-              <div className="pt-3 space-y-1.5">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Storyline</h3>
-                <p className="text-zinc-300 text-sm md:text-base leading-relaxed max-w-3xl line-clamp-3 md:line-clamp-4">
-                  {details.overview}
-                </p>
-              </div>
-            )}
 
           </div>
 
