@@ -16,10 +16,12 @@ export function SearchView({ onPlay }: { onPlay: (id: number, type: 'movie' | 't
     setLoading(true);
     try {
       const res = await searchMovies(searchQuery, pageNum);
+      const validResults = res.results.filter((m: any) => m.media_type === 'movie' || m.media_type === 'tv');
+      
       setResults(prev => {
-        if (pageNum === 1) return res.results;
+        if (pageNum === 1) return validResults;
         const newRes = [...prev];
-        res.results.forEach(m => {
+        validResults.forEach((m: any) => {
           if (!newRes.find(existing => existing.id === m.id)) {
             newRes.push(m);
           }
@@ -81,11 +83,9 @@ export function SearchView({ onPlay }: { onPlay: (id: number, type: 'movie' | 't
           ))}
         </div>
 
-        {loading && (
-          <div className="flex justify-center py-10">
-            <Loader2 className="animate-spin text-white/70" size={32} />
-          </div>
-        )}
+        <div className="flex justify-center h-24 items-center">
+          {loading && <Loader2 className="animate-spin text-white/70" size={32} />}
+        </div>
         
         {!loading && query.length >= 2 && results.length === 0 && (
           <div className="text-center text-zinc-500 py-20">

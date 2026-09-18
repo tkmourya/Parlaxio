@@ -142,16 +142,21 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
     if (!details) return null;
     let rating = '';
     if (media.type === 'movie' && (details as any).release_dates?.results) {
-      const usRelease = (details as any).release_dates.results.find((r: any) => r.iso_3166_1 === 'US');
-      const inRelease = (details as any).release_dates.results.find((r: any) => r.iso_3166_1 === 'IN');
-      const release = usRelease || inRelease;
+      const results = (details as any).release_dates.results;
+      const inRelease = results.find((r: any) => r.iso_3166_1 === 'IN' && r.release_dates?.some((d: any) => d.certification));
+      const usRelease = results.find((r: any) => r.iso_3166_1 === 'US' && r.release_dates?.some((d: any) => d.certification));
+      const anyRelease = results.find((r: any) => r.release_dates?.some((d: any) => d.certification));
+      const release = inRelease || usRelease || anyRelease;
       
       if (release) {
         const validDate = release.release_dates?.find((d: any) => d.certification && d.certification !== '');
         if (validDate) rating = validDate.certification;
       }
     } else if (media.type === 'tv' && (details as any).content_ratings?.results) {
-      const contentRating = (details as any).content_ratings.results.find((r: any) => (r.iso_3166_1 === 'US' || r.iso_3166_1 === 'IN') && r.rating);
+      const inRating = (details as any).content_ratings.results.find((r: any) => r.iso_3166_1 === 'IN' && r.rating);
+      const usRating = (details as any).content_ratings.results.find((r: any) => r.iso_3166_1 === 'US' && r.rating);
+      const anyRating = (details as any).content_ratings.results.find((r: any) => r.rating);
+      const contentRating = inRating || usRating || anyRating;
       rating = contentRating?.rating || '';
     }
     return rating || (details.adult ? '18+' : 'U/A 16+');
