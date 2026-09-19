@@ -159,7 +159,12 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
       const contentRating = inRating || usRating || anyRating;
       rating = contentRating?.rating || '';
     }
-    return rating || (details.adult ? '18+' : 'U/A 16+');
+
+    if (/^\d+$/.test(rating)) {
+      rating = parseInt(rating, 10) >= 18 ? '18+' : `U/A ${rating}+`;
+    }
+
+    return rating || (details.adult ? '18+' : '');
   };
   const ageRating = getAgeRating();
 
@@ -245,7 +250,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
               {ageRating && (
                 <>
                   <span className="text-zinc-600">&bull;</span>
-                  <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold bg-zinc-800 text-zinc-300 uppercase">
+                  <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold bg-white/10 backdrop-blur-md text-white/90 uppercase border-0">
                     {ageRating}
                   </span>
                 </>

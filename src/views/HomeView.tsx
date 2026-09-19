@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getTrending, getPopular, getTopRated, getBollywood, getSouthIndian, getPopularTV, getCombinedByGenre, getAnimeByFilter, getSeriesByFilter, getMoviesByFilter } from '../lib/tmdb';
+import { getTrending, getPopular, getTopRated, getBollywood, getSouthIndian, getPopularTV, getCombinedByGenre, getAnimeByFilter, getSeriesByFilter, getMoviesByFilter, getTrendingAll, getTrendingIndia } from '../lib/tmdb';
 import { Movie } from '../types';
 import { Hero } from '../components/Hero';
 import { MovieRow } from '../components/MovieRow';
@@ -43,6 +43,8 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
   const [southSeries, setSouthSeries] = useState<Movie[]>([]);
   const [documentaries, setDocumentaries] = useState<Movie[]>([]);
   const [action, setAction] = useState<Movie[]>([]);
+  const [trendingAll, setTrendingAll] = useState<Movie[]>([]);
+  const [trendingIndia, setTrendingIndia] = useState<Movie[]>([]);
   
   const [loading, setLoading] = useState(true);
   
@@ -58,7 +60,7 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
   useEffect(() => {
     async function loadData() {
       try {
-        const [trendRes, popRes, topRes, bollyRes, southRes, seriesRes, animeRes, koreanRes, hollyRes, indianRes, southSeriesRes, docRes, actionRes] = await Promise.all([
+        const [trendRes, popRes, topRes, bollyRes, southRes, seriesRes, animeRes, koreanRes, hollyRes, indianRes, southSeriesRes, docRes, actionRes, trendAllRes, trendIndiaRes] = await Promise.all([
           getTrending(),
           getPopular(),
           getTopRated(),
@@ -71,7 +73,9 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
           getSeriesByFilter('indian'),
           getSeriesByFilter('south_indian'),
           getMoviesByFilter('99'),
-          getMoviesByFilter('28')
+          getMoviesByFilter('28'),
+          getTrendingAll(),
+          getTrendingIndia()
         ]);
         setTrending(trendRes.results);
         setPopular(popRes.results);
@@ -86,6 +90,8 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
         setSouthSeries(southSeriesRes.results);
         setDocumentaries(docRes.results);
         setAction(actionRes.results);
+        setTrendingAll(trendAllRes.results);
+        setTrendingIndia(trendIndiaRes.results);
       } catch (err) {
         console.error("Failed to load TMDB data", err);
       } finally {
@@ -184,7 +190,7 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
             {/* Top 10 Today */}
             <MovieRow 
               title="Top 10 Today" 
-              movies={trending} 
+              movies={trendingAll} 
               onPlay={onPlay} 
               isTop10={true}
             />
@@ -194,6 +200,13 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
               title="Trending Now" 
               movies={trending} 
               fetchFn={getTrending}
+              onPlay={onPlay} 
+            />
+
+            {/* Trending in India */}
+            <MovieRow 
+              title="Trending in India" 
+              movies={trendingIndia} 
               onPlay={onPlay} 
             />
 

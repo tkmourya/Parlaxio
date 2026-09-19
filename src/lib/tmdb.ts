@@ -47,6 +47,8 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
 }
 
 export const getTrending = (page = 1) => fetchFromTMDB<TMDBResponse>(`/trending/movie/day?page=${page}`);
+export const getTrendingAll = (page = 1) => fetchFromTMDB<TMDBResponse>(`/trending/all/day?page=${page}`);
+export const getTrendingIndia = (page = 1) => fetchFromTMDB<TMDBResponse>(`/discover/movie?with_origin_country=IN&sort_by=popularity.desc&page=${page}`);
 export const getPopular = (page = 1) => fetchFromTMDB<TMDBResponse>(`/movie/popular?page=${page}`);
 export const getTopRated = (page = 1) => fetchFromTMDB<TMDBResponse>(`/movie/top_rated?page=${page}`);
 export const searchMovies = (query: string, page = 1) => fetchFromTMDB<TMDBResponse>(`/search/multi?query=${encodeURIComponent(query)}&page=${page}`);

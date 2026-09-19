@@ -46,8 +46,7 @@ export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
       try {
         // comma lagakar aur bhi .m3u links add kar sakte hain
         const playlists = [
-          'https://iptv-org.github.io/iptv/countries/in.m3u',
-          // 'http://localhost:5001/playlist.m3u' // Future JioTV-Go link
+          'https://iptv-org.github.io/iptv/countries/in.m3u'
         ];
 
         let allParsedChannels: Channel[] = [];
@@ -70,7 +69,7 @@ export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
                 currentChannel = {
                   id: Math.random().toString(36).substr(2, 9),
                   logo: logoMatch ? logoMatch[1] : '',
-                  group: groupMatch ? groupMatch[1] : 'Uncategorized',
+                  group: groupMatch ? groupMatch[1].replace(/;/g, ' & ') : 'Uncategorized',
                   name: nameMatch ? nameMatch.trim() : 'Unknown Channel'
                 };
               } else if (line && !line.startsWith('#')) {
