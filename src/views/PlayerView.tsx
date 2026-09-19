@@ -89,15 +89,15 @@ const STREAM_SERVERS = [
         : `https://embed.smashystream.com/playere.php?tmdb=${id}`
   },
   {
-    id: 'embed_su',
-    name: 'Server 8 (Embed.su)',
-    desc: 'High Speed Global CDN',
+    id: 'autoembed',
+    name: 'Server 8 (AutoEmbed)',
+    desc: 'High Speed Multi-Server CDN',
     quality: '1080p HD',
-    badge: 'Embed.su',
+    badge: 'Auto',
     getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
       type === 'tv'
-        ? `https://embed.su/embed/tv/${id}/${s}/${e}`
-        : `https://embed.su/embed/movie/${id}`
+        ? `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`
+        : `https://multiembed.mov/?video_id=${id}&tmdb=1`
   }
 ];
 
