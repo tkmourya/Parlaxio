@@ -1,4 +1,5 @@
 import { ArrowLeft, Play, Bookmark, Check, Info, Server, X, Loader2, Star } from 'lucide-react';
+import { loadDefaultServer } from '../lib/preferences';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSmartRecommendations, getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos } from '../lib/tmdb';
 import { Movie, Cast, Episode, Video } from '../types';
@@ -87,17 +88,6 @@ const STREAM_SERVERS = [
       type === 'tv'
         ? `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&ep=${e}`
         : `https://embed.smashystream.com/playere.php?tmdb=${id}`
-  },
-  {
-    id: 'autoembed',
-    name: 'Server 8 (AutoEmbed)',
-    desc: 'High Speed Multi-Server CDN',
-    quality: '1080p HD',
-    badge: 'Auto',
-    getUrl: (id: number, type: 'movie' | 'tv', s: number, e: number, isAnime?: boolean) =>
-      type === 'tv'
-        ? `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`
-        : `https://multiembed.mov/?video_id=${id}&tmdb=1`
   }
 ];
 
@@ -295,7 +285,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
     setPage(prev => prev + 1);
   }, loadingRecs, hasMore);
 
-  const [selectedServer, setSelectedServer] = useState(0);
+  const defaultServerIdx = loadDefaultServer();
+  const [selectedServer, setSelectedServer] = useState(defaultServerIdx < STREAM_SERVERS.length ? defaultServerIdx : 0);
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
   const [isSeasonDropdownOpen, setIsSeasonDropdownOpen] = useState(false);
 

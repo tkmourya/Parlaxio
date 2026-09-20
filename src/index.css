@@ -5,16 +5,23 @@
 }
 
 html, body {
-  background-color: #000000 !important;
+  background-color: var(--color-theme-bg, #000000) !important;
   color: #fff;
   overscroll-behavior-y: none;
   margin: 0;
   padding: 0;
 }
 
+/* Theme Backgrounds */
+html[data-theme="default"] { --color-theme-bg: #000000; }
+html[data-theme="midnight"] { --color-theme-bg: #060a1f; }
+html[data-theme="crimson"] { --color-theme-bg: #1a0505; }
+html[data-theme="forest"] { --color-theme-bg: #05140b; }
+html[data-theme="amethyst"] { --color-theme-bg: #13081c; }
+
 /* Fix for Android PWA 1px status bar gap glitch */
 #root {
-  background-color: #000000;
+  background-color: var(--color-theme-bg, #000000) !important;
   min-height: 100vh;
   min-height: 100dvh;
   box-shadow: 0 -2px 0 0 #000000; /* Absorbs any top sub-pixel gap */

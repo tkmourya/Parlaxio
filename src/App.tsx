@@ -19,6 +19,7 @@ import { TopNav } from './components/TopNav';
 import { PWAPrompt } from './components/PWAPrompt';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { useRouter } from './lib/router';
+import { loadTheme } from './lib/preferences';
 
 function useDoubleBackToExit() {
   const [showExitToast, setShowExitToast] = useState(false);
@@ -87,6 +88,10 @@ function AppContent() {
 
   // API Key is now handled securely by Vercel Serverless Function in production
   // We no longer block the UI here.
+
+  useEffect(() => {
+    loadTheme();
+  }, []);
 
   useEffect(() => {
     if (!loading && playingMedia && !user) {

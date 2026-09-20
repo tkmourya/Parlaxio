@@ -9,6 +9,7 @@ import { WatchlistView } from './WatchlistView';
 import { useAuth } from '../lib/AuthContext';
 import { getWatchlist } from '../lib/storage';
 import { useWatchHistory } from '../hooks/useWatchHistory';
+import { THEMES, saveTheme, loadTheme, saveDefaultServer, loadDefaultServer } from '../lib/preferences';
 
 interface SettingsViewProps {
   onPlay: (id: number, type: 'movie' | 'tv') => void;
@@ -38,7 +39,20 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
 
   // Selectable options
   const [videoQuality, setVideoQuality] = useState('4K (2160p)');
-  const [streamingServer, setStreamingServer] = useState('Server 1 (Fast)');
+  
+  const [serverIdx, setServerIdx] = useState(loadDefaultServer());
+  const [currentTheme, setCurrentTheme] = useState(loadTheme());
+  
+  const SERVERS = [
+    { val: 0, label: 'Server 1 (VidLink)', ping: '18ms', desc: '4K & 1080p Ultra HD' },
+    { val: 1, label: 'Server 2 (VidSrc SBS)', ping: '24ms', desc: 'High Speed Multi-Source HD' },
+    { val: 2, label: 'Server 3 (VidCore)', ping: '32ms', desc: 'Alternative Fast Server' },
+    { val: 3, label: 'Server 4 (2Embed)', ping: '45ms', desc: 'Stable Global CDN Node' },
+    { val: 4, label: 'Server 5 (VidSrc Buzz)', ping: '50ms', desc: 'Reliable Streaming Network' },
+    { val: 5, label: 'Server 6 (VidSrc CC)', ping: '42ms', desc: 'Reliable Streaming Network' },
+    { val: 6, label: 'Server 7 (SmashS)', ping: '60ms', desc: 'Multi-Audio & Hindi Dub' }
+  ];
+
   const [audioFormat, setAudioFormat] = useState('Dolby Atmos');
   const [subSize, setSubSize] = useState('Medium');
 
@@ -616,7 +630,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                 </div>
 
                 <div className="flex items-center gap-1.5 text-xs text-zinc-300">
-                  <span className="font-semibold">{streamingServer}</span>
+                  <span className="font-semibold">{SERVERS.find(s => s.val === serverIdx)?.label || 'Server 1'}</span>
                   {expandedRow === 'server' ? <ChevronDown size={15} className="text-zinc-400" /> : <ChevronRight size={15} className="text-zinc-500" />}
                 </div>
               </button>
@@ -624,26 +638,73 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
               {/* Vertical Server Options Accordion */}
               {expandedRow === 'server' && (
                 <div className="px-4 py-2 bg-black/40 border-t border-white/5 space-y-1">
-                  {[
-                    { val: 'Server 1 (Fast)', ping: '18ms', desc: 'High-speed edge node' },
-                    { val: 'Server 2 (Auto)', ping: '24ms', desc: 'Adaptive regional mirror' },
-                    { val: 'Server 3 (HD)', ping: '32ms', desc: 'Direct fallback stream' }
-                  ].map((item) => (
+                  {SERVERS.map((item) => (
                     <button
                       key={item.val}
                       onClick={() => {
-                        setStreamingServer(item.val);
+                        setServerIdx(item.val);
+                        saveDefaultServer(item.val);
                         setExpandedRow(null);
                       }}
                       className="w-full flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 transition text-left cursor-pointer"
                     >
                       <div>
-                        <span className={`text-xs font-semibold block ${streamingServer === item.val ? 'text-white' : 'text-zinc-300'}`}>
-                          {item.val}
+                        <span className={`text-xs font-semibold block ${serverIdx === item.val ? 'text-white' : 'text-zinc-300'}`}>
+                          {item.label}
                         </span>
                         <span className="text-[10px] text-zinc-500">{item.desc} • {item.ping}</span>
                       </div>
-                      {streamingServer === item.val && <Check size={14} className="text-zinc-200" />}
+                      {serverIdx === item.val && <Check size={14} className="text-zinc-200" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Theme Row */}
+            <div>
+              <button
+                onClick={() => toggleExpand('theme')}
+                className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 flex items-center justify-center">
+                    <LayoutGrid size={16} />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-white block">App Theme</span>
+                    <span className="text-[11px] text-zinc-400">Choose your vibe</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-xs text-zinc-300">
+                  <span className="font-semibold">{THEMES.find(t => t.id === currentTheme)?.name || 'Default'}</span>
+                  {expandedRow === 'theme' ? <ChevronDown size={15} className="text-zinc-400" /> : <ChevronRight size={15} className="text-zinc-500" />}
+                </div>
+              </button>
+
+              {/* Vertical Theme Options Accordion */}
+              {expandedRow === 'theme' && (
+                <div className="px-4 py-2 bg-black/40 border-t border-white/5 space-y-1">
+                  {THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      onClick={() => {
+                        setCurrentTheme(theme.id);
+                        saveTheme(theme.id);
+                      }}
+                      className="w-full flex items-center justify-between py-2 px-3 rounded-xl hover:bg-white/5 transition text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: theme.color }}></div>
+                        <div>
+                          <span className={`text-xs font-semibold block ${currentTheme === theme.id ? 'text-white' : 'text-zinc-300'}`}>
+                            {theme.name}
+                          </span>
+                          <span className="text-[10px] text-zinc-500">{theme.desc}</span>
+                        </div>
+                      </div>
+                      {currentTheme === theme.id && <Check size={14} className="text-zinc-200" />}
                     </button>
                   ))}
                 </div>

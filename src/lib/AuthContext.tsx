@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { account, ID } from './appwrite';
+import { loadTheme } from './preferences';
 
 export interface User {
   id: string;
@@ -42,6 +43,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const currentAccount = await account.get();
       if (currentAccount) {
         setUser(mapAppwriteUser(currentAccount));
+        
+        // Sync preferences from Cloud to Local
+        try {
+          const prefs = await account.getPrefs();
+          if (prefs.theme) {
+            localStorage.setItem('parlaxio_theme', prefs.theme);
+            loadTheme();
+          }
+          if (prefs.defaultServer !== undefined) {
+            localStorage.setItem('parlaxio_default_server', prefs.defaultServer.toString());
+          }
+        } catch (prefError) {
+          console.error("Failed to sync prefs", prefError);
+        }
       } else {
         setUser(null);
       }
