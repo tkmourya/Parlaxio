@@ -16,7 +16,7 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
     <>
       {/* Desktop Top Blur Overlay */}
       <div 
-        className="hidden md:block fixed top-0 left-0 right-0 h-32 z-40 bg-gradient-to-b from-black/80 via-black/20 to-transparent pointer-events-none" 
+        className="hidden md:block fixed top-0 left-0 right-0 h-32 z-40 bg-gradient-to-b from-[var(--color-theme-bg)] to-transparent pointer-events-none opacity-80" 
         style={{ backdropFilter: 'blur(8px)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)', maskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)' }}
       ></div>
 
@@ -103,7 +103,7 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
         </header>
       </div>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none pt-safe-top">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-[var(--color-theme-bg)] to-transparent pointer-events-none pt-safe-top opacity-90">
         <div className="flex items-center justify-between p-4 pointer-events-auto">
           <div className="flex items-center cursor-pointer select-none" onClick={() => onChange('home')}>
             <span className="font-brand-stylish font-black text-2xl tracking-[0.14em] uppercase bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">

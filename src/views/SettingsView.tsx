@@ -624,7 +624,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                     <Zap size={16} />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-white block">Streaming Server</span>
+                    <span className="text-sm font-medium text-white block">Server</span>
                     <span className="text-[11px] text-zinc-400">Content delivery provider</span>
                   </div>
                 </div>
