@@ -629,9 +629,9 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-zinc-300">
-                  <span className="font-semibold">{SERVERS.find(s => s.val === serverIdx)?.label || 'Server 1'}</span>
-                  {expandedRow === 'server' ? <ChevronDown size={15} className="text-zinc-400" /> : <ChevronRight size={15} className="text-zinc-500" />}
+                <div className="flex items-center gap-1.5 text-xs text-zinc-300 ml-4 overflow-hidden flex-shrink-0 max-w-[130px] sm:max-w-none">
+                  <span className="font-semibold truncate block w-full text-right">{SERVERS.find(s => s.val === serverIdx)?.label || 'Server 1'}</span>
+                  {expandedRow === 'server' ? <ChevronDown size={15} className="text-zinc-400 flex-shrink-0" /> : <ChevronRight size={15} className="text-zinc-500 flex-shrink-0" />}
                 </div>
               </button>
 
@@ -677,9 +677,9 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-zinc-300">
-                  <span className="font-semibold">{THEMES.find(t => t.id === currentTheme)?.name || 'Default'}</span>
-                  {expandedRow === 'theme' ? <ChevronDown size={15} className="text-zinc-400" /> : <ChevronRight size={15} className="text-zinc-500" />}
+                <div className="flex items-center gap-1.5 text-xs text-zinc-300 ml-4 overflow-hidden flex-shrink-0 max-w-[130px] sm:max-w-none">
+                  <span className="font-semibold truncate block w-full text-right">{THEMES.find(t => t.id === currentTheme)?.name || 'Default'}</span>
+                  {expandedRow === 'theme' ? <ChevronDown size={15} className="text-zinc-400 flex-shrink-0" /> : <ChevronRight size={15} className="text-zinc-500 flex-shrink-0" />}
                 </div>
               </button>
 

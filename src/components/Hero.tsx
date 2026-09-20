@@ -81,9 +81,9 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
           referrerPolicy="no-referrer"
         />
         {/* Gradient Overlays for smooth blending into background */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-        <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-black/50 via-black/20 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/35 to-transparent md:w-3/4 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-[60%] bg-gradient-to-t from-[var(--color-theme-bg)] to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[var(--color-theme-bg)] to-transparent pointer-events-none opacity-70" />
+        <div className="absolute inset-y-0 left-0 w-full md:w-[40%] bg-gradient-to-r from-[var(--color-theme-bg)] to-transparent pointer-events-none opacity-70" />
       </div>
 
       {/* Content */}

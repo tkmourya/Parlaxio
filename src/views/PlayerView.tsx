@@ -332,7 +332,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   const ageRating = getAgeRating();
 
   return (
-    <div className="fixed inset-0 z-50 bg-zinc-950 text-white overflow-y-auto hide-scrollbar animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 bg-transparent text-white overflow-y-auto hide-scrollbar animate-in fade-in duration-300">
 
       {/* Dedicated Player Top Navigation Bar (Frosted Glass, No Border, Icon-Only Buttons, High z-index) */}
       <div className="sticky top-0 left-0 right-0 z-[100] bg-black/50 backdrop-blur-2xl px-4 md:px-8 py-2.5 flex items-center justify-between">

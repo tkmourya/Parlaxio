@@ -124,7 +124,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
 
   if (loading || !details) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+      <div className="min-h-screen bg-transparent flex items-center justify-center text-white">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
           <span className="text-xs text-zinc-400 font-medium">Loading details...</span>
@@ -169,7 +169,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
   const ageRating = getAgeRating();
 
   return (
-    <div className="min-h-screen bg-black text-white pb-32 animate-in fade-in duration-300">
+    <div className="min-h-screen bg-transparent text-white pb-32 animate-in fade-in duration-300">
       
       {/* Floating Back Button */}
       <button 

@@ -154,7 +154,7 @@ function AppContent() {
 
       {/* Movie / Series Details Page */}
       {detailsMedia && !playingMedia && (
-        <div className="fixed inset-0 z-40 bg-black overflow-y-auto">
+        <div className="fixed inset-0 z-40 bg-[var(--color-theme-bg)] overflow-y-auto">
           <DetailsView 
             media={detailsMedia} 
             onBack={navigateBack} 
@@ -166,7 +166,7 @@ function AppContent() {
 
       {/* Fullscreen Video Player Modal */}
       {playingMedia && user && (
-        <div className="fixed inset-0 z-50 bg-black">
+        <div className="fixed inset-0 z-50 bg-[var(--color-theme-bg)]">
           <PlayerView 
             media={playingMedia} 
             onBack={navigateBack} 
