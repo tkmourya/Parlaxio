@@ -193,8 +193,8 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
         )}
         
         {/* Cinematic Vignette Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/10 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-[80%] bg-gradient-to-t from-[var(--color-theme-bg)] to-transparent pointer-events-none" />
+        <div className="absolute inset-y-0 left-0 w-full md:w-[60%] bg-gradient-to-r from-[var(--color-theme-bg)] to-transparent pointer-events-none opacity-80" />
       </div>
 
       {/* Content Body */}

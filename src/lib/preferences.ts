@@ -6,6 +6,7 @@ export const THEMES = [
   { id: 'crimson', name: 'Crimson Glow', desc: 'Dark Maroon Hue', color: '#1a0505' },
   { id: 'forest', name: 'Forest Shadow', desc: 'Deep Pine Green', color: '#05140b' },
   { id: 'amethyst', name: 'Amethyst Purple', desc: 'Dark Royal Purple', color: '#13081c' },
+  { id: 'silver', name: 'Frosted Silver', desc: 'Liquid Glass Gray', color: '#1e2126' },
 ];
 
 export async function saveTheme(themeId: string) {

@@ -18,6 +18,7 @@ html[data-theme="midnight"] { --color-theme-bg: #060a1f; }
 html[data-theme="crimson"] { --color-theme-bg: #1a0505; }
 html[data-theme="forest"] { --color-theme-bg: #05140b; }
 html[data-theme="amethyst"] { --color-theme-bg: #13081c; }
+html[data-theme="silver"] { --color-theme-bg: #1e2126; }
 
 /* Fix for Android PWA 1px status bar gap glitch */
 #root {
