@@ -661,7 +661,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           onClick={() => setIsServerModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-md md:max-w-2xl bg-black/60 backdrop-blur-2xl rounded-3xl p-6 shadow-[0_10px_40px_rgba(255,255,255,0.1)] space-y-5 text-white animate-in zoom-in-95 duration-200"
+            className="relative w-full max-w-md md:max-w-2xl bg-[var(--color-theme-bg)] backdrop-blur-2xl rounded-3xl p-6 shadow-[0_10px_40px_rgba(255,255,255,0.1)] border border-white/10 space-y-5 text-white animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

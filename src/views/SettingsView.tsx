@@ -623,9 +623,9 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                   <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 flex items-center justify-center">
                     <Zap size={16} />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-white block">Server</span>
-                    <span className="text-[11px] text-zinc-400">Content delivery provider</span>
+                    <span className="text-[11px] text-zinc-400 block truncate">Video Source</span>
                   </div>
                 </div>
 
