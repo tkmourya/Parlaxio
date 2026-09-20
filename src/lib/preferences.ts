@@ -13,6 +13,14 @@ export async function saveTheme(themeId: string) {
   localStorage.setItem('parlaxio_theme', themeId);
   document.documentElement.setAttribute('data-theme', themeId);
   
+  const themeObj = THEMES.find(t => t.id === themeId);
+  if (themeObj) {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeObj.color);
+    }
+  }
+  
   // Sync to Cloud
   try {
     const prefs = await account.getPrefs();
@@ -25,6 +33,15 @@ export async function saveTheme(themeId: string) {
 export function loadTheme(): string {
   const theme = localStorage.getItem('parlaxio_theme') || 'default';
   document.documentElement.setAttribute('data-theme', theme);
+  
+  const themeObj = THEMES.find(t => t.id === theme);
+  if (themeObj) {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeObj.color);
+    }
+  }
+  
   return theme;
 }
 
