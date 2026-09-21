@@ -9,6 +9,8 @@ import { SubNav } from '../components/SubNav';
 import { MovieCard } from '../components/MovieCard';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { Loader2, Tv, Signal } from 'lucide-react';
+import { useAuth } from '../lib/AuthContext';
+import { AdBlockModal } from '../components/AdBlockModal';
 
 const HOME_FILTERS = [
   { id: 'all', label: 'All' },
@@ -47,6 +49,20 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
   const [trendingIndia, setTrendingIndia] = useState<Movie[]>([]);
   
   const [loading, setLoading] = useState(true);
+  
+  const { user } = useAuth();
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+
+  // Auto-show AdBlock notice on first login
+  useEffect(() => {
+    if (user) {
+      const hasSeen = localStorage.getItem('parlaxio_seen_ad_notice');
+      if (!hasSeen) {
+        setIsAdModalOpen(true);
+        localStorage.setItem('parlaxio_seen_ad_notice', 'true');
+      }
+    }
+  }, [user]);
   
   // Genre Filter State
   const [filter, setFilter] = useState('all');
@@ -329,6 +345,11 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
           </div>
         )}
       </div>
+
+      <AdBlockModal 
+        isOpen={isAdModalOpen} 
+        onClose={() => setIsAdModalOpen(false)} 
+      />
     </div>
   );
 }

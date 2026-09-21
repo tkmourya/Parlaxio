@@ -3,12 +3,13 @@ import {
   Shield, Bookmark, Play, ChevronRight, Check,
   Trash2, Film, Zap, HardDrive, Volume2, Globe,
   ArrowLeft, LogOut, CheckCircle2, ChevronDown, Clock, User,
-  LayoutGrid, List
+  LayoutGrid, List, ShieldAlert
 } from 'lucide-react';
 import { WatchlistView } from './WatchlistView';
 import { useAuth } from '../lib/AuthContext';
 import { getWatchlist } from '../lib/storage';
 import { useWatchHistory } from '../hooks/useWatchHistory';
+import { AdBlockModal } from '../components/AdBlockModal';
 import { THEMES, saveTheme, loadTheme, saveDefaultServer, loadDefaultServer } from '../lib/preferences';
 
 interface SettingsViewProps {
@@ -23,6 +24,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   const [subView, setSubView] = useState<'watchlist' | 'history' | 'profile' | 'profile-view' | null>(null);
   const [historyLayout, setHistoryLayout] = useState<'list' | 'grid'>('list');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
   // Notify parent (App.tsx) when a subview opens/closes to hide navbars
   useEffect(() => {
@@ -661,6 +663,25 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
               )}
             </div>
 
+            {/* AdBlock Row */}
+            <div>
+              <button
+                onClick={() => setIsAdModalOpen(true)}
+                className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-b from-white to-zinc-400 text-black flex items-center justify-center">
+                    <ShieldAlert size={16} />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-white block">Ad-Free Experience</span>
+                    <span className="text-[11px] text-zinc-400">Block video pop-ups</span>
+                  </div>
+                </div>
+                <ChevronRight size={15} className="text-zinc-500" />
+              </button>
+            </div>
+
             {/* Theme Row */}
             <div>
               <button
@@ -1008,6 +1029,11 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
       </div>
 
       {logoutModal}
+
+      <AdBlockModal 
+        isOpen={isAdModalOpen} 
+        onClose={() => setIsAdModalOpen(false)} 
+      />
     </div>
   );
 }

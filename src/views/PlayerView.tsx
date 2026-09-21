@@ -1,4 +1,4 @@
-import { ArrowLeft, Play, Bookmark, Check, Info, Server, X, Loader2, Star } from 'lucide-react';
+import { ArrowLeft, Play, Bookmark, Check, Info, Server, X, Loader2, Star, ShieldAlert } from 'lucide-react';
 import { loadDefaultServer } from '../lib/preferences';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSmartRecommendations, getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos } from '../lib/tmdb';
@@ -8,6 +8,7 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { isInWatchlist, toggleWatchlist } from '../lib/storage';
 import { TrailerModal } from '../components/TrailerModal';
+import { AdBlockModal } from '../components/AdBlockModal';
 
 const STREAM_SERVERS = [
   {
@@ -288,6 +289,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   const defaultServerIdx = loadDefaultServer();
   const [selectedServer, setSelectedServer] = useState(defaultServerIdx < STREAM_SERVERS.length ? defaultServerIdx : 0);
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
+  const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [isSeasonDropdownOpen, setIsSeasonDropdownOpen] = useState(false);
 
   const activeServer = STREAM_SERVERS[selectedServer] || STREAM_SERVERS[0];
@@ -310,7 +312,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
       const usRelease = results.find((r: any) => r.iso_3166_1 === 'US' && r.release_dates?.some((d: any) => d.certification));
       const anyRelease = results.find((r: any) => r.release_dates?.some((d: any) => d.certification));
       const release = inRelease || usRelease || anyRelease;
-      
+
       if (release) {
         const validDate = release.release_dates?.find((d: any) => d.certification && d.certification !== '');
         if (validDate) rating = validDate.certification;
@@ -455,14 +457,14 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                       </span>
                     </>
                   )}
-                  
+
                   {media.type === 'tv' && details.number_of_seasons && (
                     <>
                       <span className="text-zinc-600">&bull;</span>
                       <span>{details.number_of_seasons} Season{details.number_of_seasons !== 1 ? 's' : ''}</span>
                     </>
                   )}
-                  
+
                   {details.runtime && details.runtime > 0 && (
                     <>
                       <span className="text-zinc-600">&bull;</span>
@@ -492,18 +494,25 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                <button 
+                <button
                   onClick={handleSave}
                   title={saved ? "Remove from Watchlist" : "Add to Watchlist"}
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer group ${
-                    saved 
-                      ? 'bg-white/20 text-white border border-white/20' 
+                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer group ${saved
+                      ? 'bg-white/20 text-white border border-white/20'
                       : 'bg-white/10 hover:bg-white/20 border border-white/15 text-white'
-                  }`}
+                    }`}
                 >
                   <Bookmark size={18} fill={saved ? "currentColor" : "none"} className={!saved ? 'group-hover:scale-110 transition-transform' : ''} />
                 </button>
-                
+
+                <button
+                  onClick={() => setIsAdModalOpen(true)}
+                  title="Block Ads"
+                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center justify-center transition-all duration-300 backdrop-blur-md shadow-md cursor-pointer group"
+                >
+                  <ShieldAlert size={18} className="group-hover:scale-110 transition-transform" />
+                </button>
+
                 {/* Minimal Server Switcher Icon Button */}
                 <button
                   onClick={() => setIsServerModalOpen(true)}
@@ -600,8 +609,8 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
                   {episodesList.map(ep => (
                     <button
                       key={ep.id}
-                      onClick={() => { 
-                        setEpisode(ep.episode_number); 
+                      onClick={() => {
+                        setEpisode(ep.episode_number);
                         setIsPlayingStream(true);
                       }}
                       className={`flex items-start gap-3 p-2.5 rounded-xl text-left transition-all ${episode === ep.episode_number ? 'bg-white/15 shadow-lg' : 'bg-zinc-900/60 hover:bg-white/5'}`}
@@ -730,6 +739,12 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
           </div>
         </div>
       )}
+
+      {/* AdBlock Modal Popup */}
+      <AdBlockModal 
+        isOpen={isAdModalOpen} 
+        onClose={() => setIsAdModalOpen(false)} 
+      />
 
       <TrailerModal trailerKey={trailerKey} onClose={() => setTrailerKey(null)} />
     </div>

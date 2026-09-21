@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await checkSession();
     } catch (error: any) {
       // If a session is already active, just sync the user state and return success
-      if (error?.message?.includes('prohibited when a session is active') || error?.code === 401) {
+      if (error?.message?.includes('prohibited when a session is active')) {
          console.log("Session already active, syncing session state...");
          await checkSession();
          return;
