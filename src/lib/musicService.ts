@@ -1,6 +1,6 @@
 import { Song } from './MusicContext';
 
-const API_BASE = import.meta.env.VITE_MUSIC_API_URL || 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_MUSIC_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
 export interface SearchResult extends Song {
   duration: string;
