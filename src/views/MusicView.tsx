@@ -183,7 +183,7 @@ interface MusicViewProps {
 }
 
 export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
-  const { playSong, currentSong, isPlaying, togglePlay, recentlyPlayed, watchlist, followedArtists, savedPlaylists, isLoading: contextLoading } = useMusic();
+  const { playSong, setQueue, currentSong, isPlaying, togglePlay, recentlyPlayed, watchlist, followedArtists, savedPlaylists, isLoading: contextLoading } = useMusic();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [homeRows, setHomeRows] = useState<HomeRow[]>([]);
@@ -279,6 +279,43 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       onSubViewChange(!!(activeArtistId || activePlaylistId || activeCategory));
     }
   }, [activeArtistId, activePlaylistId, activeCategory, onSubViewChange]);
+
+  // Handle swipe-to-back (popstate) to properly close sub-views instead of exiting the app
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveArtistId(params.get('artist'));
+      
+      const playlist = params.get('playlist') || params.get('album');
+      setActivePlaylistId(playlist);
+      setActivePlaylistType(params.has('album') ? 'album' : params.has('playlist') ? 'playlist' : null);
+      
+      setActiveTitle(params.get('title'));
+      setActiveCategory(null); // Category view doesn't use URL params, so clear it
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleSubViewBack = useCallback(() => {
+    if (window.history.state && window.history.state.musicSubView) {
+      window.history.back();
+    } else {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('artist');
+      newUrl.searchParams.delete('playlist');
+      newUrl.searchParams.delete('album');
+      newUrl.searchParams.delete('title');
+      window.history.replaceState(null, '', newUrl.toString());
+      
+      setActiveArtistId(null);
+      setActivePlaylistId(null);
+      setActivePlaylistType(null);
+      setActiveCategory(null);
+      setActiveTitle(null);
+    }
+  }, []);
 
   // Auto-play song if `song` param exists in URL on initial mount
   useEffect(() => {
@@ -405,6 +442,30 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
     playSong(song, queue);
   };
 
+  const handlePlaySongWithAutoplay = async (song: Song, fallbackList: Song[]) => {
+    // 1. Play immediately for instant feedback
+    playSong(song, [song]);
+    
+    // 2. Fetch smart recommendations in background for the queue
+    try {
+      const recommendations = await getRecommendations(song.id, song.artist);
+      if (recommendations && recommendations.length > 0) {
+        const filteredRecs = recommendations.filter(r => r.id !== song.id);
+        setQueue([song, ...filteredRecs]);
+      } else {
+        // Fallback if no recommendations exist
+        const index = fallbackList.findIndex(s => s.id === song.id);
+        const queue = [...fallbackList.slice(index), ...fallbackList.slice(0, index)];
+        setQueue(queue);
+      }
+    } catch (e) {
+      console.error('Autoplay fetch failed', e);
+      const index = fallbackList.findIndex(s => s.id === song.id);
+      const queue = [...fallbackList.slice(index), ...fallbackList.slice(0, index)];
+      setQueue(queue);
+    }
+  };
+
   const isCurrentSong = (id: string) => currentSong?.id === id;
   const formatDuration = (dur: string | undefined) => dur || '3:45';
   const showSearchResults = searchQuery.trim().length > 0;
@@ -421,14 +482,27 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       key={title}
       title={title}
       items={items}
-      onHeaderClick={() => setActiveCategory({ title, items })}
+      onHeaderClick={() => {
+        window.history.pushState({ musicSubView: true }, '', window.location.href);
+        setActiveCategory({ title, items });
+      }}
       onItemClick={(item) => {
         const isPlaylist = item.type === 'playlist' || item.type === 'album';
         const itemTitle = item.title || item.name || null;
         if (item.type === 'artist') {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set('artist', item.id);
+          if (itemTitle) newUrl.searchParams.set('title', itemTitle);
+          window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+          
           setActiveTitle(itemTitle);
           setActiveArtistId(item.id);
         } else if (isPlaylist) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set(item.type, item.id);
+          if (itemTitle) newUrl.searchParams.set('title', itemTitle);
+          window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+
           setActiveTitle(itemTitle);
           setActivePlaylistType(item.type);
           setActivePlaylistId(item.id);
@@ -446,11 +520,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       <PlaylistView 
         id={activePlaylistId} 
         type={activePlaylistType} 
-        onBack={() => {
-          setActivePlaylistId(null);
-          setActivePlaylistType(null);
-          setActiveTitle(null);
-        }} 
+        onBack={handleSubViewBack} 
       />
     );
   }
@@ -459,12 +529,15 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
     return (
       <ArtistView 
         id={activeArtistId} 
-        onBack={() => {
-          setActiveArtistId(null);
-          setActiveTitle(null);
-        }} 
+        onBack={handleSubViewBack} 
         onPlaylistClick={(item) => {
-          setActiveTitle(item.title || null);
+          const itemTitle = item.title || null;
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set(item.type, item.id);
+          if (itemTitle) newUrl.searchParams.set('title', itemTitle);
+          window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+
+          setActiveTitle(itemTitle);
           setActivePlaylistType(item.type as 'playlist'|'album');
           setActivePlaylistId(item.id);
         }} 
@@ -477,14 +550,24 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       <CategoryView 
         title={activeCategory.title}
         items={activeCategory.items}
-        onBack={() => setActiveCategory(null)}
+        onBack={handleSubViewBack}
         onItemClick={(item) => {
           const isPlaylist = item.type === 'playlist' || item.type === 'album';
           const itemTitle = item.title || item.name || null;
           if (item.type === 'artist') {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('artist', item.id);
+            if (itemTitle) newUrl.searchParams.set('title', itemTitle);
+            window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+            
             setActiveTitle(itemTitle);
             setActiveArtistId(item.id);
           } else if (isPlaylist) {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set(item.type, item.id);
+            if (itemTitle) newUrl.searchParams.set('title', itemTitle);
+            window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+
             setActiveTitle(itemTitle);
             setActivePlaylistType(item.type);
             setActivePlaylistId(item.id);
@@ -636,7 +719,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                 searchResults.map((song, index) => (
                   <div
                     key={song.id}
-                    onClick={() => handlePlaySong(song, searchResults)}
+                    onClick={() => handlePlaySongWithAutoplay(song, searchResults)}
                     className={`flex items-center gap-4 px-5 py-3 cursor-pointer transition-colors group ${
                       isCurrentSong(song.id) ? 'bg-white/10' : 'hover:bg-white/[0.05]'
                     } ${index < searchResults.length - 1 ? 'border-b border-white/[0.04]' : ''}`}
@@ -938,7 +1021,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                 searchResults.map(song => (
                   <div
                     key={song.id}
-                    onClick={() => handlePlaySong(song, searchResults)}
+                    onClick={() => handlePlaySongWithAutoplay(song, searchResults)}
                     className={`flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${
                       isCurrentSong(song.id) ? 'bg-white/10' : 'active:bg-white/[0.06]'
                     }`}

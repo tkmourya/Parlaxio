@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, Play, Pause, Disc3, Loader2, Heart, Share2, MoreHorizontal, Radio, Copy, CheckCircle2, Music, Sparkles } from 'lucide-react';
+import { ChevronLeft, Play, Pause, Disc3, Loader2, Heart, Share2, MoreHorizontal, Radio, Copy, CheckCircle2, Music } from 'lucide-react';
 import { useMusic, Song } from '../lib/MusicContext';
 import { getArtist, ArtistData, PlaylistItem, SearchResult } from '../lib/musicService';
 import { ArtistAvatar } from '../components/ArtistAvatar';
@@ -232,10 +232,6 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
             </p>
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs font-semibold text-white/80">
-              <span className="flex items-center gap-1.5 bg-white/10 px-3.5 py-1.5 rounded-full border border-white/15 backdrop-blur-md">
-                <Sparkles size={14} className="text-white" />
-                Parlaxio High Quality Audio
-              </span>
               <span className="flex items-center gap-1.5 bg-white/10 px-3.5 py-1.5 rounded-full border border-white/15 backdrop-blur-md">
                 <Music size={14} className="text-white/80" />
                 {artist.songs.length} Popular Songs

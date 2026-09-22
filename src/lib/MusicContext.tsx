@@ -41,6 +41,7 @@ interface MusicContextType {
   duration: number;
   setIsFullScreen: (val: boolean) => void;
   playSong: (song: Song, newQueue?: Song[]) => void;
+  setQueue: (queue: Song[] | ((prev: Song[]) => Song[])) => void;
   playNext: () => void;
   playPrev: () => void;
   togglePlay: () => void;
@@ -114,16 +115,47 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   });
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(() => {
+  const [isFullScreen, setIsFullScreenInternal] = useState(() => {
     try {
       return localStorage.getItem('parlaxio_player_fullscreen') === 'true';
     } catch {
       return false;
     }
   });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  // Sync isFullScreen with history stack for swipe-to-back support
+  const setIsFullScreen = useCallback((val: boolean) => {
+    if (val === isFullScreen) return;
+    if (val) {
+      // Push history state when opening full screen player
+      window.history.pushState({ ...window.history.state, playerFullScreen: true }, '');
+      setIsFullScreenInternal(true);
+    } else {
+      // If closing manually, and history has our state, pop it
+      if (window.history.state && window.history.state.playerFullScreen) {
+        window.history.back();
+      } else {
+        setIsFullScreenInternal(false);
+      }
+    }
+  }, [isFullScreen]);
+
+  // Listen to popstate to close player on swipe back
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.history.state && window.history.state.playerFullScreen) {
+        setIsFullScreenInternal(true);
+      } else {
+        setIsFullScreenInternal(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Persist full screen player state in localStorage & clean legacy player param
   useEffect(() => {
@@ -138,6 +170,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       window.history.replaceState(window.history.state, '', cleanUrl);
     }
   }, [isFullScreen]);
+
+  // Use refs to keep stable callbacks without recreating the Audio element
+  const currentSongRef = useRef<Song | null>(currentSong);
+  const queueRef = useRef<Song[]>(queue);
+
+  useEffect(() => {
+    currentSongRef.current = currentSong;
+  }, [currentSong]);
+
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
 
   const addToRecentlyPlayed = useCallback((song: Song) => {
     setRecentlyPlayed(prev => {
@@ -193,24 +237,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const playNextInternal = useCallback(() => {
-    setCurrentSong(prev => {
-      if (!prev) return prev;
-      setQueue(currentQueue => {
-        const currentIndex = currentQueue.findIndex(s => s.id === prev.id);
-        if (currentIndex !== -1 && currentIndex < currentQueue.length - 1) {
-          const nextSong = currentQueue[currentIndex + 1];
-          loadAndPlay(nextSong);
-          return currentQueue;
-        } else if (currentQueue.length > 0) {
-          const firstSong = currentQueue[0];
-          loadAndPlay(firstSong);
-          return currentQueue;
-        }
-        return currentQueue;
-      });
-      return prev;
-    });
-  }, []);
+    const prev = currentSongRef.current;
+    const currentQueue = queueRef.current;
+    if (!prev) return;
+    
+    const currentIndex = currentQueue.findIndex(s => s.id === prev.id);
+    if (currentIndex !== -1 && currentIndex < currentQueue.length - 1) {
+      loadAndPlay(currentQueue[currentIndex + 1]);
+    } else if (currentQueue.length > 0) {
+      loadAndPlay(currentQueue[0]);
+    }
+  }, [loadAndPlay]);
 
   useEffect(() => {
     const audio = new Audio();
@@ -394,10 +431,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const playNext = () => playNextInternal();
 
   const playPrev = () => {
-    if (!currentSong) return;
-    const currentIndex = queue.findIndex(s => s.id === currentSong.id);
+    const prev = currentSongRef.current;
+    const currentQueue = queueRef.current;
+    if (!prev) return;
+    const currentIndex = currentQueue.findIndex(s => s.id === prev.id);
     if (currentIndex > 0) {
-      loadAndPlay(queue[currentIndex - 1]);
+      loadAndPlay(currentQueue[currentIndex - 1]);
     } else {
       seekTo(0);
     }
@@ -443,7 +482,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   return (
     <MusicContext.Provider value={{
       currentSong, queue, recentlyPlayed, watchlist, followedArtists, savedPlaylists, isPlaying, isFullScreen, isLoading,
-      currentTime, duration, setIsFullScreen, playSong,
+      currentTime, duration, setIsFullScreen, playSong, setQueue,
       playNext, playPrev, togglePlay, setIsPlaying, seekTo, closePlayer,
       toggleWatchlist, isWatchlisted, toggleFollowArtist, isFollowingArtist,
       toggleSavePlaylist, isPlaylistSaved
