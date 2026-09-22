@@ -138,10 +138,57 @@ export async function getArtist(id: string): Promise<ArtistData | null> {
   }
 }
 
-/**
- * Returns the audio URL for a song. This URL points to our own backend
- * which serves the cached audio file with proper headers.
- */
 export function getAudioUrl(songId: string): string {
   return `${API_BASE}/api/music/audio/${songId}`;
 }
+
+// ==========================================
+// YOUTUBE FALLBACK API (PIPED API)
+// ==========================================
+// const PIPED_INSTANCES = [
+//   'https://pipedapi.kavin.rocks',
+//   'https://pipedapi.lunar.icu',
+//   'https://pipedapi.smnz.de',
+//   'https://pi.ggtyler.dev/api'
+// ];
+
+// export async function getYoutubeAudioUrl(title: string, artist: string): Promise<string | null> {
+//   const query = encodeURIComponent(`${title} ${artist} original audio`);
+  
+//   for (const instance of PIPED_INSTANCES) {
+//     try {
+//       // 1. Search for the track
+//       const searchRes = await fetch(`${instance}/search?q=${query}&filter=music_songs`, { signal: AbortSignal.timeout(5000) });
+//       if (!searchRes.ok) continue;
+//       const searchData = await searchRes.json();
+      
+//       if (!searchData.items || searchData.items.length === 0) continue;
+      
+//       // Get the first result's video ID
+//       const url = searchData.items[0].url;
+//       const videoId = url.includes('?v=') ? url.split('?v=')[1] : url.split('/').pop();
+//       if (!videoId) continue;
+      
+//       // 2. Get the stream details
+//       const streamRes = await fetch(`${instance}/streams/${videoId}`, { signal: AbortSignal.timeout(5000) });
+//       if (!streamRes.ok) continue;
+//       const streamData = await streamRes.json();
+      
+//       if (!streamData.audioStreams || streamData.audioStreams.length === 0) continue;
+      
+//       // 3. Extract the best audio stream (m4a/webm)
+//       const bestAudio = streamData.audioStreams
+//         .filter((s: any) => s.mimeType.startsWith('audio/mp4') || s.mimeType.startsWith('audio/webm'))
+//         .sort((a: any, b: any) => b.bitrate - a.bitrate)[0];
+        
+//       if (bestAudio?.url) {
+//         return bestAudio.url;
+//       }
+//     } catch (e) {
+//       console.warn(`Piped instance failed: ${instance}`);
+//       continue;
+//     }
+//   }
+  
+//   return null;
+// }

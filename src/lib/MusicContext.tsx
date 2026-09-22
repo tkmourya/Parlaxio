@@ -54,6 +54,8 @@ interface MusicContextType {
   toggleSavePlaylist: (item: SavedPlaylist) => void;
   isPlaylistSaved: (playlistId: string) => boolean;
   closePlayer: () => void;
+  useYouTubeSource: boolean;
+  setUseYouTubeSource: (val: boolean) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -126,6 +128,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [useYouTubeSource, setUseYouTubeSource] = useState(false);
 
   // Sync isFullScreen with history stack for swipe-to-back support
   const setIsFullScreen = useCallback((val: boolean) => {
@@ -197,14 +200,54 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setCurrentTime(0);
     setDuration(0);
     
+    // Start playing synchronously to bypass mobile autoplay restrictions
     if (audioRef.current) {
       audioRef.current.src = getAudioUrl(song.id);
       audioRef.current.play().catch(e => {
         console.error('Playback failed', e);
-        setIsLoading(false);
       });
     }
   }, [addToRecentlyPlayed]);
+
+  // Handle YouTube Source asynchronous overriding (COMMENTED OUT FOR TESTING)
+  useEffect(() => {
+    let active = true;
+    
+    const setupYTAudio = async () => {
+      /*
+      // Only do this if YT source is enabled
+      if (currentSong && audioRef.current && useYouTubeSource) {
+        setIsLoading(true);
+        try {
+          const { getYoutubeAudioUrl } = await import('./musicService');
+          const ytUrl = await getYoutubeAudioUrl(currentSong.title, currentSong.artist);
+          
+          if (!active) return;
+          
+          if (ytUrl) {
+            audioRef.current.src = ytUrl;
+            if (isPlaying) {
+              audioRef.current.play().catch(e => console.error("YT Playback failed:", e));
+            }
+          } else {
+            console.warn("YouTube fallback failed, using original Saavn audio.");
+          }
+        } catch (e) {
+          console.error("Failed to fetch YT Audio:", e);
+        }
+        setIsLoading(false);
+      } else {
+        // If YT is disabled but a song is playing, make sure isLoading is false
+        setIsLoading(false);
+      }
+      */
+      setIsLoading(false);
+    };
+    
+    setupYTAudio();
+    
+    return () => { active = false; };
+  }, [currentSong, useYouTubeSource]);
 
   // Sync current playing song in URL searchParams (e.g. ?song=12345&title=Apna%20Bana%20Le)
   useEffect(() => {
@@ -485,7 +528,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       currentTime, duration, setIsFullScreen, playSong, setQueue,
       playNext, playPrev, togglePlay, setIsPlaying, seekTo, closePlayer,
       toggleWatchlist, isWatchlisted, toggleFollowArtist, isFollowingArtist,
-      toggleSavePlaylist, isPlaylistSaved
+      toggleSavePlaylist, isPlaylistSaved, useYouTubeSource, setUseYouTubeSource
     }}>
       {children}
     </MusicContext.Provider>

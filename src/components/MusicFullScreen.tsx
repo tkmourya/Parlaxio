@@ -1,4 +1,4 @@
-import { ChevronDown, Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Disc3, Loader2, Heart } from 'lucide-react';
+import { ChevronDown, Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Disc3, Loader2, Heart, Youtube } from 'lucide-react';
 import { useMusic } from '../lib/MusicContext';
 
 function formatTime(sec: number): string {
@@ -9,7 +9,7 @@ function formatTime(sec: number): string {
 }
 
 export function MusicFullScreen() {
-  const { currentSong, isPlaying, isLoading, togglePlay, playNext, playPrev, setIsFullScreen, queue, playSong, currentTime, duration, seekTo, toggleWatchlist, isWatchlisted } = useMusic();
+  const { currentSong, isPlaying, isLoading, togglePlay, playNext, playPrev, setIsFullScreen, queue, playSong, currentTime, duration, seekTo, toggleWatchlist, isWatchlisted, useYouTubeSource, setUseYouTubeSource } = useMusic();
 
   if (!currentSong) return null;
 
@@ -21,7 +21,7 @@ export function MusicFullScreen() {
   return (
     <div className="fixed inset-0 z-50 bg-zinc-950 animate-in slide-in-from-bottom-full duration-300">
       {/* Background Blur */}
-      <div 
+      <div
         className="absolute inset-0 opacity-30 blur-[100px] saturate-200 pointer-events-none"
         style={{
           backgroundImage: `url(${currentSong.coverUrl})`,
@@ -37,7 +37,7 @@ export function MusicFullScreen() {
         <div className="flex-1 flex flex-col items-center justify-center px-12 lg:px-20">
           {/* Header */}
           <div className="absolute top-6 left-6">
-            <button 
+            <button
               onClick={() => setIsFullScreen(false)}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
             >
@@ -54,7 +54,7 @@ export function MusicFullScreen() {
             {/* Info + Controls */}
             <div className="flex-1 min-w-0">
               <p className="text-white/40 text-xs tracking-widest uppercase font-medium mb-3">Now Playing</p>
-              
+
               {/* Title, Artist + Favorite Button */}
               <div className="flex items-center justify-between mb-8 gap-4">
                 <div className="min-w-0">
@@ -66,21 +66,20 @@ export function MusicFullScreen() {
                   className="p-1 transition-transform active:scale-95 flex-shrink-0"
                   title={isFav ? "Remove from Favorites" : "Add to Favorites"}
                 >
-                  <Heart 
-                    size={26} 
-                    className={`transition-all ${
-                      isFav 
-                        ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110' 
-                        : 'text-white/40 hover:text-white hover:scale-110'
-                    }`} 
-                    fill={isFav ? "currentColor" : "none"} 
+                  <Heart
+                    size={26}
+                    className={`transition-all ${isFav
+                      ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110'
+                      : 'text-white/40 hover:text-white hover:scale-110'
+                      }`}
+                    fill={isFav ? "currentColor" : "none"}
                   />
                 </button>
               </div>
 
               {/* Progress */}
               <div className="mb-8">
-                <div 
+                <div
                   className="h-1 bg-white/10 rounded-full w-full overflow-hidden mb-2.5 cursor-pointer relative group"
                   onClick={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -106,7 +105,7 @@ export function MusicFullScreen() {
                 <button onClick={playPrev} className="text-white hover:scale-110 transition-transform">
                   <SkipBack size={26} fill="currentColor" />
                 </button>
-                <button 
+                <button
                   onClick={togglePlay}
                   className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform shadow-xl"
                 >
@@ -134,29 +133,30 @@ export function MusicFullScreen() {
               {displayQueue.map((song, i) => {
                 const isActive = song.id === currentSong.id;
                 return (
-                <div 
-                  key={song.id} 
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors group ${isActive ? 'bg-white/[0.08]' : 'hover:bg-white/[0.06]'}`}
-                  onClick={() => playSong(song, queue)}
-                >
-                  <div className="w-5 flex justify-center items-center">
-                    {isActive && isPlaying ? (
-                      <div className="flex items-end gap-[2px] h-3">
-                        <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full"></span>
-                        <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3"></span>
-                        <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full"></span>
-                      </div>
-                    ) : (
-                      <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-white/20'}`}>{i + 1}</span>
-                    )}
+                  <div
+                    key={song.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors group ${isActive ? 'bg-white/[0.08]' : 'hover:bg-white/[0.06]'}`}
+                    onClick={() => playSong(song, queue)}
+                  >
+                    <div className="w-5 flex justify-center items-center">
+                      {isActive && isPlaying ? (
+                        <div className="flex items-end gap-[2px] h-3">
+                          <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full"></span>
+                          <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3"></span>
+                          <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full"></span>
+                        </div>
+                      ) : (
+                        <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-white/20'}`}>{i + 1}</span>
+                      )}
+                    </div>
+                    <img src={song.coverUrl} className="w-10 h-10 rounded-md object-cover" alt={song.title} />
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`font-medium text-sm truncate transition-colors ${isActive ? 'text-white' : 'text-white/90 group-hover:text-white'}`}>{song.title}</h4>
+                      <p className={`text-xs truncate ${isActive ? 'text-white/70' : 'text-white/40'}`}>{song.artist}</p>
+                    </div>
                   </div>
-                  <img src={song.coverUrl} className="w-10 h-10 rounded-md object-cover" alt={song.title} />
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`font-medium text-sm truncate transition-colors ${isActive ? 'text-white' : 'text-white/90 group-hover:text-white'}`}>{song.title}</h4>
-                    <p className={`text-xs truncate ${isActive ? 'text-white/70' : 'text-white/40'}`}>{song.artist}</p>
-                  </div>
-                </div>
-              )})}
+                )
+              })}
             </div>
           </div>
         )}
@@ -166,7 +166,7 @@ export function MusicFullScreen() {
       <div className="md:hidden relative z-10 flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between p-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
-          <button 
+          <button
             onClick={() => setIsFullScreen(false)}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white"
           >
@@ -178,7 +178,7 @@ export function MusicFullScreen() {
 
         <div className="flex-1 overflow-y-auto hide-scrollbar">
           <div className="px-8 flex flex-col items-center">
-            
+
             {/* Cover Art */}
             <div className="w-full max-w-[300px] aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 mb-8">
               <img src={currentSong.coverUrl} alt={currentSong.title} className="w-full h-full object-cover" />
@@ -195,21 +195,20 @@ export function MusicFullScreen() {
                 className="p-1 transition-transform active:scale-95 flex-shrink-0 ml-2"
                 title={isFav ? "Remove from Favorites" : "Add to Favorites"}
               >
-                <Heart 
-                  size={24} 
-                  className={`transition-all ${
-                    isFav 
-                      ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110' 
-                      : 'text-white/40 hover:text-white hover:scale-110'
-                  }`} 
-                  fill={isFav ? "currentColor" : "none"} 
+                <Heart
+                  size={24}
+                  className={`transition-all ${isFav
+                    ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110'
+                    : 'text-white/40 hover:text-white hover:scale-110'
+                    }`}
+                  fill={isFav ? "currentColor" : "none"}
                 />
               </button>
             </div>
 
             {/* Progress */}
             <div className="w-full mb-6">
-              <div 
+              <div
                 className="h-1 bg-white/10 rounded-full w-full overflow-hidden mb-2 cursor-pointer relative group"
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -229,13 +228,20 @@ export function MusicFullScreen() {
 
             {/* Controls */}
             <div className="flex items-center justify-between w-full max-w-xs mb-10">
+              <button
+                onClick={() => setUseYouTubeSource(!useYouTubeSource)}
+                className={`transition-colors ${useYouTubeSource ? 'text-red-500' : 'text-white/30 hover:text-white'}`}
+                title={useYouTubeSource ? "Using YouTube Audio" : "Switch to YouTube Audio"}
+              >
+                <Youtube size={20} />
+              </button>
               <button className="text-white/30 hover:text-white transition-colors">
                 <Shuffle size={18} />
               </button>
               <button onClick={playPrev} className="text-white">
                 <SkipBack size={28} fill="currentColor" />
               </button>
-              <button 
+              <button
                 onClick={togglePlay}
                 className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center shadow-xl"
               >
@@ -261,29 +267,30 @@ export function MusicFullScreen() {
                 {displayQueue.map((song, i) => {
                   const isActive = song.id === currentSong.id;
                   return (
-                  <div 
-                    key={song.id} 
-                    className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${isActive ? 'bg-white/[0.08]' : 'active:bg-white/[0.06]'}`}
-                    onClick={() => playSong(song, queue)}
-                  >
-                    <div className="w-4 flex justify-center items-center">
-                      {isActive && isPlaying ? (
-                        <div className="flex items-end gap-[2px] h-3">
-                          <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full"></span>
-                          <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3"></span>
-                          <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full"></span>
-                        </div>
-                      ) : (
-                        <span className={`text-[10px] font-medium ${isActive ? 'text-white' : 'text-white/20'}`}>{i + 1}</span>
-                      )}
+                    <div
+                      key={song.id}
+                      className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${isActive ? 'bg-white/[0.08]' : 'active:bg-white/[0.06]'}`}
+                      onClick={() => playSong(song, queue)}
+                    >
+                      <div className="w-4 flex justify-center items-center">
+                        {isActive && isPlaying ? (
+                          <div className="flex items-end gap-[2px] h-3">
+                            <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full"></span>
+                            <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3"></span>
+                            <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full"></span>
+                          </div>
+                        ) : (
+                          <span className={`text-[10px] font-medium ${isActive ? 'text-white' : 'text-white/20'}`}>{i + 1}</span>
+                        )}
+                      </div>
+                      <img src={song.coverUrl} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" alt={song.title} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-medium text-sm truncate ${isActive ? 'text-white' : 'text-white/90'}`}>{song.title}</h4>
+                        <p className={`text-[11px] truncate ${isActive ? 'text-white/70' : 'text-white/40'}`}>{song.artist}</p>
+                      </div>
                     </div>
-                    <img src={song.coverUrl} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" alt={song.title} />
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`font-medium text-sm truncate ${isActive ? 'text-white' : 'text-white/90'}`}>{song.title}</h4>
-                      <p className={`text-[11px] truncate ${isActive ? 'text-white/70' : 'text-white/40'}`}>{song.artist}</p>
-                    </div>
-                  </div>
-                )})}
+                  )
+                })}
               </div>
             </div>
           )}
