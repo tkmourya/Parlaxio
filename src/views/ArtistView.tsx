@@ -6,6 +6,7 @@ import { ArtistAvatar } from '../components/ArtistAvatar';
 
 interface ArtistViewProps {
   id: string;
+  name?: string | null;
   onBack: () => void;
   onPlaylistClick: (item: PlaylistItem) => void;
 }
@@ -48,7 +49,7 @@ const ARTIST_AVATARS: Record<string, string> = {
   'Shakira': 'https://c.saavncdn.com/artists/Shakira_002_20220916145812_500x500.jpg'
 };
 
-export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
+export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProps) {
   const { currentSong, isPlaying, playSong, togglePlay, toggleWatchlist, isWatchlisted, toggleFollowArtist, isFollowingArtist } = useMusic();
   const [artist, setArtist] = useState<ArtistData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,7 +65,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
   useEffect(() => {
     async function fetchArtist() {
       setLoading(true);
-      const data = await getArtist(id);
+      const data = await getArtist(id, name || undefined);
       setArtist(data);
       if (data && data.title) {
         const url = new URL(window.location.href);

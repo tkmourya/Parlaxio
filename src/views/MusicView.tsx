@@ -529,6 +529,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
     return (
       <ArtistView 
         id={activeArtistId} 
+        name={activeTitle}
         onBack={handleSubViewBack} 
         onPlaylistClick={(item) => {
           const itemTitle = item.title || null;

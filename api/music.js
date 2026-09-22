@@ -8,6 +8,50 @@ app.use(cors());
 
 const SAAVN_API_URL = process.env.SAAVN_API_URL;
 
+// Simple In-Memory Cache for fast local responses
+const apiCache = new Map();
+const CACHE_TTL = 3600 * 1000; // 1 hour
+
+function getCache(key) {
+  const item = apiCache.get(key);
+  if (item && Date.now() < item.expiry) return item.data;
+  return null;
+}
+function setCache(key, data) {
+  // Prevent memory overload: Max 200 items
+  if (apiCache.size >= 200) {
+    const oldestKey = apiCache.keys().next().value;
+    apiCache.delete(oldestKey);
+  }
+  apiCache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+}
+
+// Middleware to set Vercel Edge Cache headers and handle In-Memory Caching
+app.use('/api/music', (req, res, next) => {
+  if (req.method === 'GET' && !req.path.includes('/audio')) {
+    // 1. Vercel CDN Cache
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+    
+    // 2. In-Memory Cache (for local development or warm Vercel instances)
+    const cacheKey = req.originalUrl;
+    const cached = getCache(cacheKey);
+    if (cached) {
+      console.log(`[Cache Hit] ${cacheKey}`);
+      return res.json(cached);
+    }
+    
+    // Intercept response to save to memory cache
+    const originalJson = res.json;
+    res.json = function(body) {
+      if (res.statusCode === 200 && !body.error) {
+         setCache(cacheKey, body);
+      }
+      originalJson.call(this, body);
+    };
+  }
+  next();
+});
+
 app.get('/api/music', (req, res) => {
   res.json({ status: 'ok', service: 'Parlaxio Music API (Vercel Serverless)' });
 });
@@ -100,12 +144,12 @@ app.get('/api/music/home', async (req, res) => {
       { id: 'global_pop', title: 'International Chartbusters', q: 'english pop hits' }
     ];
 
-    for (const q of queries) {
+    const categoryPromises = queries.map(async (q) => {
       try {
         const pRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getPlaylistResults&q=${encodeURIComponent(q.q)}&_format=json&p=1&n=18`);
         const pData = await pRes.json();
         if (pData.results && pData.results.length > 0) {
-          rows.push({
+          return {
             id: q.id,
             title: q.title,
             items: pData.results.map(p => ({
@@ -115,11 +159,17 @@ app.get('/api/music/home', async (req, res) => {
               artist: p.subtitle || p.artist_name || p.header_desc || '',
               coverUrl: p.image ? p.image.replace('150x150', '500x500') : '',
             }))
-          });
+          };
         }
       } catch (e) {
         console.error(`Error fetching category ${q.id}:`, e.message);
       }
+      return null;
+    });
+
+    const categoryResults = await Promise.all(categoryPromises);
+    for (const cat of categoryResults) {
+      if (cat) rows.push(cat);
     }
 
     // 1. Top Indian Artists Row
@@ -365,16 +415,21 @@ app.get('/api/music/artist', async (req, res) => {
     }
 
     if (isNumericId) {
-      const saavnRes = await fetch(`https://www.jiosaavn.com/api.php?__call=artist.getArtistPageDetails&artistId=${targetArtistId}&_format=json`);
-      const data = await saavnRes.json();
+      const nameParam = req.query.name;
+      const saavnPromise = fetch(`https://www.jiosaavn.com/api.php?__call=artist.getArtistPageDetails&artistId=${targetArtistId}&_format=json`).then(r => r.json());
+      let morePromise = null;
+      if (nameParam) {
+        morePromise = fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(nameParam)}&_format=json&_marker=0&n=40`).then(r => r.json()).catch(() => null);
+      }
+      
+      const data = await saavnPromise;
 
       if (data && data.name && data.topSongs && data.topSongs.songs && data.topSongs.songs.length > 0) {
         let topSongs = data.topSongs.songs.map(mapSaavnSong).filter(s => s.encryptedUrl);
         
         // Fetch more songs for this artist using the search API
         try {
-          const moreRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(data.name)}&_format=json&_marker=0&n=40`);
-          const moreData = await moreRes.json();
+          const moreData = morePromise ? await morePromise : await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(data.name)}&_format=json&_marker=0&n=40`).then(r => r.json());
           if (moreData && moreData.results) {
             const moreSongs = moreData.results.map(mapSaavnSong).filter(s => s.encryptedUrl);
             const seen = new Set(topSongs.map(s => s.id));

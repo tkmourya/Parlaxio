@@ -127,9 +127,10 @@ export interface ArtistData {
   albums: PlaylistItem[];
 }
 
-export async function getArtist(id: string): Promise<ArtistData | null> {
+export async function getArtist(id: string, name?: string): Promise<ArtistData | null> {
   try {
-    const res = await fetch(`${API_BASE}/api/music/artist?id=${encodeURIComponent(id)}`);
+    const url = name ? `${API_BASE}/api/music/artist?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}` : `${API_BASE}/api/music/artist?id=${encodeURIComponent(id)}`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Artist fetch failed');
     return await res.json();
   } catch (err) {
