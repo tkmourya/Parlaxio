@@ -19,6 +19,7 @@ import { GlobalAudioPlayer } from './components/GlobalAudioPlayer';
 import { AuthPromptModal } from './components/AuthPromptModal';
 import { TopNav } from './components/TopNav';
 import { PWAPrompt } from './components/PWAPrompt';
+import { NetworkStatus } from './components/NetworkStatus';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { useRouter } from './lib/router';
 import { loadTheme } from './lib/preferences';
@@ -208,6 +209,9 @@ function AppContent() {
 
       {/* PWA Update and Install Prompts */}
       <PWAPrompt />
+
+      {/* Offline/No Internet Indicator */}
+      <NetworkStatus />
 
       {/* Double Back to Exit Toast */}
       {showExitToast && (

@@ -71,6 +71,8 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
         // Fallback just in case our AuthContext check misses it
         setError('You are already logged in. Redirecting...');
         setTimeout(() => onComplete(), 1500);
+      } else if (errorMsg.toLowerCase().includes('failed to fetch') || errorMsg.includes('Network Error')) {
+        setError('Network Error. Please try again or check connection.');
       } else {
         setError(errorMsg || 'An error occurred during authentication.');
       }

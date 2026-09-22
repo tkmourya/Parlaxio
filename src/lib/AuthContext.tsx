@@ -42,7 +42,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const currentAccount = await account.get();
       if (currentAccount) {
-        setUser(mapAppwriteUser(currentAccount));
+        const mappedUser = mapAppwriteUser(currentAccount);
+        setUser(mappedUser);
+        localStorage.setItem('parlaxio_user_cache', JSON.stringify(mappedUser));
         
         // Sync preferences from Cloud to Local
         try {
@@ -59,10 +61,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         setUser(null);
+        localStorage.removeItem('parlaxio_user_cache');
       }
-    } catch (error) {
-      console.log('No active session found.');
+    } catch (error: any) {
+      console.log('Session check failed:', error.message);
+      
+      // Fallback to local cache if we get a network error
+      if (error?.message?.toLowerCase().includes('failed to fetch') || error?.message?.includes('Network Error')) {
+        const cachedUser = localStorage.getItem('parlaxio_user_cache');
+        if (cachedUser) {
+          console.log('Using cached user data as fallback');
+          setUser(JSON.parse(cachedUser));
+          setLoading(false);
+          return;
+        }
+      }
+      
       setUser(null);
+      localStorage.removeItem('parlaxio_user_cache');
     } finally {
       setLoading(false);
     }
@@ -89,15 +105,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      await account.createEmailPasswordSession(email, password);
-      await checkSession();
-    } catch (error: any) {
-      // If a session is already active, just sync the user state and return success
-      if (error?.message?.includes('prohibited when a session is active')) {
-         console.log("Session already active, syncing session state...");
-         await checkSession();
-         return;
+      try {
+        await account.createEmailPasswordSession(email, password);
+      } catch (sessionError: any) {
+        if (sessionError?.message?.includes('prohibited when a session is active') || sessionError?.code === 401 || sessionError?.message?.toLowerCase().includes('failed to fetch')) {
+           console.log("Session already active or network error, attempting to sync...");
+        } else {
+           throw sessionError;
+        }
       }
+      
+      const currentAccount = await account.get();
+      const mappedUser = mapAppwriteUser(currentAccount);
+      setUser(mappedUser);
+      localStorage.setItem('parlaxio_user_cache', JSON.stringify(mappedUser));
+      
+    } catch (error: any) {
       console.error('Login error:', error);
       throw error;
     }
