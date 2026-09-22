@@ -62,11 +62,7 @@ function useDoubleBackToExit() {
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AppContent />;
 }
 
 function AppContent() {
