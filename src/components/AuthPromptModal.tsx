@@ -41,9 +41,9 @@ export function AuthPromptModal({ onClose, onLogin, onRegister }: AuthPromptModa
 
         {/* Content */}
         <div className="p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">Login to Watch</h2>
+          <h2 className="text-2xl font-bold text-white mb-3">Login to Continue</h2>
           <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
-            Create an account or log in to watch full movies, TV shows, and Live TV. It only takes a minute!
+            Create an account or log in to watch full movies, TV shows, Live TV, and play music. It only takes a minute!
           </p>
 
           <div className="flex flex-col gap-3">

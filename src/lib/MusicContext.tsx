@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useRef, useEffect, ReactNode, useCallback } from 'react';
 import { getAudioUrl, getSongDetails } from './musicService';
 import { syncMusicToCloud, fetchMusicFromCloud } from './musicSync';
+import { useAuth } from './AuthContext';
 
 export interface Song {
   id: string;
@@ -57,6 +58,7 @@ interface MusicContextType {
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
 export function MusicProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [currentSong, setCurrentSong] = useState<Song | null>(() => {
     try {
       const saved = localStorage.getItem('parlaxio_last_played_song');
@@ -381,6 +383,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const isPlaylistSaved = (playlistId: string) => savedPlaylists.some(p => p.id === playlistId);
 
   const playSong = (song: Song, newQueue?: Song[]) => {
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('auth-required'));
+      return;
+    }
     if (newQueue) setQueue(newQueue);
     loadAndPlay(song);
   };
@@ -398,6 +404,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   };
 
   const togglePlay = () => {
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('auth-required'));
+      return;
+    }
     if (!audioRef.current) return;
     if (!audioRef.current.src && currentSong) {
       audioRef.current.src = getAudioUrl(currentSong.id);

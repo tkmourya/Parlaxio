@@ -108,6 +108,14 @@ function AppContent() {
     }
   }, [playingMedia, user, loading]);
 
+  useEffect(() => {
+    const handleAuthRequired = () => {
+      setShowAuthPrompt(true);
+    };
+    window.addEventListener('auth-required', handleAuthRequired);
+    return () => window.removeEventListener('auth-required', handleAuthRequired);
+  }, []);
+
   const handlePlay = (id: number, type: 'movie' | 'tv', season?: number, episode?: number) => {
     if (!user) {
       setShowAuthPrompt(true);
