@@ -227,16 +227,9 @@ export function MusicFullScreen() {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center justify-between w-full max-w-xs mb-10">
-              <button
-                onClick={() => setUseYouTubeSource(!useYouTubeSource)}
-                className={`transition-colors ${useYouTubeSource ? 'text-red-500' : 'text-white/30 hover:text-white'}`}
-                title={useYouTubeSource ? "Using YouTube Audio" : "Switch to YouTube Audio"}
-              >
-                <Youtube size={20} />
-              </button>
+            <div className="flex items-center justify-center gap-8 w-full max-w-xs mb-10">
               <button className="text-white/30 hover:text-white transition-colors">
-                <Shuffle size={18} />
+                <Shuffle size={20} />
               </button>
               <button onClick={playPrev} className="text-white">
                 <SkipBack size={28} fill="currentColor" />
