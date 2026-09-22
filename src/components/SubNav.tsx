@@ -1,6 +1,6 @@
 export function SubNav({ filters, current, onChange }: { filters: {id: string, label: string}[], current: string, onChange: (id: string) => void }) {
   return (
-    <div className="flex overflow-x-auto hide-scrollbar gap-3 mb-8 pb-2 snap-x md:justify-center">
+    <div className="flex overflow-x-auto hide-scrollbar gap-3 mb-8 pb-2 snap-x px-1">
       {filters.map(f => (
         <button
           key={f.id}

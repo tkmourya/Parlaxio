@@ -1,7 +1,7 @@
-import { Film, Search, Flame, Settings, Tv, Zap, Bookmark, User } from 'lucide-react';
+import { Film, Search, Flame, Settings, Tv, Zap, Bookmark, User, Music } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 
-export type TabType = 'home' | 'movies' | 'series' | 'anime' | 'trending' | 'search' | 'settings' | 'watchlist' | 'auth' | 'provider' | 'livetv' | 'privacy' | 'terms' | 'legal';
+export type TabType = 'home' | 'movies' | 'series' | 'anime' | 'music' | 'trending' | 'search' | 'settings' | 'watchlist' | 'auth' | 'provider' | 'livetv' | 'privacy' | 'terms' | 'legal';
 
 interface TopNavProps {
   currentTab: TabType;
@@ -31,12 +31,6 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
             
             <nav className="flex items-center gap-1 font-medium text-sm">
               <button 
-                onClick={() => onChange('home')}
-                className={`transition-colors px-4 py-2 rounded-full flex items-center gap-2 ${currentTab === 'home' ? 'bg-white/20 text-white shadow-inner' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
-              >
-                Home
-              </button>
-              <button 
                 onClick={() => onChange('movies')}
                 className={`transition-colors px-4 py-2 rounded-full flex items-center gap-2 ${currentTab === 'movies' ? 'bg-white/20 text-white shadow-inner' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
               >
@@ -56,6 +50,13 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
               >
                 <Zap size={16} />
                 Anime
+              </button>
+              <button 
+                onClick={() => onChange('music')}
+                className={`transition-colors px-4 py-2 rounded-full flex items-center gap-2 ${currentTab === 'music' ? 'bg-white/20 text-white shadow-inner' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+              >
+                <Music size={16} />
+                Music
               </button>
               <button 
                 onClick={() => onChange('trending')}

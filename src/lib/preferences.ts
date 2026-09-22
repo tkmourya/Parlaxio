@@ -58,5 +58,7 @@ export async function saveDefaultServer(index: number) {
 }
 
 export function loadDefaultServer(): number {
-  return parseInt(localStorage.getItem('parlaxio_default_server') || '0', 10);
+  const saved = localStorage.getItem('parlaxio_default_server');
+  if (saved === null) return 1; // Default to Server 2 (VidSrc SBS)
+  return parseInt(saved, 10);
 }

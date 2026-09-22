@@ -1,0 +1,450 @@
+import React, { createContext, useContext, useState, useRef, useEffect, ReactNode, useCallback } from 'react';
+import { getAudioUrl, getSongDetails } from './musicService';
+import { syncMusicToCloud, fetchMusicFromCloud } from './musicSync';
+
+export interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  duration: string;
+  durationSec: number;
+  coverUrl: string;
+  encryptedUrl?: string; // from Saavn
+}
+
+export interface FollowedArtist {
+  id: string;
+  title: string;
+  coverUrl: string;
+  type?: string;
+}
+
+export interface SavedPlaylist {
+  id: string;
+  title: string;
+  coverUrl: string;
+  type: 'playlist' | 'album';
+}
+
+interface MusicContextType {
+  currentSong: Song | null;
+  queue: Song[];
+  recentlyPlayed: Song[];
+  watchlist: Song[];
+  followedArtists: FollowedArtist[];
+  savedPlaylists: SavedPlaylist[];
+  isPlaying: boolean;
+  isFullScreen: boolean;
+  isLoading: boolean;
+  currentTime: number;
+  duration: number;
+  setIsFullScreen: (val: boolean) => void;
+  playSong: (song: Song, newQueue?: Song[]) => void;
+  playNext: () => void;
+  playPrev: () => void;
+  togglePlay: () => void;
+  setIsPlaying: (val: boolean) => void;
+  seekTo: (time: number) => void;
+  toggleWatchlist: (song: Song) => void;
+  isWatchlisted: (songId: string) => boolean;
+  toggleFollowArtist: (artist: FollowedArtist) => void;
+  isFollowingArtist: (artistId: string) => boolean;
+  toggleSavePlaylist: (item: SavedPlaylist) => void;
+  isPlaylistSaved: (playlistId: string) => boolean;
+  closePlayer: () => void;
+}
+
+const MusicContext = createContext<MusicContextType | undefined>(undefined);
+
+export function MusicProvider({ children }: { children: ReactNode }) {
+  const [currentSong, setCurrentSong] = useState<Song | null>(() => {
+    try {
+      const saved = localStorage.getItem('parlaxio_last_played_song');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [queue, setQueue] = useState<Song[]>(() => {
+    try {
+      const saved = localStorage.getItem('parlaxio_last_played_queue');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>(() => {
+    try {
+      const saved = localStorage.getItem('parlaxio_recently_played');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [watchlist, setWatchlist] = useState<Song[]>(() => {
+    try {
+      const saved = localStorage.getItem('parlaxio_music_watchlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [followedArtists, setFollowedArtists] = useState<FollowedArtist[]>(() => {
+    try {
+      const saved = localStorage.getItem('parlaxio_followed_artists');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [savedPlaylists, setSavedPlaylists] = useState<SavedPlaylist[]>(() => {
+    try {
+      const saved = localStorage.getItem('parlaxio_saved_playlists');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(() => {
+    try {
+      return localStorage.getItem('parlaxio_player_fullscreen') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  // Persist full screen player state in localStorage & clean legacy player param
+  useEffect(() => {
+    try {
+      localStorage.setItem('parlaxio_player_fullscreen', String(isFullScreen));
+    } catch {}
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('player')) {
+      url.searchParams.delete('player');
+      const cleanUrl = url.toString().replace(/title=([^&]+)/, (_, t) => `title=${t.replace(/\+/g, '%20')}`);
+      window.history.replaceState(window.history.state, '', cleanUrl);
+    }
+  }, [isFullScreen]);
+
+  const addToRecentlyPlayed = useCallback((song: Song) => {
+    setRecentlyPlayed(prev => {
+      const filtered = prev.filter(s => s.id !== song.id);
+      return [song, ...filtered].slice(0, 20);
+    });
+  }, []);
+
+  const loadAndPlay = useCallback((song: Song) => {
+    setIsLoading(true);
+    setCurrentSong(song);
+    addToRecentlyPlayed(song);
+    setCurrentTime(0);
+    setDuration(0);
+    
+    if (audioRef.current) {
+      audioRef.current.src = getAudioUrl(song.id);
+      audioRef.current.play().catch(e => {
+        console.error('Playback failed', e);
+        setIsLoading(false);
+      });
+    }
+  }, [addToRecentlyPlayed]);
+
+  // Sync current playing song in URL searchParams (e.g. ?song=12345&title=Apna%20Bana%20Le)
+  useEffect(() => {
+    if (currentSong?.id) {
+      const url = new URL(window.location.href);
+      // Only set song and title if not browsing an artist or playlist page
+      if (!url.searchParams.has('playlist') && !url.searchParams.has('album') && !url.searchParams.has('artist')) {
+        url.searchParams.set('song', currentSong.id);
+        if (currentSong.title) {
+          url.searchParams.set('title', currentSong.title);
+        }
+        const cleanUrl = url.toString().replace(/title=([^&]+)/, (_, t) => `title=${t.replace(/\+/g, '%20')}`);
+        window.history.replaceState(window.history.state, '', cleanUrl);
+      }
+    }
+  }, [currentSong?.id, currentSong?.title]);
+
+  // Restore song from URL on direct link / refresh
+  useEffect(() => {
+    const urlSongId = new URLSearchParams(window.location.search).get('song');
+    if (urlSongId && (!currentSong || currentSong.id !== urlSongId)) {
+      getSongDetails(urlSongId).then(song => {
+        if (song) {
+          loadAndPlay(song);
+        }
+      });
+    }
+  }, [loadAndPlay]);
+  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const playNextInternal = useCallback(() => {
+    setCurrentSong(prev => {
+      if (!prev) return prev;
+      setQueue(currentQueue => {
+        const currentIndex = currentQueue.findIndex(s => s.id === prev.id);
+        if (currentIndex !== -1 && currentIndex < currentQueue.length - 1) {
+          const nextSong = currentQueue[currentIndex + 1];
+          loadAndPlay(nextSong);
+          return currentQueue;
+        } else if (currentQueue.length > 0) {
+          const firstSong = currentQueue[0];
+          loadAndPlay(firstSong);
+          return currentQueue;
+        }
+        return currentQueue;
+      });
+      return prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audioRef.current = audio;
+
+    // Set initial audio src if last song was loaded from localStorage
+    if (currentSong) {
+      audio.src = getAudioUrl(currentSong.id);
+    }
+
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onLoadedMetadata = () => setDuration(audio.duration);
+    const onPlaying = () => {
+      setIsPlaying(true);
+      setIsLoading(false);
+    };
+    const onPause = () => setIsPlaying(false);
+    const onEnded = () => playNextInternal();
+    const onError = (e: any) => {
+      console.error('Audio playback error', e);
+      setIsLoading(false);
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('playing', onPlaying);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
+
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('playing', onPlaying);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+      audio.pause();
+      audio.src = '';
+    };
+  }, [playNextInternal]);
+
+  // Cloud restore & merge on mount
+  useEffect(() => {
+    const restoreCloudData = async () => {
+      const cloudData = await fetchMusicFromCloud();
+      if (!cloudData) return;
+
+      if (cloudData.musicWatchlist && cloudData.musicWatchlist.length > 0) {
+        setWatchlist(prev => {
+          const merged = [...prev];
+          for (const item of cloudData.musicWatchlist!) {
+            if (!merged.some(s => s.id === item.id)) merged.push(item);
+          }
+          localStorage.setItem('parlaxio_music_watchlist', JSON.stringify(merged));
+          return merged;
+        });
+      }
+
+      if (cloudData.followedArtists && cloudData.followedArtists.length > 0) {
+        setFollowedArtists(prev => {
+          const merged = [...prev];
+          for (const item of cloudData.followedArtists!) {
+            if (!merged.some(a => a.id === item.id || a.title === item.title)) merged.push(item);
+          }
+          localStorage.setItem('parlaxio_followed_artists', JSON.stringify(merged));
+          return merged;
+        });
+      }
+
+      if (cloudData.savedPlaylists && cloudData.savedPlaylists.length > 0) {
+        setSavedPlaylists(prev => {
+          const merged = [...prev];
+          for (const item of cloudData.savedPlaylists!) {
+            if (!merged.some(p => p.id === item.id)) merged.push(item);
+          }
+          localStorage.setItem('parlaxio_saved_playlists', JSON.stringify(merged));
+          return merged;
+        });
+      }
+
+      if (cloudData.recentlyPlayed && cloudData.recentlyPlayed.length > 0) {
+        setRecentlyPlayed(prev => {
+          const merged = [...prev];
+          for (const item of cloudData.recentlyPlayed!) {
+            if (!merged.some(s => s.id === item.id)) merged.push(item);
+          }
+          const sliced = merged.slice(0, 20);
+          localStorage.setItem('parlaxio_recently_played', JSON.stringify(sliced));
+          return sliced;
+        });
+      }
+    };
+
+    restoreCloudData();
+  }, []);
+
+  // Sync state changes to localStorage and Cloud
+  useEffect(() => {
+    if (currentSong) {
+      localStorage.setItem('parlaxio_last_played_song', JSON.stringify(currentSong));
+    }
+  }, [currentSong]);
+
+  useEffect(() => {
+    if (queue.length > 0) {
+      localStorage.setItem('parlaxio_last_played_queue', JSON.stringify(queue));
+    }
+  }, [queue]);
+
+  useEffect(() => {
+    localStorage.setItem('parlaxio_recently_played', JSON.stringify(recentlyPlayed));
+    syncMusicToCloud({ recentlyPlayed });
+  }, [recentlyPlayed]);
+
+  useEffect(() => {
+    localStorage.setItem('parlaxio_music_watchlist', JSON.stringify(watchlist));
+    syncMusicToCloud({ musicWatchlist: watchlist });
+  }, [watchlist]);
+
+  useEffect(() => {
+    localStorage.setItem('parlaxio_followed_artists', JSON.stringify(followedArtists));
+    syncMusicToCloud({ followedArtists });
+  }, [followedArtists]);
+
+  useEffect(() => {
+    localStorage.setItem('parlaxio_saved_playlists', JSON.stringify(savedPlaylists));
+    syncMusicToCloud({ savedPlaylists });
+  }, [savedPlaylists]);
+
+  const toggleWatchlist = (song: Song) => {
+    setWatchlist(prev => {
+      const exists = prev.some(s => s.id === song.id);
+      if (exists) {
+        return prev.filter(s => s.id !== song.id);
+      } else {
+        return [song, ...prev];
+      }
+    });
+  };
+
+  const isWatchlisted = (songId: string) => watchlist.some(s => s.id === songId);
+
+  const toggleFollowArtist = (artist: FollowedArtist) => {
+    setFollowedArtists(prev => {
+      const exists = prev.some(a => a.id === artist.id);
+      if (exists) {
+        return prev.filter(a => a.id !== artist.id);
+      } else {
+        return [artist, ...prev];
+      }
+    });
+  };
+
+  const isFollowingArtist = (artistId: string) => followedArtists.some(a => a.id === artistId);
+
+  const toggleSavePlaylist = (item: SavedPlaylist) => {
+    setSavedPlaylists(prev => {
+      const exists = prev.some(p => p.id === item.id);
+      if (exists) {
+        return prev.filter(p => p.id !== item.id);
+      } else {
+        return [item, ...prev];
+      }
+    });
+  };
+
+  const isPlaylistSaved = (playlistId: string) => savedPlaylists.some(p => p.id === playlistId);
+
+  const playSong = (song: Song, newQueue?: Song[]) => {
+    if (newQueue) setQueue(newQueue);
+    loadAndPlay(song);
+  };
+
+  const playNext = () => playNextInternal();
+
+  const playPrev = () => {
+    if (!currentSong) return;
+    const currentIndex = queue.findIndex(s => s.id === currentSong.id);
+    if (currentIndex > 0) {
+      loadAndPlay(queue[currentIndex - 1]);
+    } else {
+      seekTo(0);
+    }
+  };
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (!audioRef.current.src && currentSong) {
+      audioRef.current.src = getAudioUrl(currentSong.id);
+    }
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(e => {
+        console.error('Play toggle failed', e);
+        setIsLoading(false);
+      });
+    }
+  };
+
+  const seekTo = (time: number) => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = time;
+    setCurrentTime(time);
+  };
+
+  const closePlayer = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+    setIsPlaying(false);
+    setCurrentSong(null);
+    setIsFullScreen(false);
+    localStorage.removeItem('parlaxio_last_played_song');
+    localStorage.removeItem('parlaxio_player_fullscreen');
+  };
+
+  return (
+    <MusicContext.Provider value={{
+      currentSong, queue, recentlyPlayed, watchlist, followedArtists, savedPlaylists, isPlaying, isFullScreen, isLoading,
+      currentTime, duration, setIsFullScreen, playSong,
+      playNext, playPrev, togglePlay, setIsPlaying, seekTo, closePlayer,
+      toggleWatchlist, isWatchlisted, toggleFollowArtist, isFollowingArtist,
+      toggleSavePlaylist, isPlaylistSaved
+    }}>
+      {children}
+    </MusicContext.Provider>
+  );
+}
+
+export function useMusic() {
+  const context = useContext(MusicContext);
+  if (context === undefined) throw new Error('useMusic must be used within a MusicProvider');
+  return context;
+}

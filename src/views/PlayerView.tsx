@@ -287,7 +287,7 @@ export function PlayerView({ media, onBack, onPlay }: PlayerViewProps) {
   }, loadingRecs, hasMore);
 
   const defaultServerIdx = loadDefaultServer();
-  const [selectedServer, setSelectedServer] = useState(defaultServerIdx < STREAM_SERVERS.length ? defaultServerIdx : 0);
+  const [selectedServer, setSelectedServer] = useState(defaultServerIdx < STREAM_SERVERS.length ? defaultServerIdx : 1);
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [isSeasonDropdownOpen, setIsSeasonDropdownOpen] = useState(false);

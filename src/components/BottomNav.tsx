@@ -1,4 +1,4 @@
-import { Home, Film, Tv, Settings, Zap } from 'lucide-react';
+import { Home, Film, Tv, Settings, Zap, Music } from 'lucide-react';
 import { TabType } from './TopNav';
 
 interface BottomNavProps {
@@ -47,6 +47,15 @@ export function BottomNav({ currentTab, onChange }: BottomNavProps) {
         </button>
 
         <button
+          onClick={() => onChange('music')}
+          className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all ${currentTab === 'music' ? 'text-white' : 'text-white/50 hover:text-white/80'}`}
+        >
+          <div className={`flex items-center justify-center p-2 rounded-full transition-colors ${currentTab === 'music' ? 'bg-white/20 shadow-inner' : ''}`}>
+             <Music size={20} strokeWidth={currentTab === 'music' ? 2.5 : 2} color={currentTab === 'music' ? 'url(#iconGradient)' : 'currentColor'} />
+          </div>
+        </button>
+
+        <button
           onClick={() => onChange('anime')}
           className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all ${currentTab === 'anime' ? 'text-white' : 'text-white/50 hover:text-white/80'}`}
         >
@@ -55,14 +64,7 @@ export function BottomNav({ currentTab, onChange }: BottomNavProps) {
           </div>
         </button>
 
-        <button
-          onClick={() => onChange('settings')}
-          className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all ${currentTab === 'settings' ? 'text-white' : 'text-white/50 hover:text-white/80'}`}
-        >
-           <div className={`flex items-center justify-center p-2 rounded-full transition-colors ${currentTab === 'settings' ? 'bg-white/20 shadow-inner' : ''}`}>
-             <Settings size={20} strokeWidth={currentTab === 'settings' ? 2.5 : 2} color={currentTab === 'settings' ? 'url(#iconGradient)' : 'currentColor'} />
-           </div>
-        </button>
+
 
       </div>
     </div>

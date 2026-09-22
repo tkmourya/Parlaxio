@@ -53,7 +53,7 @@ export function MovieCard({ movie, onPlay, defaultType = 'movie' }: MovieCardPro
         {movie.progress !== undefined && movie.progress > 0 && (
           <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20 z-20 overflow-hidden">
             <div 
-              className="h-full bg-[#e50914] shadow-[0_0_10px_rgba(229,9,20,0.8)] transition-all duration-500 ease-out"
+              className="h-full bg-gradient-to-r from-white via-zinc-200 to-zinc-400 shadow-[0_0_10px_rgba(255,255,255,0.6)] transition-all duration-500 ease-out rounded-r-full"
               style={{ width: `${movie.progress}%` }}
             />
           </div>

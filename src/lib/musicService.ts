@@ -1,0 +1,147 @@
+import { Song } from './MusicContext';
+
+const API_BASE = import.meta.env.VITE_MUSIC_API_URL || 'http://localhost:3001';
+
+export interface SearchResult extends Song {
+  duration: string;
+  durationSec: number;
+}
+
+export async function searchSongs(query: string): Promise<SearchResult[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`);
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.error('Music search error:', err);
+    return [];
+  }
+}
+export async function getSongDetails(id: string): Promise<SearchResult | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/music/song?id=${encodeURIComponent(id)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.song || null;
+  } catch {
+    return null;
+  }
+}
+
+export interface PlaylistItem {
+  id: string;
+  title: string;
+  type: string;
+  coverUrl: string;
+  artist?: string;
+}
+
+export interface HomeRow {
+  id: string;
+  title: string;
+  items: PlaylistItem[];
+}
+
+export async function getHomeRows(): Promise<HomeRow[]> {
+  // 1. Try returning cached home rows instantly from localStorage for 0ms loading
+  try {
+    const cached = localStorage.getItem('parlaxio_home_rows_cache_v2');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Fetch network update asynchronously
+        fetch(`${API_BASE}/api/music/home`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.rows) localStorage.setItem('parlaxio_home_rows_cache_v2', JSON.stringify(data.rows));
+          })
+          .catch(() => {});
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const res = await fetch(`${API_BASE}/api/music/home`);
+    if (!res.ok) throw new Error('Home API failed');
+    const data = await res.json();
+    if (data.rows) {
+      localStorage.setItem('parlaxio_home_rows_cache_v2', JSON.stringify(data.rows));
+    }
+    return data.rows || [];
+  } catch (err) {
+    console.error('Home data error:', err);
+    return [];
+  }
+}
+
+export async function getRecommendations(songId: string, artistName: string): Promise<SearchResult[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/music/recommend?id=${encodeURIComponent(songId)}&artist=${encodeURIComponent(artistName)}`);
+    if (!res.ok) throw new Error('Recommendation failed');
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.error('Recommend data error:', err);
+    return [];
+  }
+}
+
+export interface PlaylistData {
+  id: string;
+  title: string;
+  coverUrl: string;
+  songs: SearchResult[];
+}
+
+export async function getPlaylist(id: string): Promise<PlaylistData | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/music/playlist?id=${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error('Playlist fetch failed');
+    return await res.json();
+  } catch (err) {
+    console.error('Playlist data error:', err);
+    return null;
+  }
+}
+
+export async function getAlbum(id: string): Promise<PlaylistData | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/music/album?id=${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error('Album fetch failed');
+    return await res.json();
+  } catch (err) {
+    console.error('Album data error:', err);
+    return null;
+  }
+}
+
+export interface ArtistData {
+  id: string;
+  title: string;
+  subtitle: string;
+  coverUrl: string;
+  followerCount: string;
+  songs: SearchResult[];
+  albums: PlaylistItem[];
+}
+
+export async function getArtist(id: string): Promise<ArtistData | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/music/artist?id=${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error('Artist fetch failed');
+    return await res.json();
+  } catch (err) {
+    console.error('Artist data error:', err);
+    return null;
+  }
+}
+
+/**
+ * Returns the audio URL for a song. This URL points to our own backend
+ * which serves the cached audio file with proper headers.
+ */
+export function getAudioUrl(songId: string): string {
+  return `${API_BASE}/api/music/audio/${songId}`;
+}

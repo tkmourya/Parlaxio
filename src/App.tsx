@@ -6,6 +6,7 @@ import { WatchlistView } from './views/WatchlistView';
 import { MoviesView } from './views/MoviesView';
 import { SeriesView } from './views/SeriesView';
 import { AnimeView } from './views/AnimeView';
+import { MusicView } from './views/MusicView';
 import { PlayerView } from './views/PlayerView';
 import { DetailsView } from './views/DetailsView';
 import { SettingsView } from './views/SettingsView';
@@ -14,6 +15,7 @@ import { ProviderView } from './views/ProviderView';
 import { LiveTVView } from './views/LiveTVView';
 import { PrivacyPolicyView, TermsView, LegalDMCAView } from './views/LegalViews';
 import { BottomNav } from './components/BottomNav';
+import { GlobalAudioPlayer } from './components/GlobalAudioPlayer';
 import { AuthPromptModal } from './components/AuthPromptModal';
 import { TopNav } from './components/TopNav';
 import { PWAPrompt } from './components/PWAPrompt';
@@ -71,6 +73,7 @@ function AppContent() {
   const { user, loading } = useAuth();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [hideSettingsNav, setHideSettingsNav] = useState(false);
+  const [hideMusicTopNav, setHideMusicTopNav] = useState(false);
   const showExitToast = useDoubleBackToExit();
   const { 
     currentTab, 
@@ -94,6 +97,12 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    if (currentTab !== 'music') {
+      setHideMusicTopNav(false);
+    }
+  }, [currentTab]);
+
+  useEffect(() => {
     if (!loading && playingMedia && !user) {
       setShowAuthPrompt(true);
     }
@@ -109,8 +118,8 @@ function AppContent() {
 
   return (
     <div className="min-h-screen text-white selection:bg-white/30">
-      {/* Top Nav for Desktop (Hidden on Player, Details, Auth, and Settings/LiveTV/Legal) */}
-      {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && currentTab !== 'privacy' && currentTab !== 'terms' && currentTab !== 'legal' && (
+      {/* Top Nav for Desktop (Hidden on Player, Details, Auth, Settings/LiveTV/Legal, and Music Artist/Playlist Subviews) */}
+      {!playingMedia && !detailsMedia && !hideMusicTopNav && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && currentTab !== 'privacy' && currentTab !== 'terms' && currentTab !== 'legal' && (
         <TopNav currentTab={currentTab} onChange={navigateTab} onAuthClick={navigateAuth} />
       )}
 
@@ -120,6 +129,7 @@ function AppContent() {
         {currentTab === 'movies' && <MoviesView onPlay={navigateDetails} />}
         {currentTab === 'series' && <SeriesView onPlay={navigateDetails} />}
         {currentTab === 'anime' && <AnimeView onPlay={navigateDetails} />}
+        {currentTab === 'music' && <MusicView onSubViewChange={setHideMusicTopNav} />}
         {currentTab === 'trending' && <TrendingView onPlay={navigateDetails} />}
         {currentTab === 'search' && <SearchView onPlay={navigateDetails} />}
         {currentTab === 'watchlist' && <WatchlistView onPlay={navigateDetails} />}
@@ -146,6 +156,8 @@ function AppContent() {
         {currentTab === 'terms' && <TermsView onBack={navigateBack} />}
         {currentTab === 'legal' && <LegalDMCAView onBack={navigateBack} />}
       </main>
+
+      <GlobalAudioPlayer currentTab={currentTab} />
 
       {/* Bottom Nav for Mobile (Hidden on Player, Details, Auth, and Settings/LiveTV/Legal) */}
       {!playingMedia && !detailsMedia && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && currentTab !== 'privacy' && currentTab !== 'terms' && currentTab !== 'legal' && (

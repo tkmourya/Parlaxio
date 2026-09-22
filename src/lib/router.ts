@@ -86,6 +86,7 @@ export function parsePath(pathname: string): RouteState {
   if (cleanPath === '/movies') return { tab: 'movies', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/series') return { tab: 'series', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/anime') return { tab: 'anime', detailsMedia: null, playingMedia: null, authMode: 'login' };
+  if (cleanPath === '/music') return { tab: 'music', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/trending') return { tab: 'trending', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/search') return { tab: 'search', detailsMedia: null, playingMedia: null, authMode: 'login' };
   if (cleanPath === '/watchlist') return { tab: 'watchlist', detailsMedia: null, playingMedia: null, authMode: 'login' };
