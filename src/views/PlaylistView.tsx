@@ -326,7 +326,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
         {/* Tracklist Table */}
         <div className="mt-6">
           <div className="flex items-center text-white/40 text-xs font-semibold uppercase tracking-wider px-4 mb-3 border-b border-white/[0.08] pb-2.5">
-            <div className="w-9 text-center">#</div>
+            <div className="hidden md:block w-9 text-center">#</div>
             <div className="flex-1">Title</div>
             <div className="hidden sm:block w-32 text-right pr-6"><Clock size={15} className="inline-block" /></div>
             <div className="w-10 text-center" />
@@ -342,30 +342,50 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
                 <div 
                   key={song.id}
                   onClick={() => playSong(song, data.songs)}
-                  className={`group relative flex items-center px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 ${
+                  className={`group relative flex items-center px-2 py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${
                     isMenuOpen ? 'z-40' : 'z-10'
                   } ${
                     isActive 
-                      ? 'bg-white/15 border border-white/20 backdrop-blur-xl shadow-lg shadow-black/30' 
-                      : 'hover:bg-white/10 hover:backdrop-blur-md border border-transparent hover:border-white/5'
+                      ? 'bg-white/10 shadow-md' 
+                      : 'hover:bg-white/5'
                   }`}
                 >
-                  <div className="w-9 flex justify-center text-white/50 text-sm font-semibold shrink-0">
+                  {/* Desktop Track Index / Play visualizer */}
+                  <div className="hidden md:flex w-8 justify-center items-center text-white/50 text-sm font-semibold shrink-0">
                     {isActive && isPlaying ? (
-                       <div className="flex items-end gap-[3px] h-4">
-                         <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full" />
-                         <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3" />
-                         <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full" />
-                       </div>
+                      <div className="flex items-end gap-[3px] h-4">
+                        <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full" />
+                        <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3" />
+                        <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full" />
+                      </div>
                     ) : (
                       <span className="group-hover:hidden">{index + 1}</span>
                     )}
                     {!isActive && <Play size={15} className="hidden group-hover:block text-white" fill="currentColor" />}
                     {isActive && !isPlaying && <Play size={15} className="text-white" fill="currentColor" />}
                   </div>
-                  
-                  <div className="flex-1 min-w-0 flex items-center gap-3.5 ml-1">
-                    <img src={song.coverUrl} className="w-11 h-11 rounded-xl object-cover shadow-md shadow-black/30 group-hover:scale-105 transition-transform duration-300 shrink-0" alt="" />
+
+                  {/* Song Image & Details */}
+                  <div className="flex-1 min-w-0 flex items-center gap-3.5">
+                    <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 shadow-md shadow-black/30 group-hover:scale-105 transition-transform duration-300">
+                      <img 
+                        src={song.coverUrl} 
+                        className="w-full h-full object-cover" 
+                        alt={song.title} 
+                      />
+                      {/* Mobile Play / Equalizer Overlay */}
+                      <div className={`md:hidden absolute inset-0 bg-black/40 flex items-center justify-center ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                        {isActive && isPlaying ? (
+                          <div className="flex items-end gap-[3px] h-4">
+                            <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full" />
+                            <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3" />
+                            <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full" />
+                          </div>
+                        ) : (
+                          <Play size={16} className="text-white" fill="currentColor" />
+                        )}
+                      </div>
+                    </div>
                     <div className="flex flex-col min-w-0">
                       <span className={`text-base font-bold truncate text-white`}>
                         {song.title}

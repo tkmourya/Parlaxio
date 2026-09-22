@@ -56,6 +56,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
   const [activeSongMenuId, setActiveSongMenuId] = useState<string | null>(null);
   const [likedSongIds, setLikedSongIds] = useState<Record<string, boolean>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showAllSongs, setShowAllSongs] = useState(false);
 
   const artistMenuRef = useRef<HTMLDivElement>(null);
   const songMenuRef = useRef<HTMLDivElement>(null);
@@ -161,8 +162,8 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
     return (
       <div className="flex-1 h-full flex flex-col items-center justify-center min-h-screen bg-[var(--color-theme-bg)]">
         <p className="text-white/60 text-lg">Failed to load Artist.</p>
-        <button 
-          onClick={onBack} 
+        <button
+          onClick={onBack}
           className="mt-4 px-6 py-2.5 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all font-medium border border-white/10"
         >
           Go Back
@@ -176,7 +177,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
   return (
     <div className="flex-1 overflow-y-auto hide-scrollbar pb-32 min-h-screen animate-in fade-in bg-[var(--color-theme-bg)] text-white relative">
       {/* Back Arrow Fixed at Top-Left Corner */}
-      <button 
+      <button
         onClick={onBack}
         className="absolute top-6 left-6 sm:left-10 z-30 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg"
         title="Go Back"
@@ -196,7 +197,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
 
       {/* Full-screen minimal frosted glass backdrop */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 blur-[100px] saturate-200 bg-cover bg-center opacity-30 transition-all duration-1000 scale-125"
           style={{ backgroundImage: `url(${artistPhoto})` }}
         />
@@ -220,13 +221,13 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
               />
             </div>
           </div>
-        
+
           {/* Artist Metadata */}
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white mb-2 tracking-tight leading-tight drop-shadow-md">
               {artist.title}
             </h1>
-            
+
             <p className="text-white/70 text-sm md:text-base font-normal max-w-2xl mb-4 leading-relaxed">
               Discover top tracks, trending hits, and popular albums by {artist.title} on Parlaxio Music.
             </p>
@@ -236,6 +237,10 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
                 <Music size={14} className="text-white/80" />
                 {artist.songs.length} Popular Songs
               </span>
+              <span className="flex items-center gap-1.5 bg-white/10 px-3.5 py-1.5 rounded-full border border-white/15 backdrop-blur-md">
+
+                Play on Parlaxio
+              </span>
             </div>
           </div>
         </div>
@@ -243,7 +248,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
         {/* Action Controls Bar */}
         <div className="py-4 flex flex-wrap items-center gap-4 mb-8 border-b border-white/[0.08]">
           {/* Play / Pause All Button (White/Black Gradient Theme) */}
-          <button 
+          <button
             onClick={() => {
               if (artist.songs.length > 0) {
                 if (currentSong && artist.songs.some(s => s.id === currentSong.id)) {
@@ -269,20 +274,19 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
           </button>
 
           {/* Follow Button */}
-          <button 
+          <button
             onClick={handleToggleFollow}
-            className={`h-12 px-6 rounded-full flex items-center gap-2 text-sm font-semibold transition-all backdrop-blur-md border ${
-              isFollowing 
-                ? 'bg-white/25 text-white border-white/40 shadow-inner' 
-                : 'bg-white/10 text-white/90 border-white/15 hover:bg-white/20 hover:text-white'
-            }`}
+            className={`h-12 px-6 rounded-full flex items-center gap-2 text-sm font-semibold transition-all backdrop-blur-md border ${isFollowing
+              ? 'bg-white/25 text-white border-white/40 shadow-inner'
+              : 'bg-white/10 text-white/90 border-white/15 hover:bg-white/20 hover:text-white'
+              }`}
           >
             <Heart size={18} className={isFollowing ? 'fill-white text-white' : ''} />
             <span>{isFollowing ? 'Following' : 'Follow'}</span>
           </button>
 
           {/* Radio Button */}
-          <button 
+          <button
             onClick={handlePlayRadio}
             className="h-12 px-5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition-all backdrop-blur-md"
             title="Artist Radio"
@@ -293,7 +297,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
 
           {/* More Options Menu (3 Dots) */}
           <div className="relative" ref={artistMenuRef}>
-            <button 
+            <button
               onClick={() => setShowArtistMenu(!showArtistMenu)}
               className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all backdrop-blur-md active:scale-95"
               title="More Options"
@@ -304,7 +308,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
             {/* Artist Context Dropdown Menu */}
             {showArtistMenu && (
               <div className="absolute left-0 mt-2 w-56 bg-zinc-900/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl p-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
-                <button 
+                <button
                   onClick={handleShareArtist}
                   className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 text-sm text-white/90 transition-colors font-medium text-left"
                 >
@@ -312,7 +316,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
                   <span>Share Artist</span>
                 </button>
 
-                <button 
+                <button
                   onClick={handleToggleFollow}
                   className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 text-sm text-white/90 transition-colors font-medium text-left"
                 >
@@ -320,7 +324,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
                   <span>{isFollowing ? 'Unfollow Artist' : 'Follow Artist'}</span>
                 </button>
 
-                <button 
+                <button
                   onClick={handlePlayRadio}
                   className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 text-sm text-white/90 transition-colors font-medium text-left"
                 >
@@ -330,7 +334,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
 
                 <div className="my-1 border-t border-white/10" />
 
-                <button 
+                <button
                   onClick={handleShareArtist}
                   className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 text-sm text-white/70 transition-colors font-medium text-left"
                 >
@@ -357,25 +361,23 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
 
             {artist.songs.length > 0 ? (
               <div className="flex flex-col gap-1.5">
-                {artist.songs.slice(0, 10).map((song, index) => {
+                {artist.songs.slice(0, showAllSongs ? artist.songs.length : 10).map((song, index) => {
                   const isActive = isCurrentSong(song.id);
                   const isMenuOpen = activeSongMenuId === song.id;
                   const isLiked = !!likedSongIds[song.id];
 
                   return (
-                    <div 
+                    <div
                       key={song.id}
                       onClick={() => playSong(song, artist.songs)}
-                      className={`group relative flex items-center px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 ${
-                        isMenuOpen ? 'z-40' : 'z-10'
-                      } ${
-                        isActive 
-                          ? 'bg-white/15 border border-white/20 backdrop-blur-xl shadow-lg shadow-black/30' 
-                          : 'hover:bg-white/10 hover:backdrop-blur-md border border-transparent hover:border-white/5'
-                      }`}
+                      className={`group relative flex items-center px-2 py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${isMenuOpen ? 'z-40' : 'z-10'
+                        } ${isActive
+                          ? 'bg-white/10 shadow-md'
+                          : 'hover:bg-white/5'
+                        }`}
                     >
-                      {/* Track Index / Play visualizer */}
-                      <div className="w-9 flex justify-center text-white/50 text-sm font-semibold shrink-0">
+                      {/* Desktop Track Index / Play visualizer */}
+                      <div className="hidden md:flex w-8 justify-center items-center text-white/50 text-sm font-semibold shrink-0">
                         {isActive && isPlaying ? (
                           <div className="flex items-end gap-[3px] h-4">
                             <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full" />
@@ -390,12 +392,26 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
                       </div>
 
                       {/* Song Image & Details */}
-                      <div className="flex-1 min-w-0 flex items-center gap-3.5 ml-1">
-                        <img 
-                          src={song.coverUrl} 
-                          className="w-11 h-11 rounded-xl object-cover shadow-md shadow-black/30 group-hover:scale-105 transition-transform duration-300 shrink-0" 
-                          alt={song.title} 
-                        />
+                      <div className="flex-1 min-w-0 flex items-center gap-3.5">
+                        <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 shadow-md shadow-black/30 group-hover:scale-105 transition-transform duration-300">
+                          <img 
+                            src={song.coverUrl} 
+                            className="w-full h-full object-cover" 
+                            alt={song.title} 
+                          />
+                          {/* Mobile Play / Equalizer Overlay */}
+                          <div className={`md:hidden absolute inset-0 bg-black/40 flex items-center justify-center ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                            {isActive && isPlaying ? (
+                              <div className="flex items-end gap-[3px] h-4">
+                                <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full" />
+                                <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3" />
+                                <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full" />
+                              </div>
+                            ) : (
+                              <Play size={16} className="text-white" fill="currentColor" />
+                            )}
+                          </div>
+                        </div>
                         <div className="flex flex-col min-w-0">
                           <span className={`text-base font-bold truncate text-white`}>
                             {song.title}
@@ -426,7 +442,7 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
 
                         {/* Song Popup Menu - Rich Frosted Dark Glassmorphism */}
                         {isMenuOpen && (
-                          <div 
+                          <div
                             ref={songMenuRef}
                             onClick={(e) => e.stopPropagation()}
                             className="absolute right-0 top-full mt-1.5 w-52 bg-zinc-900/90 border border-white/20 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200 text-white"
@@ -465,6 +481,15 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
                     </div>
                   );
                 })}
+
+                {artist.songs.length > 10 && (
+                  <button
+                    onClick={() => setShowAllSongs(!showAllSongs)}
+                    className="mt-3 w-full py-3.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-sm font-semibold transition-all shadow-md active:scale-[0.98]"
+                  >
+                    {showAllSongs ? 'Show Less' : `Show All ${artist.songs.length} Tracks`}
+                  </button>
+                )}
               </div>
             ) : (
               <p className="text-white/40 text-sm italic">No songs available for this artist.</p>
@@ -487,10 +512,10 @@ export function ArtistView({ id, onBack, onPlaylistClick }: ArtistViewProps) {
                     className="group cursor-pointer bg-white/5 hover:bg-white/15 p-0 overflow-hidden rounded-2xl transition-all duration-300 border border-white/10 hover:border-white/20 hover:shadow-xl hover:-translate-y-1"
                   >
                     <div className="relative w-full aspect-square overflow-hidden shadow-lg shadow-black/40">
-                      <img 
-                        src={album.coverUrl} 
-                        alt={album.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      <img
+                        src={album.coverUrl}
+                        alt={album.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                         <div className="w-10 h-10 rounded-full bg-white text-black shadow-lg flex items-center justify-center transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">

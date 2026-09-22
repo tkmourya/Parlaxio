@@ -369,7 +369,25 @@ app.get('/api/music/artist', async (req, res) => {
       const data = await saavnRes.json();
 
       if (data && data.name && data.topSongs && data.topSongs.songs && data.topSongs.songs.length > 0) {
-        const topSongs = data.topSongs.songs.map(mapSaavnSong).filter(s => s.encryptedUrl);
+        let topSongs = data.topSongs.songs.map(mapSaavnSong).filter(s => s.encryptedUrl);
+        
+        // Fetch more songs for this artist using the search API
+        try {
+          const moreRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(data.name)}&_format=json&_marker=0&n=40`);
+          const moreData = await moreRes.json();
+          if (moreData && moreData.results) {
+            const moreSongs = moreData.results.map(mapSaavnSong).filter(s => s.encryptedUrl);
+            const seen = new Set(topSongs.map(s => s.id));
+            for (const s of moreSongs) {
+              if (!seen.has(s.id)) {
+                topSongs.push(s);
+                seen.add(s.id);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch more songs:', e.message);
+        }
         const topAlbums = data.topAlbums && data.topAlbums.albums ? data.topAlbums.albums.map(a => {
           const img = a.image || a.imageUrl || '';
           return {
