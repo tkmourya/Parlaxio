@@ -171,7 +171,7 @@ function AppContent() {
 
       {/* Movie / Series Details Page */}
       {detailsMedia && !playingMedia && (
-        <div className="fixed inset-0 z-40 bg-[var(--color-theme-bg)] overflow-y-auto">
+        <div className="fixed inset-0 z-[60] bg-[var(--color-theme-bg)] overflow-y-auto">
           <DetailsView 
             media={detailsMedia} 
             onBack={navigateBack} 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Play, Bookmark, Check, Film, Star, Clock, Info, Calendar, Sparkles } from 'lucide-react';
+import { ArrowLeft, Play, Bookmark, Check, Film, Star, Clock, Info, Calendar, Sparkles, ShieldAlert } from 'lucide-react';
 import { getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos, getCollection } from '../lib/tmdb';
 import { Movie, Cast, Episode, Video } from '../types';
 import { MovieCard } from '../components/MovieCard';
 import { isInWatchlist, toggleWatchlist } from '../lib/storage';
 import { TrailerModal } from '../components/TrailerModal';
+import { loadFamilySafeMode } from '../lib/preferences';
 
 interface DetailsViewProps {
   media: { id: number; type: 'movie' | 'tv' };
@@ -21,6 +22,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
   const [loading, setLoading] = useState(true);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   // TV specific state
   const [selectedSeason, setSelectedSeason] = useState(1);
@@ -38,6 +40,33 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
         ]);
 
         setDetails(detRes);
+        
+        // Family Safe Block Check
+        if (loadFamilySafeMode()) {
+          const badKeywords = [
+            19037,  // nudity
+            13059,  // prostitution/female nudity
+            10321,  // erotic
+            158718, // sexual content
+            255146, // softcore
+            267122, // sex
+            158713, // bdsm
+            1664,   // eroticism
+            9799,   // erotica
+            100021, // male nudity
+            9785,   // perversion
+            195669, // ecchi
+            198385  // hentai
+          ];
+          const keywordsArr = detRes.keywords?.keywords || detRes.keywords?.results || [];
+          const hasBadKeyword = keywordsArr.some((k: any) => badKeywords.includes(k.id));
+          if (hasBadKeyword || detRes.adult) {
+            setIsBlocked(true);
+            setLoading(false);
+            return;
+          }
+        }
+
         setCast(credRes.cast ? credRes.cast.slice(0, 12) : []);
         setSaved(isInWatchlist(detRes.id));
 
@@ -129,6 +158,27 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
           <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
           <span className="text-xs text-zinc-400 font-medium">Loading details...</span>
         </div>
+      </div>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
+          <ShieldAlert size={40} className="text-red-500" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-3">Content Blocked</h2>
+        <p className="text-zinc-400 mb-8 max-w-sm">
+          Family Safe Mode is turned ON. This content contains explicit themes or nudity and has been hidden.
+        </p>
+        <button
+          onClick={onBack}
+          className="flex items-center justify-center gap-2 bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-zinc-200 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span>Go Back</span>
+        </button>
       </div>
     );
   }

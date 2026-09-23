@@ -3,14 +3,14 @@ import {
   Shield, Bookmark, Play, ChevronRight, Check,
   Trash2, Film, Zap, HardDrive, Volume2, Globe,
   ArrowLeft, LogOut, CheckCircle2, ChevronDown, Clock, User,
-  LayoutGrid, List, ShieldAlert
+  LayoutGrid, List, ShieldAlert, EyeOff
 } from 'lucide-react';
 import { WatchlistView } from './WatchlistView';
 import { useAuth } from '../lib/AuthContext';
 import { getWatchlist } from '../lib/storage';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { AdBlockModal } from '../components/AdBlockModal';
-import { THEMES, saveTheme, loadTheme, saveDefaultServer, loadDefaultServer } from '../lib/preferences';
+import { THEMES, saveTheme, loadTheme, saveDefaultServer, loadDefaultServer, saveFamilySafeMode, loadFamilySafeMode } from '../lib/preferences';
 
 interface SettingsViewProps {
   onPlay: (id: number, type: 'movie' | 'tv') => void;
@@ -38,6 +38,13 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   const [skipIntro, setSkipIntro] = useState(true);
   const [hdrEnabled, setHdrEnabled] = useState(true);
   const [hardwareAccel, setHardwareAccel] = useState(true);
+  const [familySafe, setFamilySafe] = useState(loadFamilySafeMode());
+
+  const handleFamilySafeToggle = async () => {
+    const newValue = !familySafe;
+    setFamilySafe(newValue);
+    await saveFamilySafeMode(newValue);
+  };
 
   // Selectable options
   const [videoQuality, setVideoQuality] = useState('4K (2160p)');
@@ -90,7 +97,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
       setIsUpdatingProfile(false);
     }
   };
-  const { history, clearHistory } = useWatchHistory();
+  const { history, clearHistory, removeFromHistory } = useWatchHistory();
 
   useEffect(() => {
     setWatchlistCount(getWatchlist().length);
@@ -143,10 +150,9 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setSubView(null)}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
           >
-            <ArrowLeft size={14} />
-            <span>Back to Settings</span>
+            <ArrowLeft size={18} />
           </button>
           <span className="text-xs font-semibold text-zinc-400">{watchlistCount} Titles</span>
         </div>
@@ -163,10 +169,9 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setSubView(null)}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
           >
-            <ArrowLeft size={14} />
-            <span>Back to Settings</span>
+            <ArrowLeft size={18} />
           </button>
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-zinc-400">{history.length} Titles</span>
@@ -222,6 +227,15 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromHistory(movie.id);
+                      }}
+                      className="absolute top-2 right-2 w-8 h-8 bg-black/60 hover:bg-red-500/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                     <div className="absolute bottom-0 left-0 right-0 p-3">
                       <button className="w-full py-2 bg-white text-black font-bold text-xs rounded-lg flex items-center justify-center gap-1.5">
                         <Play size={12} className="fill-current" /> Resume
@@ -264,7 +278,16 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                       <p className="text-xs text-zinc-400 mt-1">{Math.floor(movie.progress)}% watched</p>
                     )}
                   </div>
-                  <div className="pr-3 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
+                  <div className="pr-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromHistory(movie.id);
+                      }}
+                      className="w-8 h-8 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                     <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center pl-0.5 hover:scale-110 active:scale-95 transition-transform">
                       <Play size={14} className="fill-current" />
                     </button>
@@ -806,6 +829,39 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
               >
                 <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${skipIntro ? 'left-5.5 bg-black' : 'left-0.5 bg-white'}`} />
               </button>
+            </div>
+
+            {/* Family Safe Mode */}
+            <div className="flex items-center justify-between p-3.5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 flex items-center justify-center">
+                  <ShieldAlert size={16} />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-white block">Family Safe Mode</span>
+                  <span className="text-[11px] text-zinc-400">Blocks 18+ content and nudity</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* 18+ Icon indicator */}
+                <div className="relative flex items-center justify-center w-8 h-8 rounded-full">
+                  <span className="text-[11px] font-black leading-none tracking-wider text-white">
+                    18+
+                  </span>
+                  {familySafe && (
+                    <div className="absolute inset-0 m-auto w-6 h-[2px] bg-red-500 -rotate-45 rounded-full shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
+                  )}
+                </div>
+                <button
+                  onClick={handleFamilySafeToggle}
+                  className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${familySafe ? 'bg-gradient-to-r from-white via-zinc-200 to-zinc-400 shadow-inner' : 'bg-zinc-700'}`}
+                  role="switch"
+                  aria-checked={familySafe}
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${familySafe ? 'left-5.5 bg-black' : 'left-0.5 bg-white'}`} />
+                </button>
+              </div>
             </div>
 
             {/* Hardware Acceleration */}

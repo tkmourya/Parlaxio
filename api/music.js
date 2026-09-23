@@ -90,7 +90,8 @@ app.use('/api/music', async (req, res, next) => {
     // Layer 0: Browser Cache (Instant 0ms speed for users)
     res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     
-    const cacheKey = req.originalUrl;
+    // Cache Buster: Added :v3 so that old cached data is ignored and new rows are shown
+    const cacheKey = req.originalUrl + ':v3';
     
     // Layer 2: In-Memory RAM Cache (Instant)
     const ramCached = getCache(cacheKey);
@@ -222,9 +223,39 @@ app.get('/api/music/home', async (req, res) => {
       });
     }
 
+    // 1. Top Trending Songs (Fetched from real-time Trending Today playlist)
+    try {
+      const trendingRes = await fetch(`https://www.jiosaavn.com/api.php?__call=playlist.getDetails&listid=110858205&_format=json`);
+      const trendingData = await trendingRes.json();
+      if (trendingData && trendingData.songs) {
+        const trendingSongs = trendingData.songs.map(mapSaavnSong).filter(s => s.encryptedUrl);
+        rows.push({
+          id: 'trending_songs',
+          title: 'Top Trending Songs',
+          type: 'song',
+          items: deduplicateSongs(trendingSongs)
+        });
+      }
+    } catch(e) { console.error('Trending songs error:', e.message); }
+
+    // 2. Real Trending Playlists (Charts from JioSaavn Live Data)
+    if (launchData.charts) {
+      rows.push({
+        id: 'top_charts',
+        title: 'Top Charts & Trends',
+        type: 'playlist',
+        items: launchData.charts.slice(0, 18).map(p => ({
+          id: p.id || p.listid,
+          title: p.title || p.listname,
+          type: 'playlist',
+          artist: p.subtitle || p.artist_name || p.header_desc || '',
+          coverUrl: p.image ? p.image.replace('150x150', '500x500') : '',
+        }))
+      });
+    }
+
     // Rich categories with up to 18 cards per row
     const queries = [
-      { id: 'trending_hits', title: 'Trending Bollywood Hits', q: 'latest bollywood' },
       { id: 'romantic', title: 'Romantic Hindi Melodies', q: 'romantic hits' },
       { id: 'party', title: 'Party & Punjabi Beats', q: 'punjabi party dance' },
       { id: 'hip_hop', title: 'Desi Hip Hop & Rap', q: 'desi hip hop' },
@@ -338,10 +369,11 @@ app.get('/api/music/home', async (req, res) => {
 app.get('/api/music/search', async (req, res) => {
   try {
     const query = req.query.q;
+    const page = req.query.page || 1; // Support for Infinite Scroll (Pagination)
     if (!query) return res.status(400).json({ error: 'Query "q" is required' });
 
-    // Fetch 100 songs so that after deduplication we still have a lot of songs
-    const saavnRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(query)}&_format=json&_marker=0&n=100`);
+    // Fetch 50 songs per page for smooth infinite scroll
+    const saavnRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(query)}&_format=json&p=${page}&n=50`);
     const data = await saavnRes.json();
     
     if (!data.results) return res.json({ results: [] });

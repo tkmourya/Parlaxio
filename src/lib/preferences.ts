@@ -62,3 +62,21 @@ export function loadDefaultServer(): number {
   if (saved === null) return 1; // Default to Server 2 (VidSrc SBS)
   return parseInt(saved, 10);
 }
+
+export async function saveFamilySafeMode(enabled: boolean) {
+  localStorage.setItem('parlaxio_family_safe', enabled ? 'true' : 'false');
+  
+  // Sync to Cloud
+  try {
+    const prefs = await account.getPrefs();
+    await account.updatePrefs({ ...prefs, familySafe: enabled });
+  } catch (error) {
+    // User might not be logged in, ignore
+  }
+}
+
+export function loadFamilySafeMode(): boolean {
+  const saved = localStorage.getItem('parlaxio_family_safe');
+  // Default to false (off) for backward compatibility
+  return saved === 'true';
+}

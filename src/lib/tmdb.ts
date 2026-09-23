@@ -1,4 +1,5 @@
 import { Movie, TMDBResponse } from '../types';
+import { loadFamilySafeMode } from './preferences';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -11,8 +12,24 @@ export const getImageUrl = (path: string | null, size: 'w500' | 'original' = 'w5
 const apiCache = new Map<string, Promise<any>>();
 
 async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
-  if (apiCache.has(endpoint)) {
-    return apiCache.get(endpoint) as Promise<T>;
+  let safeEndpoint = endpoint;
+  if (loadFamilySafeMode()) {
+    const isDiscover = safeEndpoint.includes('/discover/');
+    const isSearch = safeEndpoint.includes('/search/');
+    
+    if (isDiscover || isSearch) {
+      const sep = safeEndpoint.includes('?') ? '&' : '?';
+      safeEndpoint += `${sep}include_adult=false`;
+      
+      if (isDiscover) {
+        // Nudity, Prostitution, Erotic, Sexual Content, Softcore, Sex, BDSM, Eroticism, Erotica, Male Nudity, Perversion, Ecchi, Hentai
+        safeEndpoint += `&without_keywords=19037,13059,10321,158718,255146,267122,158713,1664,9799,100021,9785,195669,198385`;
+      }
+    }
+  }
+
+  if (apiCache.has(safeEndpoint)) {
+    return apiCache.get(safeEndpoint) as Promise<T>;
   }
 
   const fetchPromise = (async () => {
@@ -20,15 +37,15 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
 
     if (isDev && API_KEY) {
       // LOCALHOST / DEV MODE: Call TMDB directly
-      const separator = endpoint.includes('?') ? '&' : '?';
-      const url = `${BASE_URL}${endpoint}${separator}api_key=${API_KEY}`;
+      const separator = safeEndpoint.includes('?') ? '&' : '?';
+      const url = `${BASE_URL}${safeEndpoint}${separator}api_key=${API_KEY}`;
       
       const response = await fetch(url);
       if (!response.ok) throw new Error(`TMDB API Error: ${response.status}`);
       return response.json();
     } else {
       // PRODUCTION / VERCEL: Call our secure Serverless Function
-      const url = `/api/tmdb?path=${encodeURIComponent(endpoint)}`;
+      const url = `/api/tmdb?path=${encodeURIComponent(safeEndpoint)}`;
       
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Vercel TMDB Proxy Error: ${response.status}`);
@@ -36,11 +53,11 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
     }
   })();
 
-  apiCache.set(endpoint, fetchPromise);
+  apiCache.set(safeEndpoint, fetchPromise);
 
   // If fetch fails, remove from cache so we can retry next time
   fetchPromise.catch(() => {
-    apiCache.delete(endpoint);
+    apiCache.delete(safeEndpoint);
   });
 
   return fetchPromise;
@@ -175,7 +192,7 @@ export const getAnimeByFilter = (filter: string, page = 1) => {
   }
 };
 
-export const getMovieDetails = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}?append_to_response=${type === 'movie' ? 'release_dates' : 'content_ratings'},translations,recommendations,similar`);
+export const getMovieDetails = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}?append_to_response=${type === 'movie' ? 'release_dates' : 'content_ratings'},translations,recommendations,similar,keywords`);
 export const getCredits = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}/credits`);
 export const getVideos = (type: 'movie' | 'tv', id: number) => fetchFromTMDB<any>(`/${type}/${id}/videos`);
 export const getTvSeason = (id: number, season: number) => fetchFromTMDB<any>(`/tv/${id}/season/${season}`);
