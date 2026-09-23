@@ -2,15 +2,42 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import CryptoJS from 'crypto-js';
+import Redis from 'ioredis';
+import zlib from 'zlib';
 
 const app = express();
 app.use(cors());
 
 const SAAVN_API_URL = process.env.SAAVN_API_URL;
+const REDIS_URL = process.env.LAYERBASE_REDIS_REST_URL; // Using the real connection string now
 
-// Simple In-Memory Cache for fast local responses
+// 1. Simple In-Memory Cache (RAM)
 const apiCache = new Map();
 const CACHE_TTL = 3600 * 1000; // 1 hour
+
+// Initialize Redis Client if URL exists
+let redis = null;
+if (REDIS_URL) {
+  const urlObj = new URL(REDIS_URL);
+  redis = new Redis(REDIS_URL, {
+    tls: { 
+      rejectUnauthorized: false,
+      servername: urlObj.hostname // CRITICAL: Layerbase requires SNI
+    },
+    connectTimeout: 1000, // 1 second fail-fast
+    commandTimeout: 1000, // 1 second fail-fast
+    maxRetriesPerRequest: 1,
+    retryStrategy: () => null, // No retries, fallback instantly
+  });
+  
+  redis.on('connect', () => console.log('[Redis] Connecting to Layerbase...'));
+  redis.on('ready', () => console.log('[Redis] Successfully connected and ready!'));
+  
+  redis.on('error', (err) => {
+    if (err.message.includes('Connection is closed')) return;
+    console.warn(`[Redis Connection Error] ${err.message}`);
+  });
+}
 
 function getCache(key) {
   const item = apiCache.get(key);
@@ -26,25 +53,71 @@ function setCache(key, data) {
   apiCache.set(key, { data, expiry: Date.now() + CACHE_TTL });
 }
 
-// Middleware to set Vercel Edge Cache headers and handle In-Memory Caching
-app.use('/api/music', (req, res, next) => {
+// 2. Serverless Redis Cache Helpers (With ZLIB Compression for extreme speed)
+async function getRedisCache(key) {
+  if (!redis) return null;
+  try {
+    const buffer = await redis.getBuffer(key);
+    if (buffer) {
+      try {
+        // Try decompressing new data
+        return JSON.parse(zlib.inflateSync(buffer).toString());
+      } catch (e) {
+        // Fallback for old uncompressed data
+        return JSON.parse(buffer.toString());
+      }
+    }
+  } catch (e) {
+    console.warn(`[Redis Fallback] Get failed: ${e.message}`);
+  }
+  return null;
+}
+
+async function setRedisCache(key, body) {
+  if (!redis) return;
+  try {
+    // Compress data to reduce 100KB to 10KB (makes US to India transfer 10x faster)
+    const compressed = zlib.deflateSync(JSON.stringify(body));
+    await redis.set(key, compressed, 'EX', 3600);
+  } catch (e) {
+    console.warn(`[Redis Fallback] Set failed: ${e.message}`);
+  }
+}
+
+// Middleware to set Browser & Edge Cache headers and handle 3-Layer Caching
+app.use('/api/music', async (req, res, next) => {
   if (req.method === 'GET' && !req.path.includes('/audio')) {
-    // 1. Vercel CDN Cache
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+    // Layer 0: Browser Cache (Instant 0ms speed for users)
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     
-    // 2. In-Memory Cache (for local development or warm Vercel instances)
     const cacheKey = req.originalUrl;
-    const cached = getCache(cacheKey);
-    if (cached) {
-      console.log(`[Cache Hit] ${cacheKey}`);
-      return res.json(cached);
+    
+    // Layer 2: In-Memory RAM Cache (Instant)
+    const ramCached = getCache(cacheKey);
+    if (ramCached) {
+      console.log(`[RAM Cache Hit] ${cacheKey}`);
+      return res.json(ramCached);
+    }
+
+    // Layer 3: Serverless Redis Cache (Global)
+    const redisCached = await getRedisCache(cacheKey);
+    if (redisCached) {
+      console.log(`[Redis Cache Hit] ${cacheKey}`);
+      setCache(cacheKey, redisCached); // Hydrate RAM cache for next time
+      return res.json(redisCached);
     }
     
-    // Intercept response to save to memory cache
+    // Intercept response to save to both RAM and Redis and fix broken images
     const originalJson = res.json;
     res.json = function(body) {
       if (res.statusCode === 200 && !body.error) {
+         // Globally fix broken JioSaavn default images
+         let stringified = JSON.stringify(body);
+         stringified = stringified.replace(/https:\/\/admin\.aws\.sg\.saavn\.com\/[^"']+/g, 'https://images.unsplash.com/photo-1614680376593-902f74ca0cd5?w=500&h=500&fit=crop');
+         body = JSON.parse(stringified);
+         
          setCache(cacheKey, body);
+         setRedisCache(cacheKey, body); // Fire-and-forget background save
       }
       originalJson.call(this, body);
     };
@@ -87,6 +160,23 @@ function mapSaavnSong(song) {
     coverUrl: image,
     encryptedUrl: song.encrypted_media_url || null
   };
+}
+
+// Deduplicate songs by title and artist to prevent same song from appearing 3-4 times
+function deduplicateSongs(songs) {
+  const unique = [];
+  const seenKeys = new Set();
+  for (const s of songs) {
+    const titleKey = s.title.toLowerCase().trim();
+    const artistKey = s.artist ? s.artist.toLowerCase().trim() : '';
+    const uniqueKey = `${titleKey}-${artistKey}`; // Combine Title + Artist
+    
+    if (!seenKeys.has(uniqueKey)) {
+      seenKeys.add(uniqueKey);
+      unique.push(s);
+    }
+  }
+  return unique;
 }
 
 // 1. Home Page Categories (Pre-fetched rows of Playlists/Albums)
@@ -250,22 +340,14 @@ app.get('/api/music/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ error: 'Query "q" is required' });
 
-    const saavnRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(query)}&_format=json&_marker=0&n=40`);
+    // Fetch 100 songs so that after deduplication we still have a lot of songs
+    const saavnRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(query)}&_format=json&_marker=0&n=100`);
     const data = await saavnRes.json();
     
     if (!data.results) return res.json({ results: [] });
 
     const songs = data.results.map(mapSaavnSong).filter(s => s.encryptedUrl);
-    
-    // Remove duplicates by ID
-    const uniqueSongs = [];
-    const seen = new Set();
-    for (const s of songs) {
-      if (!seen.has(s.id)) {
-        seen.add(s.id);
-        uniqueSongs.push(s);
-      }
-    }
+    const uniqueSongs = deduplicateSongs(songs);
 
     res.json({ results: uniqueSongs });
   } catch (err) {
@@ -291,7 +373,7 @@ app.get('/api/music/recommend', async (req, res) => {
     const songs = data.results.map(mapSaavnSong)
       .filter(s => s.encryptedUrl && s.id !== songId);
 
-    res.json({ results: songs });
+    res.json({ results: deduplicateSongs(songs) });
   } catch (err) {
     console.error('Recommend error:', err.message);
     res.status(500).json({ error: 'Recommendation failed' });
@@ -419,7 +501,8 @@ app.get('/api/music/artist', async (req, res) => {
       const saavnPromise = fetch(`https://www.jiosaavn.com/api.php?__call=artist.getArtistPageDetails&artistId=${targetArtistId}&_format=json`).then(r => r.json());
       let morePromise = null;
       if (nameParam) {
-        morePromise = fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(nameParam)}&_format=json&_marker=0&n=40`).then(r => r.json()).catch(() => null);
+        // Fetch 100 songs to compensate for duplicates
+        morePromise = fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(nameParam)}&_format=json&_marker=0&n=100`).then(r => r.json()).catch(() => null);
       }
       
       const data = await saavnPromise;
@@ -427,22 +510,19 @@ app.get('/api/music/artist', async (req, res) => {
       if (data && data.name && data.topSongs && data.topSongs.songs && data.topSongs.songs.length > 0) {
         let topSongs = data.topSongs.songs.map(mapSaavnSong).filter(s => s.encryptedUrl);
         
-        // Fetch more songs for this artist using the search API
+        // Fetch more songs for this artist using the search API (100 items)
         try {
-          const moreData = morePromise ? await morePromise : await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(data.name)}&_format=json&_marker=0&n=40`).then(r => r.json());
+          const moreData = morePromise ? await morePromise : await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(data.name)}&_format=json&_marker=0&n=100`).then(r => r.json());
           if (moreData && moreData.results) {
             const moreSongs = moreData.results.map(mapSaavnSong).filter(s => s.encryptedUrl);
-            const seen = new Set(topSongs.map(s => s.id));
-            for (const s of moreSongs) {
-              if (!seen.has(s.id)) {
-                topSongs.push(s);
-                seen.add(s.id);
-              }
-            }
+            topSongs = [...topSongs, ...moreSongs];
           }
         } catch (e) {
           console.error('Failed to fetch more songs:', e.message);
         }
+        
+        topSongs = deduplicateSongs(topSongs);
+        
         const topAlbums = data.topAlbums && data.topAlbums.albums ? data.topAlbums.albums.map(a => {
           const img = a.image || a.imageUrl || '';
           return {
@@ -468,10 +548,13 @@ app.get('/api/music/artist', async (req, res) => {
     }
 
     // Fallback search by artist name for International artists or non-numeric IDs
-    const searchRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(rawId)}&_format=json&_marker=0&n=30`);
+    // Fetch 100 songs to compensate for duplicates
+    const searchRes = await fetch(`https://www.jiosaavn.com/api.php?__call=search.getResults&q=${encodeURIComponent(rawId)}&_format=json&_marker=0&n=100`);
     const searchData = await searchRes.json();
 
-    const songs = searchData.results ? searchData.results.map(mapSaavnSong).filter(s => s.encryptedUrl) : [];
+    let songs = searchData.results ? searchData.results.map(mapSaavnSong).filter(s => s.encryptedUrl) : [];
+    songs = deduplicateSongs(songs);
+    
     const realCoverUrl = ARTIST_AVATARS[rawId] || artistSearchImage || (songs.length > 0 ? songs[0].coverUrl : '');
 
     const albumMap = new Map();

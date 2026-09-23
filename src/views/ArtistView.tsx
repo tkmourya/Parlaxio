@@ -308,7 +308,7 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
 
             {/* Artist Context Dropdown Menu */}
             {showArtistMenu && (
-              <div className="absolute left-0 mt-2 w-56 bg-zinc-900/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl p-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 sm:left-0 mt-2 w-56 bg-zinc-900/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl p-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
                 <button
                   onClick={handleShareArtist}
                   className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 text-sm text-white/90 transition-colors font-medium text-left"
