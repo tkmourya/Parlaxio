@@ -206,6 +206,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       audioRef.current.play().catch(e => {
         console.error('Playback failed', e);
       });
+      
+      // Setup Media Session API for background playback & lockscreen controls
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: song.title,
+          artist: song.artist || 'Unknown Artist',
+          album: '',
+          artwork: [
+            { src: song.coverUrl || '', sizes: '150x150', type: 'image/jpeg' },
+            { src: song.coverUrl || '', sizes: '500x500', type: 'image/jpeg' }
+          ]
+        });
+      }
     }
   }, [addToRecentlyPlayed]);
 
@@ -292,6 +305,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [loadAndPlay]);
 
+  const playPrevInternal = useCallback(() => {
+    const prev = currentSongRef.current;
+    const currentQueue = queueRef.current;
+    if (!prev) return;
+    
+    const currentIndex = currentQueue.findIndex(s => s.id === prev.id);
+    if (currentIndex > 0) {
+      loadAndPlay(currentQueue[currentIndex - 1]);
+    } else {
+      // If at start, restart current song
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play();
+      }
+    }
+  }, [loadAndPlay]);
+
   useEffect(() => {
     const audio = new Audio();
     audio.preload = 'auto';
@@ -300,6 +330,24 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     // Set initial audio src if last song was loaded from localStorage
     if (currentSong) {
       audio.src = getAudioUrl(currentSong.id);
+    }
+    
+    // Setup Media Session action handlers
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => {
+        audio.play();
+        setIsPlaying(true);
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        audio.pause();
+        setIsPlaying(false);
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        playNextInternal();
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        playPrevInternal();
+      });
     }
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
