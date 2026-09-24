@@ -107,7 +107,7 @@ export function GlobalAudioPlayer({ currentTab }: GlobalAudioPlayerProps) {
     <>
       {/* ====== FULL MINI PLAYER (Music Page) ====== */}
       <div 
-        className={`fixed bottom-[88px] md:bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-xl z-40 transition-all duration-300 ${
+        className={`mini-player-container fixed bottom-[88px] md:bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-xl z-40 transition-all duration-300 ${
           isFullScreen || !isOnMusicPage ? 'opacity-0 pointer-events-none translate-y-10' : 'opacity-100 translate-y-0'
         }`}
       >
@@ -157,7 +157,7 @@ export function GlobalAudioPlayer({ currentTab }: GlobalAudioPlayerProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
-        className={`fixed z-[45] select-none touch-none transition-opacity duration-300 ${
+        className={`mini-player-container fixed z-[45] select-none touch-none transition-opacity duration-300 ${
           isFullScreen || isOnMusicPage ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
         style={

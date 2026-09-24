@@ -238,10 +238,10 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
       {/* Back Arrow Fixed at Top-Left Corner */}
       <button
         onClick={onBack}
-        className="absolute top-6 left-6 sm:left-10 z-30 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg"
+        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg group"
         title="Go Back"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
       </button>
 
       {/* Toast Banner Notification */}
@@ -263,7 +263,7 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/80 to-zinc-950" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2rem)]">
         {/* Artist Hero Header Section */}
         <div className="pt-4 pb-10 flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-center">
           {/* Circular Avatar */}

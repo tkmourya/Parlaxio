@@ -154,23 +154,34 @@ export function SearchView({ onPlay }: { onPlay: (id: number, type: 'movie' | 't
   const showSuggestions = isFocused && results.length === 0;
 
   return (
-    <div className="px-4 md:px-12 pt-24 md:pt-36 pb-32 min-h-screen animate-in fade-in">
+    <div className="px-4 md:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+9rem)] pb-32 min-h-screen animate-in fade-in">
       <div className="max-w-3xl mx-auto">
         <div ref={containerRef} className="relative mb-10 z-50">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search className="text-white/50" size={24} />
           </div>
           
-          <input
-            ref={inputRef}
-            type="text"
-            className="w-full bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full py-4 pl-12 pr-10 focus:outline-none focus:border-white/50 focus:bg-white/20 shadow-lg text-lg transition-all placeholder:text-white/50"
-            placeholder="Search for movies, TV shows..."
-            value={query}
-            onFocus={() => setIsFocused(true)}
-            onKeyDown={handleKeyDown}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <form action="." onSubmit={(e) => {
+            e.preventDefault();
+            setIsFocused(false);
+            inputRef.current?.blur();
+            if (query.trim()) {
+              saveRecentSearch(query);
+              executeSearch(query, 1);
+            }
+          }} className="w-full">
+            <input
+              ref={inputRef}
+              type="search"
+              enterKeyHint="search"
+              className="w-full bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full py-4 pl-12 pr-10 focus:outline-none focus:border-white/50 focus:bg-white/20 shadow-lg text-lg transition-all placeholder:text-white/50"
+              placeholder="Search for movies, TV shows..."
+              value={query}
+              onFocus={() => setIsFocused(true)}
+              onKeyDown={handleKeyDown}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </form>
 
           {query && (
             <button

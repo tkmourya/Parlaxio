@@ -117,10 +117,10 @@ export function WatchlistView({
                   <div
                     key={movie.id}
                     onClick={() => onPlay(movie.id, type)}
-                    className="flex items-center justify-between p-3 sm:p-3.5 hover:bg-white/[0.04] transition cursor-pointer group"
+                    className="flex items-center justify-between pr-3 sm:pr-4 hover:bg-white/[0.04] transition cursor-pointer group"
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-12 h-16 sm:w-14 sm:h-20 shrink-0 rounded-lg overflow-hidden bg-zinc-800 border border-white/10">
+                    <div className="flex items-center gap-4 min-w-0 h-full">
+                      <div className="w-14 h-20 sm:w-16 sm:h-24 shrink-0 overflow-hidden bg-zinc-800 border-r border-white/10">
                         <img
                           src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

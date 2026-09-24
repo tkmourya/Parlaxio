@@ -15,8 +15,8 @@ export function BottomNav({ currentTab, onChange }: BottomNavProps) {
           <stop offset="100%" stopColor="#71717a" />
         </linearGradient>
       </svg>
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[var(--color-theme-bg)] to-transparent pointer-events-none z-30 opacity-90" />
-      <div className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm">
+      <div className="bottom-nav-container md:hidden fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[var(--color-theme-bg)] to-transparent pointer-events-none z-30 opacity-90" />
+      <div className="bottom-nav-container md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm">
         <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-full py-2 px-3 flex justify-between items-center shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-x-auto hide-scrollbar gap-2">
         
         <button

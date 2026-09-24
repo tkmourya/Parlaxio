@@ -98,7 +98,7 @@ export function ProviderView({ providerId, providerName, onPlay }: ProviderViewP
   }, loading, hasMore);
 
   return (
-    <div className="px-4 md:px-12 pt-24 md:pt-36 pb-32 min-h-screen animate-in fade-in">
+    <div className="px-4 md:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+9rem)] pb-32 min-h-screen animate-in fade-in">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-1.5 h-10 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500"></div>

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect, ReactNode, useCallback } from 'react';
+import { CapacitorMusicControls } from 'capacitor-music-controls-plugin';
+import { Capacitor } from '@capacitor/core';
 import { getAudioUrl, getSongDetails } from './musicService';
 import { syncMusicToCloud, fetchMusicFromCloud } from './musicSync';
 import { useAuth } from './AuthContext';
@@ -219,6 +221,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           ]
         });
       }
+      
+      // Native Capacitor Music Controls
+      if (Capacitor.isNativePlatform()) {
+        CapacitorMusicControls.create({
+          track: song.title,
+          artist: song.artist || 'Unknown Artist',
+          cover: song.coverUrl || '',
+          duration: song.durationSec || 0,
+          elapsed: 0,
+          hasScrubbing: true,
+          isPlaying: true,
+          dismissable: false,
+          hasPrev: true,
+          hasNext: true,
+          hasClose: false,
+          playIcon: 'media_play',
+          pauseIcon: 'media_pause',
+          prevIcon: 'media_prev',
+          nextIcon: 'media_next',
+          closeIcon: 'media_close',
+          notificationIcon: 'notification'
+        }).catch(e => console.error('MusicControls create error', e));
+      }
     }
   }, [addToRecentlyPlayed]);
 
@@ -351,18 +376,55 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onLoadedMetadata = () => setDuration(audio.duration);
+    const onLoadedMetadata = () => {
+      setDuration(audio.duration);
+      if (Capacitor.isNativePlatform()) {
+        CapacitorMusicControls.updateElapsed({ isPlaying: !audio.paused, elapsed: audio.currentTime });
+      }
+    };
     const onPlaying = () => {
       setIsPlaying(true);
       setIsLoading(false);
+      if (Capacitor.isNativePlatform()) {
+        CapacitorMusicControls.updateElapsed({ isPlaying: true, elapsed: audio.currentTime });
+      }
     };
-    const onPause = () => setIsPlaying(false);
+    const onPause = () => {
+      setIsPlaying(false);
+      if (Capacitor.isNativePlatform()) {
+        CapacitorMusicControls.updateElapsed({ isPlaying: false, elapsed: audio.currentTime });
+      }
+    };
     const onEnded = () => playNextInternal();
     const onError = (e: any) => {
       console.error('Audio playback error', e);
       setIsLoading(false);
       setIsPlaying(false);
     };
+
+    // Native App Controls Listener
+    const handleNativeControls = (action: any) => {
+      const message = action.message || action;
+      if (message === 'music-controls-next') {
+        playNextInternal();
+      } else if (message === 'music-controls-previous') {
+        playPrevInternal();
+      } else if (message === 'music-controls-pause') {
+        audio.pause();
+      } else if (message === 'music-controls-play') {
+        audio.play();
+      } else if (message === 'music-controls-destroy') {
+        audio.pause();
+      }
+    };
+
+    let nativeListener: any = null;
+    if (Capacitor.isNativePlatform()) {
+      nativeListener = CapacitorMusicControls.addListener('controlsNotification', handleNativeControls);
+      document.addEventListener('controlsNotification', (event: any) => {
+        handleNativeControls(event.message || event);
+      });
+    }
 
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
@@ -378,6 +440,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener('pause', onPause);
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
+      if (nativeListener) {
+        nativeListener.remove();
+      }
+      document.removeEventListener('controlsNotification', handleNativeControls);
       audio.pause();
       audio.src = '';
     };

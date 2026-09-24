@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { StatusBar } from '@capacitor/status-bar';
 import { HomeView } from './views/HomeView';
 import { SearchView } from './views/SearchView';
 import { TrendingView } from './views/TrendingView';
@@ -35,11 +36,25 @@ function useDoubleBackToExit() {
       window.history.replaceState({ isAppRoot: true }, '', window.location.pathname);
       window.history.pushState({ isWorkingState: true }, '', window.location.pathname);
     }
+    
+    // Force webview to go under the status bar
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+    }
 
     let lastBackPressTime = 0;
 
     const handlePopState = (e: PopStateEvent) => {
       if (e.state && e.state.isAppRoot) {
+        // If we are on a tab other than home, go back to home instead of exiting
+        if (window.location.pathname !== '/' && window.location.pathname !== '') {
+          window.history.pushState({ isWorkingState: true }, '', '/');
+          // Dispatch a custom event or just let the router pick it up on next render?
+          // Actually, pushState doesn't fire popstate, so we must dispatch it manually:
+          window.dispatchEvent(new PopStateEvent('popstate'));
+          return;
+        }
+
         const currentTime = Date.now();
         if (currentTime - lastBackPressTime < 2000) {
           if (Capacitor.isNativePlatform()) {
@@ -62,6 +77,13 @@ function useDoubleBackToExit() {
     if (Capacitor.isNativePlatform()) {
       CapApp.addListener('backButton', ({ canGoBack }) => {
         if (!canGoBack) {
+          // If we are on a tab other than home, go back to home instead of exiting
+          if (window.location.pathname !== '/' && window.location.pathname !== '') {
+            window.history.pushState({ isWorkingState: true }, '', '/');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            return;
+          }
+
           const currentTime = Date.now();
           if (currentTime - lastBackPressTime < 2000) {
             CapApp.exitApp();

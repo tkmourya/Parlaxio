@@ -193,7 +193,7 @@ export function HomeView({ onPlay, onContinueWatch, onProviderSelect, onLiveTVCl
         </div>
       )}
 
-      <div className={`${filter === 'all' ? 'pt-8 md:pt-10' : 'pt-24 md:pt-36 px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full'} relative z-20`}>
+      <div className={`${filter === 'all' ? 'pt-8 md:pt-10' : 'pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+9rem)] px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full'} relative z-20`}>
         <div className={filter === 'all' ? 'px-4 md:px-12 lg:px-16 max-w-7xl mx-auto w-full mb-8' : 'mb-8'}>
           <SubNav filters={HOME_FILTERS} current={filter} onChange={setFilter} />
         </div>

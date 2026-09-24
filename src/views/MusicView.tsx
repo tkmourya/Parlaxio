@@ -584,7 +584,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
     <div className="min-h-screen animate-in fade-in pb-40">
       
       {/* === DESKTOP LAYOUT (md+) === */}
-      <div className="hidden md:block pt-32 px-8 lg:px-16 max-w-[1400px] mx-auto">
+      <div className="hidden md:block pt-[calc(env(safe-area-inset-top,0px)+8rem)] px-8 lg:px-16 max-w-[1400px] mx-auto">
         
         {/* Search Bar */}
         <div className="relative max-w-2xl mx-auto mb-12 flex gap-3">
@@ -595,15 +595,25 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
           )}
           <div className="relative flex-1">
             <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-            <input
-              type="text"
-              placeholder="Search songs, artists, albums..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-              className="w-full bg-white/[0.06] backdrop-blur-xl hover:bg-white/[0.08] focus:bg-white/[0.1] border border-white/[0.08] focus:border-white/20 rounded-full py-3.5 pl-14 pr-12 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/10 transition-all text-[15px]"
-            />
+            <form action="." onSubmit={(e) => {
+              e.preventDefault();
+              (e.target as HTMLFormElement).querySelector('input')?.blur();
+              if (searchQuery.trim()) {
+                saveRecentSearch(searchQuery);
+                executeSearch(searchQuery);
+              }
+            }} className="w-full">
+              <input
+                type="search"
+                enterKeyHint="search"
+                placeholder="Search songs, artists, albums..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                className="w-full bg-white/[0.06] backdrop-blur-xl hover:bg-white/[0.08] focus:bg-white/[0.1] border border-white/[0.08] focus:border-white/20 rounded-full py-3.5 pl-14 pr-12 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/10 transition-all text-[15px]"
+              />
+            </form>
             {isSearching && <Loader2 className="absolute right-12 top-1/2 -translate-y-1/2 text-white/40 animate-spin" size={18} />}
             {showSearchResults && (
               <button onClick={clearSearch} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
@@ -866,7 +876,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       </div>
 
       {/* === MOBILE LAYOUT (< md) === */}
-      <div className="md:hidden pt-20 px-4 pb-8">
+      <div className="md:hidden pt-[calc(env(safe-area-inset-top,0px)+5rem)] px-4 pb-8">
         
         {!showSearchResults && (
           <div className="mb-6">
@@ -883,15 +893,25 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
           )}
           <div className="relative flex-1">
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-            <input
-              type="text"
-              placeholder="Search songs, artists..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-              className="w-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-full py-3 pl-11 pr-10 text-white placeholder-white/40 focus:outline-none focus:border-white/15 transition-all text-sm"
-            />
+            <form action="." onSubmit={(e) => {
+              e.preventDefault();
+              (e.target as HTMLFormElement).querySelector('input')?.blur();
+              if (searchQuery.trim()) {
+                saveRecentSearch(searchQuery);
+                executeSearch(searchQuery);
+              }
+            }} className="w-full">
+              <input
+                type="search"
+                enterKeyHint="search"
+                placeholder="Search songs, artists..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                className="w-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-full py-3 pl-11 pr-10 text-white placeholder-white/40 focus:outline-none focus:border-white/15 transition-all text-sm"
+              />
+            </form>
             {isSearching && <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 text-white/40 animate-spin" size={16} />}
             {showSearchResults && (
               <button onClick={clearSearch} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">

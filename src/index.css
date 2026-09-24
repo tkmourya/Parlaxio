@@ -10,7 +10,6 @@ html, body {
   overscroll-behavior-y: none;
   margin: 0;
   padding: 0;
-  padding-top: env(safe-area-inset-top, 0px);
 }
 
 ::-webkit-scrollbar {
@@ -87,4 +86,10 @@ html[data-theme="silver"] { --color-theme-bg: #1e2126; }
 @keyframes musicbar {
   0% { height: 30%; }
   100% { height: 100%; }
+}
+
+/* Hide fixed bottom elements when a virtual keyboard pushes them up on mobile */
+body:has(input:focus) .bottom-nav-container,
+body:has(input:focus) .mini-player-container {
+  display: none !important;
 }

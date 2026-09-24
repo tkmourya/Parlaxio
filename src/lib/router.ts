@@ -122,7 +122,8 @@ export function useRouter() {
   const navigateTab = (tab: TabType) => {
     const targetUrl = tab === 'home' ? '/' : `/${tab}`;
     if (window.location.pathname !== targetUrl) {
-      window.history.pushState(null, '', targetUrl);
+      // Use replaceState instead of pushState for main tabs to prevent history bloat
+      window.history.replaceState(null, '', targetUrl);
     }
     setRoute({ tab, detailsMedia: null, playingMedia: null, authMode: 'login' });
     window.scrollTo({ top: 0, behavior: 'smooth' });

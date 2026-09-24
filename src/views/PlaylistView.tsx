@@ -12,7 +12,7 @@ interface PlaylistViewProps {
 
 export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
   const [data, setData] = useState<PlaylistData | null>(null);
-  useImageColor(data?.image);
+  useImageColor(data?.coverUrl);
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const { playSong, currentSong, isPlaying, togglePlay, toggleWatchlist, isWatchlisted, toggleSavePlaylist, isPlaylistSaved } = useMusic();
@@ -136,10 +136,10 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
     return (
       <div className="flex-1 overflow-y-auto pb-32 min-h-screen bg-[var(--color-theme-bg)] animate-pulse">
         {/* Back Button Skeleton */}
-        <div className="absolute top-6 left-6 sm:left-10 z-30 w-10 h-10 rounded-full bg-white/10 border border-white/5" />
+        <div className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/5" />
         
         {/* Hero Skeleton */}
-        <div className="relative pt-24 pb-12 px-6 sm:px-12 xl:px-24 flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-10">
+        <div className="relative pt-[calc(env(safe-area-inset-top,0px)+6rem)] pb-12 px-6 sm:px-12 xl:px-24 flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-10">
           {/* Cover */}
           <div className="w-56 h-56 md:w-64 md:h-64 rounded-xl md:rounded-2xl bg-white/10 shadow-lg border border-white/5 shrink-0" />
           
@@ -202,10 +202,10 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
       {/* Back Arrow Fixed at Top-Left Corner */}
       <button 
         onClick={onBack}
-        className="absolute top-6 left-6 sm:left-10 z-30 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg"
+        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg group"
         title="Go Back"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
       </button>
 
       {/* Toast Notification */}
@@ -227,7 +227,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/80 to-zinc-950" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2rem)]">
         {/* Playlist Hero Header Section */}
         <div className="pt-4 pb-8 flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-center">
           {/* Playlist Cover Image - Clean song cover art fallback + crop */}

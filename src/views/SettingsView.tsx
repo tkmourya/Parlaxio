@@ -11,6 +11,8 @@ import { getWatchlist } from '../lib/storage';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { AdBlockModal } from '../components/AdBlockModal';
 import { THEMES, saveTheme, loadTheme, saveDefaultServer, loadDefaultServer, saveFamilySafeMode, loadFamilySafeMode } from '../lib/preferences';
+import { App as CapacitorApp } from '@capacitor/app';
+import packageJson from '../../package.json';
 
 interface SettingsViewProps {
   onPlay: (id: number, type: 'movie' | 'tv') => void;
@@ -25,6 +27,21 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   const [historyLayout, setHistoryLayout] = useState<'list' | 'grid'>('list');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>(packageJson.version || '1.0.0');
+
+  useEffect(() => {
+    const fetchVersion = async () => {
+      try {
+        const info = await CapacitorApp.getInfo();
+        if (info && info.version) {
+          setAppVersion(info.version);
+        }
+      } catch (e) {
+        // running in web/browser, fallback to packageJson is already set
+      }
+    };
+    fetchVersion();
+  }, []);
 
   // Notify parent (App.tsx) when a subview opens/closes to hide navbars
   useEffect(() => {
@@ -146,7 +163,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   // If user tapped "My Watchlist", render Watchlist in list layout with clean back button
   if (subView === 'watchlist') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setSubView(null)}
@@ -165,7 +182,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   // If user tapped "Watch History"
   if (subView === 'history') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setSubView(null)}
@@ -213,7 +230,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
             <p className="text-sm text-zinc-400">Movies and shows you watch will appear here.</p>
           </div>
         ) : (
-          <div className={historyLayout === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" : "flex flex-col gap-3"}>
+          <div className={historyLayout === 'grid' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" : "bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md"}>
             {history.map((movie) => (
               historyLayout === 'grid' ? (
                 <div
@@ -254,42 +271,53 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                 <div
                   key={movie.id}
                   onClick={() => onPlay(movie.id, movie.media_type || 'movie')}
-                  className="group cursor-pointer flex items-center gap-4 bg-zinc-900/50 border border-white/5 p-2 rounded-xl hover:bg-white/5 transition"
+                  className="flex items-center justify-between pr-3 sm:pr-4 hover:bg-white/[0.04] transition cursor-pointer group"
                 >
-                  <div className="relative w-16 md:w-20 aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-                    <img
-                      src={movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Poster'}
-                      alt={movie.title || movie.name}
-                      className="w-full h-full object-cover"
-                    />
-                    {movie.progress !== undefined && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                        <div
-                          className="h-full bg-red-600"
-                          style={{ width: `${movie.progress}%` }}
-                        />
+                  <div className="flex items-center gap-4 min-w-0 h-full">
+                    <div className="relative w-14 h-20 sm:w-16 sm:h-24 shrink-0 overflow-hidden bg-zinc-800 border-r border-white/10">
+                      <img
+                        src={movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Poster'}
+                        alt={movie.title || movie.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {movie.progress !== undefined && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                          <div
+                            className="h-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.8)]"
+                            style={{ width: `${movie.progress}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-white truncate group-hover:text-zinc-200 transition-colors">
+                        {movie.title || movie.name}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mt-1">
+                        {movie.progress !== undefined && (
+                          <span className="text-zinc-300 font-medium">{Math.floor(movie.progress)}% watched</span>
+                        )}
+                        <span className="capitalize px-1.5 py-0.5 rounded text-[10px] bg-white/10 text-zinc-300">
+                          {movie.media_type === 'tv' ? 'Series' : 'Movie'}
+                        </span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0 pr-2">
-                    <h4 className="font-bold text-white text-sm md:text-base truncate">{movie.title || movie.name}</h4>
-                    {movie.progress !== undefined && (
-                      <p className="text-xs text-zinc-400 mt-1">{Math.floor(movie.progress)}% watched</p>
-                    )}
-                  </div>
-                  <div className="pr-3 flex items-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                  
+                  <div className="flex items-center gap-1 sm:gap-3 shrink-0 ml-2">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         removeFromHistory(movie.id);
                       }}
-                      className="w-8 h-8 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-full flex items-center justify-center transition-colors"
+                      className="w-8 h-8 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-full flex items-center justify-center transition-colors"
+                      title="Remove"
                     >
                       <Trash2 size={16} />
                     </button>
-                    <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center pl-0.5 hover:scale-110 active:scale-95 transition-transform hidden sm:flex pointer-events-none">
-                      <Play size={14} className="fill-current" />
-                    </button>
+                    <span className="text-xs font-semibold text-zinc-400 group-hover:text-white px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hidden sm:block">
+                      Resume
+                    </span>
                   </div>
                 </div>
               )
@@ -307,7 +335,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
       : 'N/A';
 
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full flex flex-col justify-start md:justify-center">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full flex flex-col justify-start md:justify-center">
         <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => setSubView(null)}
@@ -398,7 +426,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   // If user tapped "Edit Profile"
   if (subView === 'profile') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-xl mx-auto w-full flex flex-col justify-start md:justify-center">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-xl mx-auto w-full flex flex-col justify-start md:justify-center">
         <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => setSubView(user ? 'profile-view' : null)}
@@ -463,7 +491,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   }
 
   return (
-    <div className="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+    <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
 
       {/* Minimal Header with Back Button */}
       <div className="mb-6 flex items-center gap-4">
@@ -1075,7 +1103,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
             {/* Version */}
             <div className="flex items-center justify-between p-3.5">
               <span className="text-sm font-medium text-zinc-400">Version</span>
-              <span className="text-xs text-zinc-400 font-medium">Parlaxio v2.4.0</span>
+              <span className="text-xs text-zinc-400 font-medium">Parlaxio v{appVersion}</span>
             </div>
 
           </div>

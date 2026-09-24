@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Play, Bookmark, Check, Film, Star, Clock, Info, Calendar, Sparkles, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Play, Bookmark, Check, Film, Star, Clock, Info, Calendar, Sparkles, ShieldAlert, ChevronLeft } from 'lucide-react';
 import { getMovieDetails, getCredits, getTvSeason, getImageUrl, getVideos, getCollection } from '../lib/tmdb';
 import { Movie, Cast, Episode, Video } from '../types';
 import { MovieCard } from '../components/MovieCard';
@@ -157,10 +157,10 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
     return (
       <div className="min-h-screen bg-transparent text-white pb-32">
         {/* Floating Back Button Skeleton */}
-        <div className="fixed top-4 left-4 z-50 p-5 rounded-full bg-zinc-800/50 backdrop-blur-md animate-pulse" />
+        <div className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/5 animate-pulse" />
         
         {/* Hero Backdrop Skeleton */}
-        <div className="relative w-full h-[55vh] md:h-[70vh] max-h-[750px] bg-zinc-900/50 animate-pulse">
+        <div className="relative w-full h-[65vh] md:h-[75vh] max-h-[850px] bg-zinc-900/50 animate-pulse">
           <div className="absolute bottom-0 left-0 right-0 h-[80%] bg-gradient-to-t from-[var(--color-theme-bg)] to-transparent" />
         </div>
 
@@ -266,14 +266,14 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
       {/* Floating Back Button */}
       <button 
         onClick={onBack}
-        className="fixed top-4 left-4 z-50 p-2.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/10 text-white shadow-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center group"
-        title="Back"
+        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg group"
+        title="Go Back"
       >
-        <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+        <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
       </button>
 
       {/* Hero Backdrop Banner */}
-      <div className="relative w-full h-[55vh] md:h-[70vh] max-h-[750px] overflow-hidden">
+      <div className="relative w-full h-[65vh] md:h-[75vh] max-h-[850px] overflow-hidden">
         {details.backdrop_path ? (
           <img 
             src={getImageUrl(details.backdrop_path, 'original')} 
