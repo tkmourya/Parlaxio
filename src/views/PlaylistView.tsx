@@ -12,6 +12,7 @@ interface PlaylistViewProps {
 export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
   const [data, setData] = useState<PlaylistData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const { playSong, currentSong, isPlaying, togglePlay, toggleWatchlist, isWatchlisted, toggleSavePlaylist, isPlaylistSaved } = useMusic();
   const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
   const [activeSongMenuId, setActiveSongMenuId] = useState<string | null>(null);
@@ -22,6 +23,17 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
   const songMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loading) {
+      timer = setTimeout(() => setShowSkeleton(true), 150);
+    } else {
+      setShowSkeleton(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     async function fetchDetails() {
       setLoading(true);
       const res = type === 'playlist' ? await getPlaylist(id) : await getAlbum(id);
@@ -117,10 +129,45 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
   };
 
   if (loading) {
+    if (!showSkeleton) return <div className="flex-1 min-h-screen bg-[var(--color-theme-bg)]" />;
+
     return (
-      <div className="flex-1 h-full flex flex-col items-center justify-center min-h-screen bg-[var(--color-theme-bg)]">
-        <Loader2 size={36} className="animate-spin text-white/60 mb-4" />
-        <p className="text-white/60 font-medium">Loading {type}...</p>
+      <div className="flex-1 overflow-y-auto pb-32 min-h-screen bg-[var(--color-theme-bg)] animate-pulse">
+        {/* Back Button Skeleton */}
+        <div className="absolute top-6 left-6 sm:left-10 z-30 w-10 h-10 rounded-full bg-white/10 border border-white/5" />
+        
+        {/* Hero Skeleton */}
+        <div className="relative pt-24 pb-12 px-6 sm:px-12 xl:px-24 flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-10">
+          {/* Cover */}
+          <div className="w-56 h-56 md:w-64 md:h-64 rounded-xl md:rounded-2xl bg-white/10 shadow-lg border border-white/5 shrink-0" />
+          
+          {/* Details */}
+          <div className="text-center md:text-left flex-1 space-y-4 w-full flex flex-col items-center md:items-start">
+            <div className="h-4 bg-white/10 rounded-md w-24" />
+            <div className="h-10 md:h-16 bg-white/10 rounded-xl w-64 md:w-96" />
+            <div className="h-4 bg-white/10 rounded-md w-40" />
+            
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-4">
+              <div className="h-12 w-36 rounded-full bg-white/10" />
+              <div className="h-12 w-32 rounded-full bg-white/10" />
+              <div className="h-12 w-12 rounded-full bg-white/10" />
+            </div>
+          </div>
+        </div>
+
+        {/* Songs List Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-10 xl:px-24 mt-4 space-y-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-white/5">
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-white/10 rounded-md shrink-0" />
+              <div className="flex-1 space-y-2.5">
+                <div className="h-4 bg-white/10 rounded-md w-48 sm:w-64" />
+                <div className="h-3 bg-white/10 rounded-md w-32 sm:w-40" />
+              </div>
+              <div className="w-8 h-8 bg-white/10 rounded-full shrink-0 hidden sm:block" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

@@ -53,6 +53,7 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
   const { currentSong, isPlaying, playSong, togglePlay, toggleWatchlist, isWatchlisted, toggleFollowArtist, isFollowingArtist } = useMusic();
   const [artist, setArtist] = useState<ArtistData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [showArtistMenu, setShowArtistMenu] = useState(false);
   const [activeSongMenuId, setActiveSongMenuId] = useState<string | null>(null);
   const [likedSongIds, setLikedSongIds] = useState<Record<string, boolean>>({});
@@ -63,6 +64,18 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
   const songMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loading) {
+      timer = setTimeout(() => setShowSkeleton(true), 150);
+    } else {
+      setShowSkeleton(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
     async function fetchArtist() {
       setLoading(true);
       const data = await getArtist(id, name || undefined);
@@ -151,10 +164,55 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
   };
 
   if (loading) {
+    if (!showSkeleton) return <div className="flex-1 min-h-screen bg-[var(--color-theme-bg)]" />;
+    
     return (
-      <div className="flex-1 h-full flex flex-col items-center justify-center min-h-screen bg-[var(--color-theme-bg)]">
-        <Loader2 size={36} className="animate-spin text-white/60 mb-4" />
-        <p className="text-white/60 font-medium">Loading Artist...</p>
+      <div className="flex-1 overflow-y-auto pb-32 min-h-screen bg-[var(--color-theme-bg)] animate-pulse">
+        {/* Back Button Skeleton */}
+        <div className="absolute top-6 left-6 sm:left-10 z-30 w-10 h-10 rounded-full bg-white/10 border border-white/5" />
+        
+        {/* Hero & Content Skeleton */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8">
+          {/* Artist Hero Header Section */}
+          <div className="pt-4 pb-10 flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-center">
+            {/* Avatar */}
+            <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-60 md:h-60 rounded-full bg-white/10 shadow-lg shrink-0 border border-white/5" />
+            
+            {/* Metadata */}
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left w-full">
+              <div className="h-10 md:h-16 bg-white/10 rounded-xl w-64 md:w-[400px] mb-4" />
+              <div className="h-4 bg-white/10 rounded-md w-full max-w-[500px] mb-2" />
+              <div className="h-4 bg-white/10 rounded-md w-3/4 max-w-[400px] mb-6" />
+              
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-32 rounded-full bg-white/10" />
+                <div className="h-8 w-32 rounded-full bg-white/10" />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Controls Bar Skeleton */}
+          <div className="py-4 flex flex-wrap items-center justify-center md:justify-start gap-4 mb-8 border-b border-white/[0.08]">
+            <div className="h-12 w-36 rounded-full bg-white/10" />
+            <div className="h-12 w-32 rounded-full bg-white/10" />
+            <div className="h-12 w-12 rounded-full bg-white/10 hidden sm:block" />
+          </div>
+
+          {/* Songs List Skeleton */}
+          <div className="space-y-3">
+            <div className="h-8 bg-white/10 rounded-md w-40 mb-6" />
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-white/5">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-white/10 rounded-md shrink-0" />
+                <div className="flex-1 space-y-2.5">
+                  <div className="h-4 bg-white/10 rounded-md w-48 sm:w-64" />
+                  <div className="h-3 bg-white/10 rounded-md w-32 sm:w-40" />
+                </div>
+                <div className="w-8 h-8 bg-white/10 rounded-full shrink-0 hidden sm:block" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

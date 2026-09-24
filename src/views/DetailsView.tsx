@@ -153,10 +153,50 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
 
   if (loading || !details) {
     return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center text-white">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-          <span className="text-xs text-zinc-400 font-medium">Loading details...</span>
+      <div className="min-h-screen bg-transparent text-white pb-32">
+        {/* Floating Back Button Skeleton */}
+        <div className="fixed top-4 left-4 z-50 p-5 rounded-full bg-zinc-800/50 backdrop-blur-md animate-pulse" />
+        
+        {/* Hero Backdrop Skeleton */}
+        <div className="relative w-full h-[55vh] md:h-[70vh] max-h-[750px] bg-zinc-900/50 animate-pulse">
+          <div className="absolute bottom-0 left-0 right-0 h-[80%] bg-gradient-to-t from-[var(--color-theme-bg)] to-transparent" />
+        </div>
+
+        {/* Content Body Skeleton */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 md:px-12 -mt-44 md:-mt-60 space-y-10">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+            
+            {/* Poster Card Skeleton */}
+            <div className="w-36 sm:w-48 md:w-56 aspect-[2/3] rounded-2xl bg-zinc-800/80 animate-pulse shrink-0 hidden sm:block shadow-lg border border-white/5" />
+
+            {/* Details & Actions Skeleton */}
+            <div className="space-y-6 max-w-3xl flex-1 min-w-0 w-full pt-4 md:pt-0">
+              
+              {/* Title Skeleton */}
+              <div className="h-10 md:h-14 bg-zinc-800/80 rounded-xl w-3/4 md:w-2/3 animate-pulse" />
+              
+              {/* Badges Skeleton */}
+              <div className="flex gap-3">
+                <div className="h-5 w-16 bg-zinc-800/80 rounded-md animate-pulse" />
+                <div className="h-5 w-12 bg-zinc-800/80 rounded-md animate-pulse" />
+                <div className="h-5 w-20 bg-zinc-800/80 rounded-md animate-pulse" />
+              </div>
+
+              {/* Action Buttons Skeleton */}
+              <div className="flex flex-wrap items-center gap-3 md:gap-4 pt-2">
+                <div className="h-12 w-32 md:w-40 bg-zinc-800/80 rounded-full animate-pulse" />
+                <div className="h-12 w-12 bg-zinc-800/80 rounded-full animate-pulse" />
+                <div className="h-12 w-12 bg-zinc-800/80 rounded-full animate-pulse" />
+              </div>
+
+              {/* Overview Skeleton */}
+              <div className="space-y-3 pt-6">
+                <div className="h-4 bg-zinc-800/60 rounded-md w-full animate-pulse" />
+                <div className="h-4 bg-zinc-800/60 rounded-md w-[90%] animate-pulse" />
+                <div className="h-4 bg-zinc-800/60 rounded-md w-[80%] animate-pulse" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

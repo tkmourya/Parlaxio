@@ -3,6 +3,7 @@ import { getTrending } from '../lib/tmdb';
 import { Movie } from '../types';
 import { Loader2, Flame } from 'lucide-react';
 import { MovieCard } from '../components/MovieCard';
+import { GridSkeleton } from '../components/GridSkeleton';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 export function TrendingView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv') => void }) {
@@ -58,13 +59,19 @@ export function TrendingView({ onPlay }: { onPlay: (id: number, type: 'movie' | 
           <h1 className="text-3xl font-bold text-white tracking-tight">Trending Now</h1>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-          {movies.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} onPlay={onPlay} />
-          ))}
-        </div>
+        {loading && page === 1 ? (
+          <div className="mt-8">
+            <GridSkeleton count={18} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 mt-8">
+            {movies.map((movie) => (
+              <MovieCard key={movie.id} movie={movie} onPlay={onPlay} />
+            ))}
+          </div>
+        )}
 
-        {loading && (
+        {loading && page > 1 && (
           <div className="flex justify-center py-10">
             <Loader2 className="animate-spin text-white/50" size={32} />
           </div>

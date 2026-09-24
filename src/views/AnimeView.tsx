@@ -4,6 +4,7 @@ import { Movie } from '../types';
 import { Loader2, Zap } from 'lucide-react';
 import { MovieCard } from '../components/MovieCard';
 import { SubNav } from '../components/SubNav';
+import { GridSkeleton } from '../components/GridSkeleton';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 const FILTERS = [
@@ -75,13 +76,19 @@ export function AnimeView({ onPlay }: { onPlay: (id: number, type: 'movie' | 'tv
 
         <SubNav filters={FILTERS} current={filter} onChange={setFilter} />
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-          {anime.map((show) => (
-            <MovieCard key={show.id} movie={show} onPlay={onPlay} defaultType="tv" />
-          ))}
-        </div>
+        {loading && page === 1 ? (
+          <div className="mt-8">
+            <GridSkeleton count={18} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 mt-8">
+            {anime.map((show) => (
+              <MovieCard key={show.id} movie={show} onPlay={onPlay} defaultType="tv" />
+            ))}
+          </div>
+        )}
 
-        {loading && (
+        {loading && page > 1 && (
           <div className="flex justify-center py-10">
             <Loader2 className="animate-spin text-white/50" size={32} />
           </div>

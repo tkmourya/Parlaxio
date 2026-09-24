@@ -3,7 +3,14 @@ import { syncWatchlistToCloud, fetchWatchlistFromCloud } from './sync';
 
 export const getWatchlist = (): Movie[] => {
   try {
-    return JSON.parse(localStorage.getItem('watchlist') || '[]');
+    const saved = localStorage.getItem('watchlist');
+    if (!saved) return [];
+    
+    if (saved.startsWith('[')) {
+      return JSON.parse(saved);
+    }
+    
+    return [];
   } catch {
     return [];
   }
@@ -16,6 +23,7 @@ export const toggleWatchlist = (movie: Movie) => {
   } else {
     list.push(movie);
   }
+  
   localStorage.setItem('watchlist', JSON.stringify(list));
   window.dispatchEvent(new Event('watchlist-updated'));
   

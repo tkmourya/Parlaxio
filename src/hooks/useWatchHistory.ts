@@ -12,7 +12,9 @@ export function useWatchHistory() {
     const saved = localStorage.getItem('cinestream_history');
     if (saved) {
       try {
-        setHistory(JSON.parse(saved));
+        if (saved.startsWith('[')) {
+          setHistory(JSON.parse(saved));
+        }
       } catch (e) {
         console.error('Failed to parse history', e);
       }

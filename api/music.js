@@ -24,8 +24,8 @@ if (REDIS_URL) {
       rejectUnauthorized: false,
       servername: urlObj.hostname // CRITICAL: Layerbase requires SNI
     },
-    connectTimeout: 1000, // 1 second fail-fast
-    commandTimeout: 1000, // 1 second fail-fast
+    connectTimeout: 2000, // 2 seconds (increased to handle free tier cold starts)
+    commandTimeout: 2000, // 2 seconds fail-fast
     maxRetriesPerRequest: 1,
     retryStrategy: () => null, // No retries, fallback instantly
   });

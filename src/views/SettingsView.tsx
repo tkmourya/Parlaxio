@@ -226,21 +226,20 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                     alt={movie.title || movie.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFromHistory(movie.id);
-                      }}
-                      className="absolute top-2 right-2 w-8 h-8 bg-black/60 hover:bg-red-500/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm transition-colors"
-                    >
-                      <Trash2 size={14} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromHistory(movie.id);
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-black/60 hover:bg-red-500/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm transition-colors opacity-100 md:opacity-0 group-hover:opacity-100 z-10"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  <div className="absolute bottom-0 left-0 right-0 p-3 opacity-100 md:opacity-0 group-hover:opacity-100 z-10">
+                    <button className="w-full py-2 bg-white text-black font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 pointer-events-none">
+                      <Play size={12} className="fill-current" /> Resume
                     </button>
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <button className="w-full py-2 bg-white text-black font-bold text-xs rounded-lg flex items-center justify-center gap-1.5">
-                        <Play size={12} className="fill-current" /> Resume
-                      </button>
-                    </div>
                   </div>
                   {movie.progress !== undefined && (
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
@@ -278,7 +277,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                       <p className="text-xs text-zinc-400 mt-1">{Math.floor(movie.progress)}% watched</p>
                     )}
                   </div>
-                  <div className="pr-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex">
+                  <div className="pr-3 flex items-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -288,7 +287,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                     >
                       <Trash2 size={16} />
                     </button>
-                    <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center pl-0.5 hover:scale-110 active:scale-95 transition-transform">
+                    <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center pl-0.5 hover:scale-110 active:scale-95 transition-transform hidden sm:flex pointer-events-none">
                       <Play size={14} className="fill-current" />
                     </button>
                   </div>
