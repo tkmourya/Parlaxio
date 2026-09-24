@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/music/(.*)",
-      "destination": "/api/music.js"
+      "destination": "/api/music"
     },
     {
       "source": "/api/(.*)",
