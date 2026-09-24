@@ -3,7 +3,7 @@ import {
   Shield, Bookmark, Play, ChevronRight, Check,
   Trash2, Film, Zap, HardDrive, Volume2, Globe,
   ArrowLeft, LogOut, CheckCircle2, ChevronDown, Clock, User,
-  LayoutGrid, List, ShieldAlert, EyeOff
+  LayoutGrid, List, ShieldAlert, EyeOff, BadgeCheck
 } from 'lucide-react';
 import { WatchlistView } from './WatchlistView';
 import { useAuth } from '../lib/AuthContext';
@@ -92,10 +92,25 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   // Watchlist count
   const [watchlistCount, setWatchlistCount] = useState(0);
 
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile, sendVerificationEmail } = useAuth();
 
   const [profileName, setProfileName] = useState(user?.name || '');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+
+  const handleSendVerification = async () => {
+    setIsSendingVerification(true);
+    try {
+      await sendVerificationEmail();
+      setVerificationSent(true);
+      setTimeout(() => setVerificationSent(false), 5000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSendingVerification(false);
+    }
+  };
 
   useEffect(() => {
     if (user) setProfileName(user.name);
@@ -163,7 +178,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   // If user tapped "My Watchlist", render Watchlist in list layout with clean back button
   if (subView === 'watchlist') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setSubView(null)}
@@ -182,7 +197,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   // If user tapped "Watch History"
   if (subView === 'history') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setSubView(null)}
@@ -335,7 +350,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
       : 'N/A';
 
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full flex flex-col justify-start md:justify-center">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full flex flex-col justify-start">
         <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => setSubView(null)}
@@ -355,10 +370,31 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">{user ? user.name : 'Guest User'}</h2>
               <p className="text-sm text-zinc-400 mt-1 break-all w-full">{user ? user.email : 'Not signed in'}</p>
-              {user?.plan && (
-                <span className="mt-4 text-[10px] font-bold uppercase px-3 py-1.5 rounded-full bg-gradient-to-r from-white/10 to-white/5 text-zinc-200 border border-white/10 tracking-wider">
-                  {user.plan}
-                </span>
+              {user && user.emailVerification && (
+                <div className="mt-3 flex items-center gap-1.5 text-sm font-bold text-white/70 tracking-wide">
+                  <svg width="0" height="0" className="absolute">
+                    <defs>
+                      <linearGradient id="silver-black-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop stopColor="#ffffff" offset="0%" />
+                        <stop stopColor="#52525b" offset="100%" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <BadgeCheck size={18} style={{ fill: 'url(#silver-black-grad)' }} className="text-black shrink-0" />
+                  Verified
+                </div>
+              )}
+              {user && !user.emailVerification && (
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <span className="text-xs font-bold text-red-400 bg-red-400/10 px-2 py-0.5 rounded uppercase tracking-wider">Unverified</span>
+                  <button 
+                    onClick={handleSendVerification}
+                    disabled={isSendingVerification || verificationSent}
+                    className="mt-1 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors"
+                  >
+                    {isSendingVerification ? 'Sending...' : verificationSent ? 'Link Sent!' : 'Verify Email'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -414,7 +450,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
 
             {/* App Info */}
             <div className="text-left mt-2 pl-2">
-              <p className="text-[11px] text-zinc-500 font-medium">Parlaxio v2.4.0 <span className="mx-1">•</span> Powered by TMDB</p>
+              <p className="text-[11px] text-zinc-500 font-medium">Parlaxio v{appVersion} <span className="mx-1">•</span> Powered by TMDB</p>
             </div>
           </div>
         </div>
@@ -426,7 +462,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   // If user tapped "Edit Profile"
   if (subView === 'profile') {
     return (
-      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-xl mx-auto w-full flex flex-col justify-start md:justify-center">
+      <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-xl mx-auto w-full flex flex-col justify-start">
         <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => setSubView(user ? 'profile-view' : null)}
@@ -491,7 +527,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
   }
 
   return (
-    <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+6rem)] md:pt-[calc(env(safe-area-inset-top,0px)+8rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
+    <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-2xl mx-auto w-full">
 
       {/* Minimal Header with Back Button */}
       <div className="mb-6 flex items-center gap-4">
@@ -517,13 +553,26 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                 {user ? user.avatarInitials : 'G'}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-white truncate">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-sm font-semibold text-white truncate max-w-[160px]">
                     {user ? user.name : 'Guest User'}
                   </h3>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-white/10 text-zinc-300 border border-white/10">
-                    {user ? 'VIP' : 'Free'}
-                  </span>
+                  {user && user.emailVerification && (
+                    <>
+                      <svg width="0" height="0" className="absolute">
+                        <defs>
+                          <linearGradient id="silver-black-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop stopColor="#ffffff" offset="0%" />
+                            <stop stopColor="#52525b" offset="100%" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <BadgeCheck size={16} style={{ fill: 'url(#silver-black-grad)' }} className="text-black shrink-0" />
+                    </>
+                  )}
+                  {user && !user.emailVerification && (
+                    <span className="text-[10px] font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded uppercase">Unverified</span>
+                  )}
                 </div>
                 <p className="text-xs text-zinc-400 truncate mt-0.5">
                   {user ? user.email : 'Sign in to sync your watchlist'}
@@ -1081,31 +1130,13 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                 )}
               </button>
             </div>
-
-            {/* App Status */}
-            <div className="flex items-center justify-between p-3.5">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 flex items-center justify-center">
-                  <Shield size={16} />
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-white block">Service Status</span>
-                  <span className="text-[11px] text-zinc-400">Online & verified API</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span>Operational</span>
-              </div>
-            </div>
-
-            {/* Version */}
-            <div className="flex items-center justify-between p-3.5">
-              <span className="text-sm font-medium text-zinc-400">Version</span>
-              <span className="text-xs text-zinc-400 font-medium">Parlaxio v{appVersion}</span>
-            </div>
-
+          </div>
+          
+          {/* Version (Moved outside the box) */}
+          <div className="text-center mt-6">
+            <p className="text-[11px] text-zinc-500 font-medium tracking-wide">
+              Parlaxio v{appVersion} <span className="mx-1.5">•</span> Powered by TMDB
+            </p>
           </div>
         </div>
 

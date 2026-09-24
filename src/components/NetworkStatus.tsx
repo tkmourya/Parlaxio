@@ -20,10 +20,10 @@ export function NetworkStatus() {
   if (!isOffline) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center animate-in slide-in-from-top-full duration-300 pointer-events-none">
-      <div className="bg-red-500/90 backdrop-blur-md text-white text-xs sm:text-sm font-semibold px-4 py-2 mt-2 rounded-full shadow-lg border border-red-500/50 flex items-center gap-2">
-        <WifiOff size={16} />
-        <span>No Internet Connection</span>
+    <div className="fixed top-0 left-0 right-0 z-[100] animate-in slide-in-from-top-full duration-300 pointer-events-none">
+      <div className="w-full bg-white/15 backdrop-blur-2xl border-b border-white/20 shadow-2xl px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3 flex items-center justify-center gap-2">
+        <WifiOff size={16} className="text-white/90 drop-shadow-md" />
+        <span className="text-xs sm:text-sm font-bold tracking-wide text-white drop-shadow-md">No Internet Connection</span>
       </div>
     </div>
   );

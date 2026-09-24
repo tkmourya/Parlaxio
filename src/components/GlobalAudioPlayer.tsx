@@ -158,7 +158,7 @@ export function GlobalAudioPlayer({ currentTab }: GlobalAudioPlayerProps) {
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         className={`mini-player-container fixed z-[45] select-none touch-none transition-opacity duration-300 ${
-          isFullScreen || isOnMusicPage ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          isFullScreen || isOnMusicPage || currentTab === 'settings' ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
         style={
           pos

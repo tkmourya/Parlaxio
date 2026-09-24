@@ -6,6 +6,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  emailVerification: boolean;
   avatarInitials: string;
   plan?: string;
   createdAt?: string;
@@ -18,6 +19,10 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (name: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  completeVerification: (userId: string, secret: string) => Promise<void>;
+  completeResetPassword: (userId: string, secret: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -26,7 +31,11 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   logout: async () => {},
-  updateProfile: async () => {}
+  updateProfile: async () => {},
+  sendVerificationEmail: async () => {},
+  resetPassword: async () => {},
+  completeVerification: async () => {},
+  completeResetPassword: async () => {}
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -97,6 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: appwriteUser.$id,
       name: displayName,
       email: appwriteUser.email,
+      emailVerification: appwriteUser.emailVerification === true,
       avatarInitials: initials,
       plan: 'VIP Ultra 4K', // Simulated plan
       createdAt: appwriteUser.$createdAt
@@ -108,8 +118,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         await account.createEmailPasswordSession(email, password);
       } catch (sessionError: any) {
-        if (sessionError?.message?.includes('prohibited when a session is active') || sessionError?.code === 401 || sessionError?.message?.toLowerCase().includes('failed to fetch')) {
-           console.log("Session already active or network error, attempting to sync...");
+        if (sessionError?.message?.includes('prohibited when a session is active')) {
+           console.log("Session already active, proceeding to get account...");
         } else {
            throw sessionError;
         }
@@ -155,8 +165,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const sendVerificationEmail = async () => {
+    try {
+      const currentUrl = window.location.origin + '/?verify=true';
+      await account.createVerification(currentUrl);
+    } catch (error) {
+      console.error('Send verification error:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const currentUrl = window.location.origin + '/?reset=true';
+      await account.createRecovery(email, currentUrl);
+    } catch (error) {
+      console.error('Reset password error:', error);
+      throw error;
+    }
+  };
+
+  const completeVerification = async (userId: string, secret: string) => {
+    try {
+      await account.updateVerification(userId, secret);
+      await checkSession();
+    } catch (e) {
+      console.error('Verification completion error:', e);
+      throw e;
+    }
+  };
+
+  const completeResetPassword = async (userId: string, secret: string, newPassword: string) => {
+    try {
+      await account.updateRecovery(userId, secret, newPassword, newPassword);
+    } catch (e) {
+      console.error('Reset completion error:', e);
+      throw e;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, sendVerificationEmail, resetPassword, completeVerification, completeResetPassword }}>
       {children}
     </AuthContext.Provider>
   );

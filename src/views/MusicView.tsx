@@ -610,8 +610,8 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                className="w-full bg-white/[0.06] backdrop-blur-xl hover:bg-white/[0.08] focus:bg-white/[0.1] border border-white/[0.08] focus:border-white/20 rounded-full py-3.5 pl-14 pr-12 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/10 transition-all text-[15px]"
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 300)}
+                className="w-full bg-white/[0.06] backdrop-blur-xl hover:bg-white/[0.08] focus:bg-white/[0.1] border border-white/[0.08] focus:border-white/20 rounded-full py-3.5 pl-14 pr-12 text-white placeholder-white/40 focus:outline-none focus:ring-0 transition-all text-[15px] [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
               />
             </form>
             {isSearching && <Loader2 className="absolute right-12 top-1/2 -translate-y-1/2 text-white/40 animate-spin" size={18} />}
@@ -634,7 +634,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                         Recent Searches
                       </span>
                       <button
-                        onMouseDown={clearRecentSearches}
+                        onClick={clearRecentSearches}
                         className="text-[11px] font-semibold text-white/40 hover:text-white transition-colors flex items-center gap-1"
                       >
                         <Trash2 size={12} /> Clear All
@@ -644,10 +644,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                       {recentSearches.map((item) => (
                         <div
                           key={item}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleSuggestionClick(item);
-                          }}
+                          onClick={() => handleSuggestionClick(item)}
                           className="px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -655,7 +652,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                             <span className="text-sm font-medium truncate">{item}</span>
                           </div>
                           <button
-                            onMouseDown={(e) => removeSingleRecentSearch(item, e)}
+                            onClick={(e) => removeSingleRecentSearch(item, e)}
                             className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
                             title="Remove search"
                           >
@@ -677,10 +674,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {HOT_SEARCH_TAGS.map((tag) => (
                       <button
                         key={tag}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(tag);
-                        }}
+                        onClick={() => handleSuggestionClick(tag)}
                         className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white/90 hover:text-white border border-white/10 transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                       >
                         <Flame size={12} className="text-white/60 shrink-0" />
@@ -699,10 +693,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {TRENDING_SEARCHES.map((suggestion) => (
                       <div
                         key={suggestion}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(suggestion);
-                        }}
+                        onClick={() => handleSuggestionClick(suggestion)}
                         className="px-3 py-2 rounded-xl text-white/80 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center gap-2.5 text-sm font-medium"
                       >
                         <SearchIcon size={14} className="text-white/40" />
@@ -908,8 +899,8 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                className="w-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-full py-3 pl-11 pr-10 text-white placeholder-white/40 focus:outline-none focus:border-white/15 transition-all text-sm"
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 300)}
+                className="w-full bg-white/[0.06] backdrop-blur-xl border border-white/[0.08] rounded-full py-3 pl-11 pr-10 text-white placeholder-white/40 focus:outline-none focus:ring-0 focus:border-white/15 transition-all text-sm [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
               />
             </form>
             {isSearching && <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 text-white/40 animate-spin" size={16} />}
@@ -932,8 +923,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                         Recent Searches
                       </span>
                       <button
-                        onMouseDown={clearRecentSearches}
-                        onTouchStart={clearRecentSearches}
+                        onClick={clearRecentSearches}
                         className="text-[11px] font-semibold text-white/40 hover:text-white transition-colors flex items-center gap-1"
                       >
                         <Trash2 size={12} /> Clear All
@@ -943,14 +933,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                       {recentSearches.map((item) => (
                         <div
                           key={item}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleSuggestionClick(item);
-                          }}
-                          onTouchStart={(e) => {
-                            e.preventDefault();
-                            handleSuggestionClick(item);
-                          }}
+                          onClick={() => handleSuggestionClick(item)}
                           className="px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -958,8 +941,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                             <span className="text-sm font-medium truncate">{item}</span>
                           </div>
                           <button
-                            onMouseDown={(e) => removeSingleRecentSearch(item, e)}
-                            onTouchStart={(e) => removeSingleRecentSearch(item, e)}
+                            onClick={(e) => removeSingleRecentSearch(item, e)}
                             className="p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
                             title="Remove search"
                           >
@@ -981,14 +963,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {HOT_SEARCH_TAGS.map((tag) => (
                       <button
                         key={tag}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(tag);
-                        }}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(tag);
-                        }}
+                        onClick={() => handleSuggestionClick(tag)}
                         className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white/90 hover:text-white border border-white/10 transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                       >
                         <Flame size={12} className="text-white/60 shrink-0" />
@@ -1007,14 +982,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {TRENDING_SEARCHES.map((suggestion) => (
                       <div
                         key={suggestion}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(suggestion);
-                        }}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(suggestion);
-                        }}
+                        onClick={() => handleSuggestionClick(suggestion)}
                         className="px-3 py-2 rounded-xl text-white/80 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center gap-2.5 text-sm font-medium"
                       >
                         <SearchIcon size={14} className="text-white/40" />

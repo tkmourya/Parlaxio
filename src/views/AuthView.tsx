@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
 
-type AuthMode = 'login' | 'register' | 'forgot';
+type AuthMode = 'login' | 'register' | 'forgot' | 'verify-prompt';
 
 export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: () => void, initialMode?: AuthMode }) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -13,7 +13,8 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const { login, register, user, loading: authLoading } = useAuth();
+  const [isJustRegistered, setIsJustRegistered] = useState(false);
+  const { login, register, resetPassword, sendVerificationEmail, user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     setMode(initialMode);
@@ -22,10 +23,10 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
   useEffect(() => {
     // If the user is already logged in and we somehow landed on AuthView,
     // automatically complete the auth flow to hide the view.
-    if (user && !authLoading) {
+    if (user && !authLoading && !isJustRegistered) {
       onComplete();
     }
-  }, [user, authLoading, onComplete]);
+  }, [user, authLoading, onComplete, isJustRegistered]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -37,13 +38,18 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
 
     try {
       if (mode === 'forgot') {
-        // Simple mock for forgot password for now, or connect to Appwrite later
+        if (!email.trim()) {
+          setError('Email is required.');
+          setLoading(false);
+          return;
+        }
+        await resetPassword(email.trim());
         setMessage(`Password reset link sent to ${email}`);
         setLoading(false);
         setTimeout(() => {
           setMode('login');
           setMessage('');
-        }, 2000);
+        }, 4000);
         return;
       }
 
@@ -51,7 +57,11 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
         if (!name.trim()) {
           throw new Error('Name is required for registration.');
         }
+        setIsJustRegistered(true);
         await register(name.trim(), email.trim(), password);
+        setMode('verify-prompt');
+        setLoading(false);
+        return; // wait for user to click send or later
       } else {
         await login(email.trim(), password);
       }
@@ -110,11 +120,12 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
             {mode === 'login' && 'Sign in to sync your library across devices'}
             {mode === 'register' && 'Create your free account for personalized streaming'}
             {mode === 'forgot' && 'Enter your email to recover your account'}
+            {mode === 'verify-prompt' && 'Please verify your email address to unlock playback'}
           </p>
         </div>
 
         {/* Mode Selector Tabs (Frosted Navbar Pill Style) */}
-        {mode !== 'forgot' && (
+        {(mode !== 'forgot' && mode !== 'verify-prompt') && (
           <div className="grid grid-cols-2 p-1 bg-black/30 border border-white/10 rounded-2xl mb-6 backdrop-blur-md">
             <button
               type="button"
@@ -151,102 +162,131 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          {mode === 'register' && (
+        {mode === 'verify-prompt' ? (
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await sendVerificationEmail();
+                  setMessage(`Verification email sent to ${email}`);
+                } catch(e: any) {
+                  setError(e.message || 'Failed to send verification email');
+                }
+                setLoading(false);
+              }}
+              className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-3 px-6 rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all flex items-center justify-center gap-2"
+            >
+              {loading ? 'Sending...' : 'Send Verification Link'}
+            </button>
+            <button
+              type="button"
+              onClick={onComplete}
+              className="w-full bg-white/5 hover:bg-white/10 text-white font-medium py-3 px-6 rounded-2xl transition-all"
+            >
+              Verify Later (Go to Home)
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            {mode === 'register' && (
+              <div>
+                <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. Alex Walker"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">
-                Full Name
+                Email Address
               </label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
                 <input
                   required
-                  type="text"
-                  placeholder="e.g. Alex Walker"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                   className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                 />
               </div>
             </div>
-          )}
 
-          <div>
-            <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
-              <input
-                required
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
-              />
-            </div>
-          </div>
-
-          {mode !== 'forgot' && (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-                  Password
-                </label>
-                {mode === 'login' && (
+            {mode !== 'forgot' && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    Password
+                  </label>
+                  {mode === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => setMode('forgot')}
+                      className="text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Forgot?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
+                  <input
+                    required
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                  />
                   <button
                     type="button"
-                    onClick={() => setMode('forgot')}
-                    className="text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition cursor-pointer"
                   >
-                    Forgot?
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
-                )}
+                </div>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={17} />
-                <input
-                  required
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition cursor-pointer"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-2.5 rounded-2xl transition-all active:scale-[0.99] shadow-lg text-sm mt-4 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {loading ? (
-              <span>Authenticating...</span>
-            ) : mode === 'login' ? (
-              <>
-                <span>Sign In</span>
-                <ArrowRight size={16} />
-              </>
-            ) : mode === 'register' ? (
-              <>
-                <span>Create Account</span>
-                <ArrowRight size={16} />
-              </>
-            ) : (
-              <span>Send Reset Link</span>
             )}
-          </button>
-        </form>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-2.5 rounded-2xl transition-all active:scale-[0.99] shadow-lg text-sm mt-4 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {loading ? (
+                <span>Authenticating...</span>
+              ) : mode === 'login' ? (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight size={16} />
+                </>
+              ) : mode === 'register' ? (
+                <>
+                  <span>Create Account</span>
+                  <ArrowRight size={16} />
+                </>
+              ) : (
+                <span>Send Reset Link</span>
+              )}
+            </button>
+          </form>
+        )}
 
         {mode === 'forgot' ? (
           <div className="mt-5 text-center">
@@ -257,7 +297,7 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
               ← Back to Sign In
             </button>
           </div>
-        ) : (
+        ) : mode === 'verify-prompt' ? null : (
           <div className="mt-6 pt-5 border-t border-white/5 text-center flex flex-col items-center gap-3">
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[10px] sm:text-xs text-zinc-500">
               <button onClick={() => { window.history.pushState(null, '', '/privacy'); window.dispatchEvent(new Event('popstate')); }} className="hover:text-zinc-300 transition-colors cursor-pointer">Privacy Policy</button>

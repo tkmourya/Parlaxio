@@ -18,6 +18,8 @@ import { PrivacyPolicyView, TermsView, LegalDMCAView } from './views/LegalViews'
 import { BottomNav } from './components/BottomNav';
 import { GlobalAudioPlayer } from './components/GlobalAudioPlayer';
 import { AuthPromptModal } from './components/AuthPromptModal';
+import { VerificationPromptModal } from './components/VerificationPromptModal';
+import { ResetPasswordModal } from './components/ResetPasswordModal';
 import { TopNav } from './components/TopNav';
 import { PWAPrompt } from './components/PWAPrompt';
 import { NetworkStatus } from './components/NetworkStatus';
@@ -33,8 +35,9 @@ function useDoubleBackToExit() {
   useEffect(() => {
     // Only initialize this logic once
     if (!window.history.state?.isWorkingState && !window.history.state?.isAppRoot) {
-      window.history.replaceState({ isAppRoot: true }, '', window.location.pathname);
-      window.history.pushState({ isWorkingState: true }, '', window.location.pathname);
+      const fullUrl = window.location.pathname + window.location.search;
+      window.history.replaceState({ isAppRoot: true }, '', fullUrl);
+      window.history.pushState({ isWorkingState: true }, '', fullUrl);
     }
     
     // Force webview to go under the status bar
@@ -116,6 +119,8 @@ export default function App() {
 function AppContent() {
   const { user, loading } = useAuth();
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
+  const [resetData, setResetData] = useState<{userId: string, secret: string} | null>(null);
   const [hideSettingsNav, setHideSettingsNav] = useState(false);
   const [hideMusicTopNav, setHideMusicTopNav] = useState(false);
   const showExitToast = useDoubleBackToExit();
@@ -152,6 +157,28 @@ function AppContent() {
     }
   }, [playingMedia, user, loading]);
 
+  const { completeVerification } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    const secret = params.get('secret');
+
+    if (userId && secret) {
+      if (params.get('verify') === 'true') {
+        completeVerification(userId, secret).then(() => {
+          alert('Email successfully verified! You now have the VIP badge.');
+          window.history.replaceState({}, '', '/');
+        }).catch((e: any) => {
+          alert('Verification failed: ' + e.message);
+        });
+      } else if (params.get('reset') === 'true') {
+        setResetData({ userId, secret });
+        window.history.replaceState({}, '', '/');
+      }
+    }
+  }, [completeVerification]);
+
   useEffect(() => {
     const handleAuthRequired = () => {
       setShowAuthPrompt(true);
@@ -163,6 +190,10 @@ function AppContent() {
   const handlePlay = (id: number, type: 'movie' | 'tv', season?: number, episode?: number) => {
     if (!user) {
       setShowAuthPrompt(true);
+      return;
+    }
+    if (!user.emailVerification) {
+      setShowVerificationPrompt(true);
       return;
     }
     navigatePlay(id, type, season, episode);
@@ -254,6 +285,25 @@ function AppContent() {
         />
       )}
 
+      {/* Verification Prompt Modal */}
+      {showVerificationPrompt && (
+        <VerificationPromptModal onClose={() => setShowVerificationPrompt(false)} />
+      )}
+
+      {/* Reset Password Modal */}
+      {resetData && (
+        <ResetPasswordModal 
+          userId={resetData.userId} 
+          secret={resetData.secret} 
+          onClose={() => setResetData(null)}
+          onSuccess={() => {
+            setResetData(null);
+            alert('Password successfully reset! Please login.');
+            setShowAuthPrompt(true);
+          }}
+        />
+      )}
+
       {/* PWA Update and Install Prompts */}
       <PWAPrompt />
 
@@ -262,8 +312,8 @@ function AppContent() {
 
       {/* Double Back to Exit Toast */}
       {showExitToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-zinc-800/90 backdrop-blur-md text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg border border-white/10">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
+          <div className="bg-black/40 backdrop-blur-xl text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-2xl whitespace-nowrap">
             Press back again to exit
           </div>
         </div>
