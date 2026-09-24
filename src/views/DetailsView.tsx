@@ -6,6 +6,7 @@ import { MovieCard } from '../components/MovieCard';
 import { isInWatchlist, toggleWatchlist } from '../lib/storage';
 import { TrailerModal } from '../components/TrailerModal';
 import { loadFamilySafeMode } from '../lib/preferences';
+import { useImageColor } from '../hooks/useImageColor';
 
 interface DetailsViewProps {
   media: { id: number; type: 'movie' | 'tv' };
@@ -16,6 +17,7 @@ interface DetailsViewProps {
 
 export function DetailsView({ media, onBack, onWatch, onSelectRelated }: DetailsViewProps) {
   const [details, setDetails] = useState<Movie | null>(null);
+  useImageColor(details?.backdrop_path ? getImageUrl(details.backdrop_path, 'w500') : null);
   const [cast, setCast] = useState<Cast[]>([]);
   const [recommended, setRecommended] = useState<Movie[]>([]);
   const [saved, setSaved] = useState(false);

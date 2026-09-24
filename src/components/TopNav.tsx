@@ -104,7 +104,7 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
         </header>
       </div>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-[var(--color-theme-bg)] to-transparent pointer-events-none pt-safe-top opacity-90">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-[var(--color-theme-bg)] to-transparent pointer-events-none opacity-90" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center justify-between p-4 pointer-events-auto">
           <div className="flex items-center cursor-pointer select-none" onClick={() => onChange('home')}>
             <span className="font-brand-stylish font-black text-2xl tracking-[0.14em] uppercase bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">

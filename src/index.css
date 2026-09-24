@@ -10,6 +10,7 @@ html, body {
   overscroll-behavior-y: none;
   margin: 0;
   padding: 0;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 ::-webkit-scrollbar {

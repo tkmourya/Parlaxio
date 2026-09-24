@@ -24,10 +24,13 @@ if (REDIS_URL) {
       rejectUnauthorized: false,
       servername: urlObj.hostname // CRITICAL: Layerbase requires SNI
     },
-    connectTimeout: 2000, // 2 seconds (increased to handle free tier cold starts)
-    commandTimeout: 2000, // 2 seconds fail-fast
+    connectTimeout: 3000, // 3 seconds
+    commandTimeout: 3000, // 3 seconds fail-fast
     maxRetriesPerRequest: 1,
-    retryStrategy: () => null, // No retries, fallback instantly
+    retryStrategy: (times) => {
+      if (times > 3) return null; // Stop trying after 3 attempts
+      return 100; // Reconnect after 100ms
+    },
   });
   
   redis.on('connect', () => console.log('[Redis] Connecting to Layerbase...'));

@@ -1,4 +1,17 @@
 import { account } from './appwrite';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+
+const updateNativeStatusBar = async (hexColor: string) => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await StatusBar.setBackgroundColor({ color: hexColor });
+      await StatusBar.setStyle({ style: Style.Dark }); // White text for all our dark themes
+    } catch (e) {
+      console.log('Status bar error:', e);
+    }
+  }
+};
 
 export const THEMES = [
   { id: 'default', name: 'Pitch Black', desc: 'True AMOLED Black', color: '#000000' },
@@ -19,6 +32,7 @@ export async function saveTheme(themeId: string) {
     if (metaThemeColor) {
       metaThemeColor.setAttribute('content', themeObj.color);
     }
+    updateNativeStatusBar(themeObj.color);
   }
   
   // Sync to Cloud
@@ -40,6 +54,7 @@ export function loadTheme(): string {
     if (metaThemeColor) {
       metaThemeColor.setAttribute('content', themeObj.color);
     }
+    updateNativeStatusBar(themeObj.color);
   }
   
   return theme;

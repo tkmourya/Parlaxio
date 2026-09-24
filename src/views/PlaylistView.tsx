@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Play, Pause, Shuffle, Loader2, Clock, ChevronLeft, Heart, Share2, MoreHorizontal, Copy, CheckCircle2, Sparkles, Music } from 'lucide-react';
 import { useMusic } from '../lib/MusicContext';
 import { getPlaylist, getAlbum, PlaylistData, SearchResult } from '../lib/musicService';
+import { useImageColor } from '../hooks/useImageColor';
 
 interface PlaylistViewProps {
   id: string;
@@ -11,6 +12,7 @@ interface PlaylistViewProps {
 
 export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
   const [data, setData] = useState<PlaylistData | null>(null);
+  useImageColor(data?.image);
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const { playSong, currentSong, isPlaying, togglePlay, toggleWatchlist, isWatchlisted, toggleSavePlaylist, isPlaylistSaved } = useMusic();

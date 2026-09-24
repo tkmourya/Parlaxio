@@ -3,6 +3,7 @@ import { Play, Pause, SkipForward, SkipBack, Loader2, X } from 'lucide-react';
 import { useMusic } from '../lib/MusicContext';
 import { MusicFullScreen } from './MusicFullScreen';
 import { TabType } from './TopNav';
+import { useImageColor } from '../hooks/useImageColor';
 
 interface GlobalAudioPlayerProps {
   currentTab: TabType;
@@ -10,6 +11,7 @@ interface GlobalAudioPlayerProps {
 
 export function GlobalAudioPlayer({ currentTab }: GlobalAudioPlayerProps) {
   const { currentSong, isPlaying, isLoading, togglePlay, playNext, playPrev, isFullScreen, setIsFullScreen, currentTime, duration, seekTo, closePlayer } = useMusic();
+  useImageColor(isFullScreen && currentSong ? currentSong.thumbnail : null);
 
   // Draggable state
   const pillRef = useRef<HTMLDivElement>(null);

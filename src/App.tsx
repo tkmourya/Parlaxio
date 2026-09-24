@@ -23,6 +23,8 @@ import { NetworkStatus } from './components/NetworkStatus';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { useRouter } from './lib/router';
 import { loadTheme } from './lib/preferences';
+import { App as CapApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 function useDoubleBackToExit() {
   const [showExitToast, setShowExitToast] = useState(false);
@@ -40,23 +42,46 @@ function useDoubleBackToExit() {
       if (e.state && e.state.isAppRoot) {
         const currentTime = Date.now();
         if (currentTime - lastBackPressTime < 2000) {
-          // Allow exit
-          window.history.back();
+          if (Capacitor.isNativePlatform()) {
+            CapApp.exitApp();
+          } else {
+            window.history.back();
+          }
         } else {
-          // Prevent exit, show toast, and restore working state
           lastBackPressTime = currentTime;
           setShowExitToast(true);
           window.history.pushState({ isWorkingState: true }, '', window.location.pathname);
-          
-          setTimeout(() => {
-            setShowExitToast(false);
-          }, 2000);
+          setTimeout(() => setShowExitToast(false), 2000);
         }
       }
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+
+    // Capacitor Native Hardware Back Button
+    if (Capacitor.isNativePlatform()) {
+      CapApp.addListener('backButton', ({ canGoBack }) => {
+        if (!canGoBack) {
+          const currentTime = Date.now();
+          if (currentTime - lastBackPressTime < 2000) {
+            CapApp.exitApp();
+          } else {
+            lastBackPressTime = currentTime;
+            setShowExitToast(true);
+            setTimeout(() => setShowExitToast(false), 2000);
+          }
+        } else {
+          window.history.back();
+        }
+      });
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (Capacitor.isNativePlatform()) {
+        CapApp.removeAllListeners();
+      }
+    };
   }, []);
 
   return showExitToast;

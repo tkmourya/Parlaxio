@@ -45,7 +45,8 @@ async function fetchFromTMDB<T>(endpoint: string): Promise<T> {
       return response.json();
     } else {
       // PRODUCTION / VERCEL: Call our secure Serverless Function
-      const url = `/api/tmdb?path=${encodeURIComponent(safeEndpoint)}`;
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || '';
+      const url = `${baseUrl}/api/tmdb?path=${encodeURIComponent(safeEndpoint)}`;
       
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Vercel TMDB Proxy Error: ${response.status}`);
