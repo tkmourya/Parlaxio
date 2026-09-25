@@ -224,6 +224,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         nextIcon: 'media_next',
         closeIcon: 'media_close',
         notificationIcon: 'notification'
+      }).then(() => {
+        // Re-subscribe listener after create() since it resets the notification
+        CapacitorMusicControls.addListener('controlsNotification', (action: any) => {
+          const message = action.message || action;
+          if (message === 'music-controls-next') playNextRef.current();
+          else if (message === 'music-controls-previous') playPrevRef.current();
+          else if (message === 'music-controls-pause' && audioRef.current) audioRef.current.pause();
+          else if (message === 'music-controls-play' && audioRef.current) audioRef.current.play();
+        });
       }).catch(e => console.error('MusicControls create error', e));
     }
 
@@ -404,11 +413,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       }
     };
     const onEnded = () => playNextRef.current();
+    let lastErrorTime = 0;
     const onError = (e: any) => {
       console.error('Audio playback error', e);
       setIsLoading(false);
-      // Auto-skip to next song on error instead of stopping
-      playNextRef.current();
+      // Auto-skip to next song on error, but guard against infinite loop
+      const now = Date.now();
+      if (now - lastErrorTime > 2000) {
+        lastErrorTime = now;
+        setTimeout(() => playNextRef.current(), 500);
+      } else {
+        // Too many errors too fast, stop playback
+        setIsPlaying(false);
+      }
     };
 
     // Native App Controls Listener

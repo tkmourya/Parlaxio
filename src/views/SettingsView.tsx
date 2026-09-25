@@ -96,10 +96,10 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
 
   // Selectable options
   const [videoQuality, setVideoQuality] = useState('4K (2160p)');
-  
+
   const [serverIdx, setServerIdx] = useState(loadDefaultServer());
   const [currentTheme, setCurrentTheme] = useState(loadTheme());
-  
+
   const SERVERS = [
     { val: 0, label: 'Server 1 (VidLink)', ping: '18ms', desc: '4K & 1080p Ultra HD' },
     { val: 1, label: 'Server 2 (VidSrc SBS)', ping: '24ms', desc: 'High Speed Multi-Source HD' },
@@ -366,9 +366,9 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-1 sm:gap-3 shrink-0 ml-2">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         removeFromHistory(movie.id);
@@ -435,7 +435,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
               {user && !user.emailVerification && (
                 <div className="mt-4 flex flex-col items-center gap-2">
                   <span className="text-xs font-bold text-red-400 bg-red-400/10 px-2 py-0.5 rounded uppercase tracking-wider">Unverified</span>
-                  <button 
+                  <button
                     onClick={handleSendVerification}
                     disabled={isSendingVerification || verificationSent}
                     className="mt-1 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors"
@@ -1062,7 +1062,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
 
               {expandedRow === 'audio' && (
                 <div className="px-4 py-2 bg-black/40 border-t border-white/5 space-y-1">
-                  {['Stereo 2.0', 'Dolby 5.1 Surround', 'Dolby Atmos'].map((aud) => (
+                  {['Stereo 2.0', 'Dolby Atm'].map((aud) => (
                     <button
                       key={aud}
                       onClick={() => {
@@ -1129,7 +1129,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
             Legal & Information
           </span>
           <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 backdrop-blur-md">
-            
+
             <button
               onClick={() => onNavigate && onNavigate('privacy')}
               className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer"
@@ -1197,7 +1197,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
               </button>
             </div>
           </div>
-          
+
           {/* Version (Moved outside the box) */}
           <div className="text-center mt-6">
             <p className="text-[11px] text-zinc-500 font-medium tracking-wide">
@@ -1210,9 +1210,9 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
 
       {logoutModal}
 
-      <AdBlockModal 
-        isOpen={isAdModalOpen} 
-        onClose={() => setIsAdModalOpen(false)} 
+      <AdBlockModal
+        isOpen={isAdModalOpen}
+        onClose={() => setIsAdModalOpen(false)}
       />
     </div>
   );

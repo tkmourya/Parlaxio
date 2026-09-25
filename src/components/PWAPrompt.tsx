@@ -1,20 +1,46 @@
 import { useState, useEffect } from 'react';
 import { Download, RefreshCw, X } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { Capacitor } from '@capacitor/core';
+
+// Check once at module level
+const isNativePlatform = Capacitor.isNativePlatform();
 
 export function PWAPrompt() {
-  // Check if running natively inside Android/iOS APK via Capacitor
-  const isCapacitor = !!(window as any).Capacitor?.isNative;
+  // On native APK, unregister any existing SW and show nothing
+  useEffect(() => {
+    if (isNativePlatform && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      });
+      // Also clear all caches left by the old SW
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+        });
+      }
+    }
+  }, []);
 
-  // Service Worker Update State
+  // Never render anything or register SW on native
+  if (isNativePlatform) return null;
+
+  return <PWAPromptWeb />;
+}
+
+// This component only mounts on web — SW hook is called here, never on native
+function PWAPromptWeb() {
+
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegistered(r) {
+    onRegistered(r: any) {
       console.log('SW Registered: ' + r);
     },
-    onRegisterError(error) {
+    onRegisterError(error: any) {
       console.log('SW registration error', error);
     },
   });
@@ -28,17 +54,12 @@ export function PWAPrompt() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     
     if (isStandalone) {
-      // If it's already installed, we don't need to show install prompt
       return;
     }
 
     const handleBeforeInstallPrompt = (e: any) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Update UI notify the user they can install the PWA
-      // Only show install prompt if there's no update prompt
       if (!needRefresh) {
         setShowInstall(true);
       }
@@ -55,32 +76,13 @@ export function PWAPrompt() {
     if (!deferredPrompt) return;
     
     setShowInstall(false);
-    // Show the install prompt
     deferredPrompt.prompt();
     
-    // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
     console.log(`User response to the install prompt: ${outcome}`);
     
-    // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null);
   };
-
-  // Force unregister Service Worker if running natively (so updates happen instantly via APK)
-  useEffect(() => {
-    if (isCapacitor && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-        }
-      });
-    }
-  }, [isCapacitor]);
-
-  // DO NOT show any PWA prompts inside the Native APK
-  if (isCapacitor) {
-    return null;
-  }
 
   // If there's an update, show Update Prompt
   if (needRefresh) {
@@ -156,3 +158,4 @@ export function PWAPrompt() {
 
   return null;
 }
+

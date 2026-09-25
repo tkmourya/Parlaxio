@@ -75,6 +75,8 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
         setError('Too many attempts. Please wait a few minutes and try again.');
       } else if (errorMsg.includes('Invalid credentials')) {
         setError('Incorrect email or password. Please try again.');
+      } else if (errorMsg.includes('password') && errorMsg.includes('between 8 and 256')) {
+        setError(mode === 'register' ? 'Password must be at least 8 characters.' : 'Incorrect email or password.');
       } else if (errorMsg.includes('already exists')) {
         setError('An account with this email already exists. Please Sign In.');
       } else if (errorMsg.includes('prohibited when a session is active')) {
@@ -105,7 +107,7 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
         {/* Back Button */}
         <button
           onClick={onComplete}
-          className="absolute top-6 left-6 text-zinc-400 hover:text-white transition-colors cursor-pointer p-1.5 rounded-full hover:bg-white/10"
+          className="absolute top-[max(env(safe-area-inset-top,0px),1.5rem)] left-6 text-zinc-400 hover:text-white transition-colors cursor-pointer p-1.5 rounded-full hover:bg-white/10"
           title="Back"
         >
           <ArrowLeft size={18} />
@@ -204,7 +206,7 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
                     placeholder="e.g. Alex Walker"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                   />
                 </div>
               </div>
@@ -222,7 +224,7 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
                   placeholder="name@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                 />
               </div>
             </div>
@@ -251,7 +253,7 @@ export function AuthView({ onComplete, initialMode = 'login' }: { onComplete: ()
                     placeholder="••••••••••••"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
                   />
                   <button
                     type="button"

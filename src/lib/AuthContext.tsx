@@ -167,7 +167,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const sendVerificationEmail = async () => {
     try {
-      const currentUrl = window.location.origin + '/?verify=true';
+      const appUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+      const currentUrl = appUrl + '/?verify=true';
       await account.createVerification(currentUrl);
     } catch (error) {
       console.error('Send verification error:', error);
@@ -177,7 +178,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const resetPassword = async (email: string) => {
     try {
-      const currentUrl = window.location.origin + '/?reset=true';
+      const appUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+      const currentUrl = appUrl + '/?reset=true';
       await account.createRecovery(email, currentUrl);
     } catch (error) {
       console.error('Reset password error:', error);

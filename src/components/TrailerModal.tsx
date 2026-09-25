@@ -23,7 +23,7 @@ export function TrailerModal({ trailerKey, onClose }: TrailerModalProps) {
     <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
       <button 
         onClick={onClose}
-        className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+        className="absolute top-[max(env(safe-area-inset-top,0px),1.5rem)] right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-10"
       >
         <X size={24} />
       </button>
