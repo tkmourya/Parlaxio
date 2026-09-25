@@ -68,3 +68,15 @@ export interface TMDBResponse {
   total_pages: number;
   total_results: number;
 }
+
+export interface CustomPlaylist {
+  $id?: string;
+  userId: string;
+  name: string;
+  creatorName: string;
+  isPublic: boolean;
+  coverUrl?: string;
+  items: any[]; // JSON array of SaavnSong objects
+  savedCount: number;
+  $createdAt?: string;
+}

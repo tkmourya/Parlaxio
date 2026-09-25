@@ -223,7 +223,7 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
         <p className="text-white/60 text-lg">Failed to load Artist.</p>
         <button
           onClick={onBack}
-          className="mt-4 px-6 py-2.5 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all font-medium border border-white/10"
+          className="mt-4 px-6 py-2.5 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all font-medium"
         >
           Go Back
         </button>
@@ -238,7 +238,7 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
       {/* Back Arrow Fixed at Top-Left Corner */}
       <button
         onClick={onBack}
-        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg group"
+        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors backdrop-blur-md shadow-lg group"
         title="Go Back"
       >
         <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />

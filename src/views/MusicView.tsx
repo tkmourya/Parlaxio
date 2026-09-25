@@ -6,6 +6,8 @@ import { PlaylistView } from './PlaylistView';
 import { CategoryView } from './CategoryView';
 import { ArtistView } from './ArtistView';
 import { ArtistAvatar } from '../components/ArtistAvatar';
+import { fetchPublicPlaylists } from '../lib/sync';
+import { CustomPlaylist } from '../types';
 
 function MusicRow({ 
   title, 
@@ -194,6 +196,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
   const [activeChip, setActiveChip] = useState<string | null>(null);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [activeCategory, setActiveCategory] = useState<{title: string, items: any[]} | null>(null);
+  const [publicPlaylists, setPublicPlaylists] = useState<CustomPlaylist[]>([]);
   
   // Recent searches state
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -264,12 +267,13 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
   const [activeArtistId, setActiveArtistId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('artist'));
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('playlist') || params.get('album');
+    return params.get('playlist') || params.get('album') || params.get('custom_playlist');
   });
-  const [activePlaylistType, setActivePlaylistType] = useState<'playlist'|'album'|null>(() => {
+  const [activePlaylistType, setActivePlaylistType] = useState<'playlist'|'album'|'custom_playlist'|null>(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.has('album')) return 'album';
     if (params.has('playlist')) return 'playlist';
+    if (params.has('custom_playlist')) return 'custom_playlist';
     return (params.get('ptype') as any) || null;
   });
   const [activeTitle, setActiveTitle] = useState<string | null>(() => new URLSearchParams(window.location.search).get('title'));
@@ -306,6 +310,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       newUrl.searchParams.delete('artist');
       newUrl.searchParams.delete('playlist');
       newUrl.searchParams.delete('album');
+      newUrl.searchParams.delete('custom_playlist');
       newUrl.searchParams.delete('title');
       window.history.replaceState(null, '', newUrl.toString());
       
@@ -340,6 +345,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       url.searchParams.set('artist', activeArtistId);
       url.searchParams.delete('playlist');
       url.searchParams.delete('album');
+      url.searchParams.delete('custom_playlist');
       if (activeTitle) {
         url.searchParams.set('title', activeTitle);
       } else {
@@ -353,9 +359,15 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
       if (activePlaylistType === 'album') {
         url.searchParams.set('album', activePlaylistId);
         url.searchParams.delete('playlist');
+        url.searchParams.delete('custom_playlist');
+      } else if (activePlaylistType === 'custom_playlist') {
+        url.searchParams.set('custom_playlist', activePlaylistId);
+        url.searchParams.delete('playlist');
+        url.searchParams.delete('album');
       } else {
         url.searchParams.set('playlist', activePlaylistId);
         url.searchParams.delete('album');
+        url.searchParams.delete('custom_playlist');
       }
       if (activeTitle) {
         url.searchParams.set('title', activeTitle);
@@ -365,6 +377,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
     } else if (!activeArtistId) {
       url.searchParams.delete('playlist');
       url.searchParams.delete('album');
+      url.searchParams.delete('custom_playlist');
       if (!currentSong) {
         url.searchParams.delete('title');
       }
@@ -422,8 +435,16 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
 
   const loadHomeData = async () => {
     setIsLoadingTrending(true);
-    const rows = await getHomeRows();
-    setHomeRows(rows);
+    try {
+      const [rows, publicLists] = await Promise.all([
+        getHomeRows(),
+        fetchPublicPlaylists()
+      ]);
+      setHomeRows(rows);
+      setPublicPlaylists(publicLists);
+    } catch (e) {
+      console.error(e);
+    }
     setIsLoadingTrending(false);
   };
 
@@ -487,7 +508,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
         setActiveCategory({ title, items });
       }}
       onItemClick={(item) => {
-        const isPlaylist = item.type === 'playlist' || item.type === 'album';
+        const isPlaylist = item.type === 'playlist' || item.type === 'album' || item.type === 'custom_playlist';
         const itemTitle = item.title || item.name || null;
         if (item.type === 'artist') {
           const newUrl = new URL(window.location.href);
@@ -600,7 +621,6 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
               (e.target as HTMLFormElement).querySelector('input')?.blur();
               if (searchQuery.trim()) {
                 saveRecentSearch(searchQuery);
-                executeSearch(searchQuery);
               }
             }} className="w-full">
               <input
@@ -853,6 +873,14 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
             ) : (
               <>
                 {recentlyPlayed.length > 0 && renderRow('Recently Played Songs', recentlyPlayed)}
+                {publicPlaylists.length > 0 && renderRow('Community Playlists', publicPlaylists.map(p => ({
+                  id: p.$id,
+                  title: p.name,
+                  subtitle: `By ${p.creatorName} • ${p.items.length} tracks`,
+                  type: 'custom_playlist',
+                  coverUrl: p.coverUrl || (p.items && p.items.length > 0 ? p.items[0].coverUrl : ''),
+                  customData: p
+                })))}
                 {watchlist.length > 0 && renderRow('Your Saved Watchlist', watchlist)}
                 {savedPlaylists.length > 0 && renderRow('Your Favorited Playlists', savedPlaylists)}
                 {followedArtists.length > 0 && renderRow('Your Followed Artists', followedArtists)}
@@ -889,7 +917,6 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
               (e.target as HTMLFormElement).querySelector('input')?.blur();
               if (searchQuery.trim()) {
                 saveRecentSearch(searchQuery);
-                executeSearch(searchQuery);
               }
             }} className="w-full">
               <input
@@ -1125,6 +1152,14 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
             ) : (
               <div className="mt-8">
                 {recentlyPlayed.length > 0 && renderRow('Recently Played Songs', recentlyPlayed)}
+                {publicPlaylists.length > 0 && renderRow('Community Playlists', publicPlaylists.map(p => ({
+                  id: p.$id,
+                  title: p.name,
+                  subtitle: `By ${p.creatorName} • ${p.items.length} tracks`,
+                  type: 'custom_playlist',
+                  coverUrl: p.coverUrl || (p.items && p.items.length > 0 ? p.items[0].coverUrl : ''),
+                  customData: p
+                })))}
                 {watchlist.length > 0 && renderRow('Your Saved Watchlist', watchlist)}
                 {savedPlaylists.length > 0 && renderRow('Your Favorited Playlists', savedPlaylists)}
                 {followedArtists.length > 0 && renderRow('Your Followed Artists', followedArtists)}

@@ -93,6 +93,7 @@ export interface PlaylistData {
   title: string;
   coverUrl: string;
   songs: SearchResult[];
+  creatorName?: string;
 }
 
 export async function getPlaylist(id: string): Promise<PlaylistData | null> {

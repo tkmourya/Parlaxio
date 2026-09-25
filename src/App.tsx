@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { CheckCircle2, AlertCircle, BadgeCheck } from 'lucide-react';
 import { StatusBar } from '@capacitor/status-bar';
 import { HomeView } from './views/HomeView';
 import { SearchView } from './views/SearchView';
@@ -121,6 +122,7 @@ function AppContent() {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
   const [resetData, setResetData] = useState<{userId: string, secret: string} | null>(null);
+  const [verificationToast, setVerificationToast] = useState<{message: string, isError: boolean} | null>(null);
   const [hideSettingsNav, setHideSettingsNav] = useState(false);
   const [hideMusicTopNav, setHideMusicTopNav] = useState(false);
   const showExitToast = useDoubleBackToExit();
@@ -170,12 +172,14 @@ function AppContent() {
         if (processedVerification.current !== secret) {
           processedVerification.current = secret;
           completeVerification(userId, secret).then(() => {
-            alert('Email successfully verified! You now have the VIP badge.');
+            setVerificationToast({ message: 'Email successfully verified! You now have the VIP badge.', isError: false });
+            setTimeout(() => setVerificationToast(null), 3000);
             window.history.replaceState({}, '', window.location.pathname);
           }).catch((e: any) => {
             // Ignore error if it's already verified recently (token invalid)
             if (!e.message?.includes('Invalid token')) {
-              alert('Verification failed: ' + e.message);
+              setVerificationToast({ message: 'Verification failed: ' + e.message, isError: true });
+              setTimeout(() => setVerificationToast(null), 5000);
             }
           });
         }
@@ -246,6 +250,47 @@ function AppContent() {
         {currentTab === 'terms' && <TermsView onBack={navigateBack} />}
         {currentTab === 'legal' && <LegalDMCAView onBack={navigateBack} />}
       </main>
+
+      {/* Verification Modal */}
+      {verificationToast && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setVerificationToast(null)} />
+          {verificationToast.isError ? (
+            <div className="relative bg-zinc-900 border border-white/10 p-6 rounded-3xl shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 max-w-sm w-full text-center">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                <AlertCircle size={32} className="text-red-500" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Verification Failed</h2>
+              <p className="text-sm text-zinc-400 mb-6">{verificationToast.message}</p>
+              <button onClick={() => setVerificationToast(null)} className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition active:scale-95">Close</button>
+            </div>
+          ) : (
+            <div className="relative bg-zinc-900/90 backdrop-blur-2xl border border-white/10 p-10 rounded-3xl shadow-[0_0_60px_-15px_rgba(255,255,255,0.15)] flex flex-col items-center animate-in zoom-in-95 duration-500 max-w-xs w-full text-center overflow-hidden">
+              {/* Shine effect background */}
+              <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+              
+              <svg width="0" height="0" className="absolute">
+                <defs>
+                  <linearGradient id="silver-black-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop stopColor="#ffffff" offset="0%" />
+                    <stop stopColor="#52525b" offset="100%" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              
+              <div className="relative mb-5">
+                <div className="absolute inset-0 bg-white/20 blur-xl rounded-full animate-pulse" />
+                <BadgeCheck size={100} strokeWidth={1} style={{ fill: 'url(#silver-black-grad)' }} className="text-zinc-400 relative z-10 animate-bounce" />
+              </div>
+              
+              <h2 className="text-2xl font-extrabold text-white mb-1.5 tracking-tight">Verified</h2>
+              <p className="text-sm text-zinc-400 leading-relaxed px-2">
+                Your email has been verified successfully.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       <GlobalAudioPlayer currentTab={currentTab} />
 

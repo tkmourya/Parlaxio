@@ -213,7 +213,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
         <div className="absolute top-[calc(env(safe-area-inset-top,0px)+1.5rem)] left-4 md:left-12 z-50">
           <button
             onClick={handleSubViewClose}
-            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 transition cursor-pointer shrink-0"
           >
             <ArrowLeft size={18} />
           </button>
@@ -230,7 +230,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={handleSubViewClose}
-            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 transition cursor-pointer shrink-0"
           >
             <ArrowLeft size={18} />
           </button>
@@ -249,7 +249,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={handleSubViewClose}
-            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 transition cursor-pointer shrink-0"
           >
             <ArrowLeft size={18} />
           </button>

@@ -202,48 +202,50 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setCurrentTime(0);
     setDuration(0);
     
-    // Start playing synchronously to bypass mobile autoplay restrictions
+    // Update native notification FIRST (before audio src change) to minimize flicker
+    if (Capacitor.isNativePlatform()) {
+      // Update isPlaying immediately to keep notification alive
+      try { CapacitorMusicControls.updateIsPlaying({ isPlaying: true }); } catch (_) { /* ignore */ }
+      CapacitorMusicControls.create({
+        track: song.title,
+        artist: song.artist || 'Unknown Artist',
+        cover: song.coverUrl || '',
+        duration: song.durationSec || 0,
+        elapsed: 0,
+        hasScrubbing: true,
+        isPlaying: true,
+        dismissable: false,
+        hasPrev: true,
+        hasNext: true,
+        hasClose: false,
+        playIcon: 'media_play',
+        pauseIcon: 'media_pause',
+        prevIcon: 'media_prev',
+        nextIcon: 'media_next',
+        closeIcon: 'media_close',
+        notificationIcon: 'notification'
+      }).catch(e => console.error('MusicControls create error', e));
+    }
+
+    // Setup Media Session API for background playback & lockscreen controls
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: song.title,
+        artist: song.artist || 'Unknown Artist',
+        album: '',
+        artwork: [
+          { src: song.coverUrl || '', sizes: '150x150', type: 'image/jpeg' },
+          { src: song.coverUrl || '', sizes: '500x500', type: 'image/jpeg' }
+        ]
+      });
+    }
+
+    // Start playing after notification is updated
     if (audioRef.current) {
       audioRef.current.src = getAudioUrl(song.id);
       audioRef.current.play().catch(e => {
         console.error('Playback failed', e);
       });
-      
-      // Setup Media Session API for background playback & lockscreen controls
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: song.title,
-          artist: song.artist || 'Unknown Artist',
-          album: '',
-          artwork: [
-            { src: song.coverUrl || '', sizes: '150x150', type: 'image/jpeg' },
-            { src: song.coverUrl || '', sizes: '500x500', type: 'image/jpeg' }
-          ]
-        });
-      }
-      
-      // Native Capacitor Music Controls
-      if (Capacitor.isNativePlatform()) {
-        CapacitorMusicControls.create({
-          track: song.title,
-          artist: song.artist || 'Unknown Artist',
-          cover: song.coverUrl || '',
-          duration: song.durationSec || 0,
-          elapsed: 0,
-          hasScrubbing: true,
-          isPlaying: true,
-          dismissable: false,
-          hasPrev: true,
-          hasNext: true,
-          hasClose: false,
-          playIcon: 'media_play',
-          pauseIcon: 'media_pause',
-          prevIcon: 'media_prev',
-          nextIcon: 'media_next',
-          closeIcon: 'media_close',
-          notificationIcon: 'notification'
-        }).catch(e => console.error('MusicControls create error', e));
-      }
     }
   }, [addToRecentlyPlayed]);
 
@@ -347,6 +349,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [loadAndPlay]);
 
+  // Stable refs so the Audio element never needs to be recreated
+  const playNextRef = useRef(playNextInternal);
+  const playPrevRef = useRef(playPrevInternal);
+  useEffect(() => { playNextRef.current = playNextInternal; }, [playNextInternal]);
+  useEffect(() => { playPrevRef.current = playPrevInternal; }, [playPrevInternal]);
+
   useEffect(() => {
     const audio = new Audio();
     audio.preload = 'auto';
@@ -368,10 +376,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         setIsPlaying(false);
       });
       navigator.mediaSession.setActionHandler('nexttrack', () => {
-        playNextInternal();
+        playNextRef.current();
       });
       navigator.mediaSession.setActionHandler('previoustrack', () => {
-        playPrevInternal();
+        playPrevRef.current();
       });
     }
 
@@ -395,20 +403,21 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         CapacitorMusicControls.updateElapsed({ isPlaying: false, elapsed: audio.currentTime });
       }
     };
-    const onEnded = () => playNextInternal();
+    const onEnded = () => playNextRef.current();
     const onError = (e: any) => {
       console.error('Audio playback error', e);
       setIsLoading(false);
-      setIsPlaying(false);
+      // Auto-skip to next song on error instead of stopping
+      playNextRef.current();
     };
 
     // Native App Controls Listener
     const handleNativeControls = (action: any) => {
       const message = action.message || action;
       if (message === 'music-controls-next') {
-        playNextInternal();
+        playNextRef.current();
       } else if (message === 'music-controls-previous') {
-        playPrevInternal();
+        playPrevRef.current();
       } else if (message === 'music-controls-pause') {
         audio.pause();
       } else if (message === 'music-controls-play') {
@@ -447,7 +456,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       audio.pause();
       audio.src = '';
     };
-  }, [playNextInternal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps — Audio element created once, never destroyed
 
   // Cloud restore & merge on mount
   useEffect(() => {

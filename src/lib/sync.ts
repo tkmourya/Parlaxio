@@ -1,6 +1,6 @@
-import { databases, DATABASE_ID, WATCHLIST_COLLECTION_ID, HISTORY_COLLECTION_ID, ID, account } from './appwrite';
+import { databases, DATABASE_ID, WATCHLIST_COLLECTION_ID, HISTORY_COLLECTION_ID, PLAYLISTS_COLLECTION_ID, ID, account, Permission, Role } from './appwrite';
 import { Query } from 'appwrite';
-import { Movie } from '../types';
+import { Movie, CustomPlaylist } from '../types';
 
 export const syncWatchlistToCloud = async (watchlist: Movie[]) => {
   if (!DATABASE_ID || !WATCHLIST_COLLECTION_ID || WATCHLIST_COLLECTION_ID === 'YOUR_WATCHLIST_COLLECTION_ID') return;
@@ -130,6 +130,121 @@ export const fetchHistoryFromCloud = async (): Promise<Movie[] | null> => {
       });
   } catch (error) {
     console.error('Cloud Fetch Error (History):', error);
+    return null;
+  }
+};
+
+// =======================
+// CUSTOM PLAYLISTS SYNC
+// =======================
+
+export const fetchUserCustomPlaylists = async (userId: string) => {
+  if (!DATABASE_ID || !PLAYLISTS_COLLECTION_ID) return [];
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, PLAYLISTS_COLLECTION_ID, [
+      Query.equal('userId', userId),
+      Query.orderDesc('$createdAt')
+    ]);
+    return response.documents.map(doc => ({
+      ...doc,
+      items: doc.items ? JSON.parse(doc.items) : []
+    })) as unknown as CustomPlaylist[];
+  } catch (e) {
+    console.error('Fetch User Playlists Error:', e);
+    return [];
+  }
+};
+
+export const fetchPublicPlaylists = async () => {
+  if (!DATABASE_ID || !PLAYLISTS_COLLECTION_ID) return [];
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, PLAYLISTS_COLLECTION_ID, [
+      Query.equal('isPublic', true),
+      Query.orderDesc('$createdAt'),
+      Query.limit(25)
+    ]);
+    return response.documents.map(doc => ({
+      ...doc,
+      items: doc.items ? JSON.parse(doc.items) : []
+    })) as unknown as CustomPlaylist[];
+  } catch (e) {
+    console.error('Fetch Public Playlists Error:', e);
+    return [];
+  }
+};
+
+export const createCustomPlaylist = async (userId: string, creatorName: string, name: string, isPublic: boolean, items: any[] = []) => {
+  if (!DATABASE_ID || !PLAYLISTS_COLLECTION_ID) throw new Error('Database not configured');
+  try {
+    const coverUrl = items.length > 0 && items[0].image ? items[0].image : '';
+    const response = await databases.createDocument(
+      DATABASE_ID, 
+      PLAYLISTS_COLLECTION_ID, 
+      ID.unique(), 
+      {
+        userId,
+        creatorName,
+        name,
+        isPublic,
+        coverUrl,
+        items: JSON.stringify(items),
+        savedCount: 0
+      },
+      [
+        Permission.read(Role.any()), // Anyone can read
+        Permission.update(Role.user(userId)), // Only creator can update
+        Permission.delete(Role.user(userId)) // Only creator can delete
+      ]
+    );
+    return {
+      ...response,
+      items: response.items ? JSON.parse(response.items) : []
+    } as unknown as CustomPlaylist;
+  } catch (e) {
+    console.error('Create Playlist Error:', e);
+    throw e;
+  }
+};
+
+export const updateCustomPlaylistItems = async (playlistId: string, items: any[]) => {
+  if (!DATABASE_ID || !PLAYLISTS_COLLECTION_ID) throw new Error('Database not configured');
+  try {
+    const coverUrl = items.length > 0 && items[0].image ? items[0].image : '';
+    const response = await databases.updateDocument(DATABASE_ID, PLAYLISTS_COLLECTION_ID, playlistId, {
+      items: JSON.stringify(items),
+      coverUrl
+    });
+    return {
+      ...response,
+      items: response.items ? JSON.parse(response.items) : []
+    } as unknown as CustomPlaylist;
+  } catch (e) {
+    console.error('Update Playlist Error:', e);
+    throw e;
+  }
+};
+
+export const deleteCustomPlaylist = async (playlistId: string) => {
+  if (!DATABASE_ID || !PLAYLISTS_COLLECTION_ID) throw new Error('Database not configured');
+  try {
+    await databases.deleteDocument(DATABASE_ID, PLAYLISTS_COLLECTION_ID, playlistId);
+    return true;
+  } catch (e) {
+    console.error('Delete Playlist Error:', e);
+    throw e;
+  }
+};
+
+export const getCustomPlaylistById = async (playlistId: string) => {
+  if (!DATABASE_ID || !PLAYLISTS_COLLECTION_ID) return null;
+  try {
+    const doc = await databases.getDocument(DATABASE_ID, PLAYLISTS_COLLECTION_ID, playlistId);
+    return {
+      ...doc,
+      items: doc.items ? JSON.parse(doc.items) : []
+    } as unknown as CustomPlaylist;
+  } catch (e) {
+    console.error('Get Custom Playlist Error:', e);
     return null;
   }
 };

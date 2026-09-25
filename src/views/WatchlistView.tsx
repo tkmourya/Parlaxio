@@ -5,6 +5,9 @@ import { MovieCard } from '../components/MovieCard';
 import { getWatchlist } from '../lib/storage';
 import { getGenreNames } from '../lib/tmdb';
 import { useMusic, Song, FollowedArtist, SavedPlaylist } from '../lib/MusicContext';
+import { useAuth } from '../lib/AuthContext';
+import { fetchUserCustomPlaylists } from '../lib/sync';
+import { CustomPlaylist } from '../types';
 
 export function WatchlistView({
   onPlay,
@@ -17,7 +20,9 @@ export function WatchlistView({
 }) {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [activeTab, setActiveTab] = useState<'movies' | 'songs' | 'playlists' | 'artists'>('movies');
-  const { watchlist, followedArtists, savedPlaylists, playSong, currentSong, isPlaying, togglePlay, toggleWatchlist, toggleFollowArtist, toggleSavePlaylist } = useMusic();
+  const [myPlaylists, setMyPlaylists] = useState<CustomPlaylist[]>([]);
+  const { user } = useAuth();
+  const { watchlist, followedArtists, savedPlaylists, playSong, currentSong, isPlaying, togglePlay, toggleWatchlist, toggleFollowArtist, toggleSavePlaylist, setQueue } = useMusic();
 
   useEffect(() => {
     // Initial Load
@@ -33,6 +38,14 @@ export function WatchlistView({
       window.removeEventListener('watchlist-updated', handleStorage);
     };
   }, []);
+
+  useEffect(() => {
+    if (user && activeTab === 'playlists') {
+      fetchUserCustomPlaylists(user.id).then(res => {
+        setMyPlaylists(res);
+      });
+    }
+  }, [user, activeTab]);
 
   const isList = layout === 'list' || hideHeader;
 
@@ -188,8 +201,16 @@ export function WatchlistView({
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           alt={song.title}
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          {isActive && isPlaying ? <Pause size={18} className="text-white" /> : <Play size={18} className="text-white ml-0.5" fill="currentColor" />}
+                        <div className={`absolute inset-0 bg-black/40 transition-opacity flex items-center justify-center ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                          {isActive && isPlaying ? (
+                            <div className="flex items-end gap-[3px] h-4">
+                              <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_infinite_alternate] h-full" />
+                              <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.2s_infinite_alternate] h-2/3" />
+                              <span className="w-1 bg-white rounded-full animate-[musicbar_0.5s_ease-in-out_0.4s_infinite_alternate] h-full" />
+                            </div>
+                          ) : (
+                            <Play size={18} className="text-white ml-0.5" fill="currentColor" />
+                          )}
                         </div>
                       </div>
 
@@ -227,17 +248,62 @@ export function WatchlistView({
 
         {/* TAB 3: PLAYLISTS & ALBUMS */}
         {activeTab === 'playlists' && (
-          savedPlaylists.length === 0 ? (
+          savedPlaylists.length === 0 && myPlaylists.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-zinc-500 bg-zinc-900/40 rounded-2xl border border-white/10">
               <Disc3 size={48} className="mb-3 opacity-30 text-zinc-400" />
-              <h2 className="text-base font-semibold text-white mb-1">No favorited playlists or albums</h2>
-              <p className="text-xs text-zinc-400">Click Favorite on any playlist or album page to save it here.</p>
+              <h2 className="text-base font-semibold text-white mb-1">No playlists found</h2>
+              <p className="text-xs text-zinc-400">Your created playlists and favorited albums will appear here.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {/* My Custom Playlists */}
+              {myPlaylists.map((item) => (
+                <div
+                  key={item.$id}
+                  onClick={() => {
+                    const newUrl = new URL(window.location.href);
+                    newUrl.pathname = '/music';
+                    newUrl.searchParams.set('custom_playlist', item.$id);
+                    if (item.name) newUrl.searchParams.set('title', item.name);
+                    window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl pb-3 flex flex-col transition-all duration-300 hover:-translate-y-1 group cursor-pointer overflow-hidden relative"
+                >
+                  <div className="absolute top-2 left-2 px-2.5 py-1 bg-black/40 border border-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-wider z-10 shadow-lg">
+                    My Playlist
+                  </div>
+                  <div className="relative w-full aspect-square mb-3 overflow-hidden shadow-xl bg-zinc-800 flex items-center justify-center">
+                    {item.coverUrl || (item.items && item.items.length > 0 ? item.items[0].coverUrl : null) ? (
+                      <img
+                        src={item.coverUrl || item.items[0].coverUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover scale-[1.28] origin-center group-hover:scale-[1.34] transition-transform duration-500"
+                      />
+                    ) : (
+                      <Disc3 size={40} className="text-white/20" />
+                    )}
+                  </div>
+
+                  <div className="px-3">
+                    <h4 className="font-bold text-sm text-white truncate w-full mb-0.5">{item.name}</h4>
+                    <p className="text-xs text-white/50 capitalize font-medium">{item.items.length} tracks • {item.isPublic ? 'Public' : 'Private'}</p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Saved Playlists/Albums */}
               {savedPlaylists.map((item) => (
                 <div
                   key={item.id}
+                  onClick={() => {
+                    const newUrl = new URL(window.location.href);
+                    newUrl.pathname = '/music';
+                    newUrl.searchParams.set(item.type || 'playlist', item.id);
+                    if (item.title) newUrl.searchParams.set('title', item.title);
+                    window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
                   className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl pb-3 flex flex-col transition-all duration-300 hover:-translate-y-1 group cursor-pointer overflow-hidden"
                 >
                   <div className="relative w-full aspect-square mb-3 overflow-hidden shadow-xl">
@@ -281,7 +347,15 @@ export function WatchlistView({
               {followedArtists.map((artist) => (
                 <div
                   key={artist.id || artist.title}
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 group"
+                  onClick={() => {
+                    const newUrl = new URL(window.location.href);
+                    newUrl.pathname = '/music';
+                    newUrl.searchParams.set('artist', artist.id);
+                    if (artist.title) newUrl.searchParams.set('title', artist.title);
+                    window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 group cursor-pointer"
                 >
                   <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-3 overflow-hidden rounded-full border border-white/15 shadow-xl">
                     <img

@@ -381,7 +381,17 @@ app.get('/api/music/search', async (req, res) => {
     
     if (!data.results) return res.json({ results: [] });
 
-    const songs = data.results.map(mapSaavnSong).filter(s => s.encryptedUrl);
+    const blockedWords = ['sex', 'porn', 'fuck', 'nude', 'xnxx', 'desi bhabhi', 'bhabhi sex', 'hot video', 'adult'];
+    
+    const songs = data.results
+      .map(mapSaavnSong)
+      .filter(s => s.encryptedUrl)
+      .filter(s => {
+        const titleLower = s.title.toLowerCase();
+        const artistLower = s.artist.toLowerCase();
+        return !blockedWords.some(w => titleLower.includes(w) || artistLower.includes(w));
+      });
+      
     const uniqueSongs = deduplicateSongs(songs);
 
     res.json({ results: uniqueSongs });

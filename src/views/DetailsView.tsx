@@ -266,7 +266,7 @@ export function DetailsView({ media, onBack, onWatch, onSelectRelated }: Details
       {/* Floating Back Button */}
       <button 
         onClick={onBack}
-        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg group"
+        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors backdrop-blur-md shadow-lg group"
         title="Go Back"
       >
         <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />

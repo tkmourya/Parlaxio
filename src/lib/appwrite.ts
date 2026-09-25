@@ -1,4 +1,4 @@
-import { Client, Account, Databases, ID } from 'appwrite';
+import { Client, Account, Databases, ID, Permission, Role, Query } from 'appwrite';
 
 const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
 const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
@@ -13,8 +13,9 @@ if (projectId && projectId !== 'YOUR_PROJECT_ID_HERE') {
 
 export const account = new Account(client);
 export const databases = new Databases(client);
-export { ID };
+export { ID, Query, Permission, Role };
 
 export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID || '';
 export const WATCHLIST_COLLECTION_ID = import.meta.env.VITE_APPWRITE_WATCHLIST_COLLECTION_ID || '';
 export const HISTORY_COLLECTION_ID = import.meta.env.VITE_APPWRITE_HISTORY_COLLECTION_ID || '';
+export const PLAYLISTS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_PLAYLISTS_COLLECTION_ID || '';

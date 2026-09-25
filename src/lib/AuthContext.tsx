@@ -197,7 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const completeResetPassword = async (userId: string, secret: string, newPassword: string) => {
     try {
-      await account.updateRecovery(userId, secret, newPassword, newPassword);
+      await account.updateRecovery(userId, secret, newPassword);
     } catch (e) {
       console.error('Reset completion error:', e);
       throw e;

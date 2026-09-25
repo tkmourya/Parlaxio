@@ -1,5 +1,7 @@
-import { ChevronDown, Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Disc3, Loader2, Heart, Youtube } from 'lucide-react';
+import { ChevronDown, Play, Pause, SkipForward, SkipBack, Shuffle, Repeat, Disc3, Loader2, Heart, Youtube, ListPlus } from 'lucide-react';
 import { useMusic } from '../lib/MusicContext';
+import { AddToPlaylistModal } from './AddToPlaylistModal';
+import { useState } from 'react';
 
 function formatTime(sec: number): string {
   if (!sec || isNaN(sec)) return '0:00';
@@ -10,6 +12,7 @@ function formatTime(sec: number): string {
 
 export function MusicFullScreen() {
   const { currentSong, isPlaying, isLoading, togglePlay, playNext, playPrev, setIsFullScreen, queue, playSong, currentTime, duration, seekTo, toggleWatchlist, isWatchlisted, useYouTubeSource, setUseYouTubeSource } = useMusic();
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
   if (!currentSong) return null;
 
@@ -61,20 +64,32 @@ export function MusicFullScreen() {
                   <h2 className="text-4xl font-bold text-white mb-2 truncate">{currentSong.title}</h2>
                   <p className="text-white/50 text-lg truncate">{currentSong.artist}</p>
                 </div>
-                <button
-                  onClick={() => toggleWatchlist(currentSong)}
-                  className="p-1 transition-transform active:scale-95 flex-shrink-0"
-                  title={isFav ? "Remove from Favorites" : "Add to Favorites"}
-                >
-                  <Heart
-                    size={26}
-                    className={`transition-all ${isFav
-                      ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110'
-                      : 'text-white/40 hover:text-white hover:scale-110'
-                      }`}
-                    fill={isFav ? "currentColor" : "none"}
-                  />
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => setShowPlaylistModal(true)}
+                    className="p-1 transition-transform active:scale-95 flex-shrink-0"
+                    title="Add to Playlist"
+                  >
+                    <ListPlus
+                      size={26}
+                      className="text-white/40 hover:text-white hover:scale-110 transition-all"
+                    />
+                  </button>
+                  <button
+                    onClick={() => toggleWatchlist(currentSong)}
+                    className="p-1 transition-transform active:scale-95 flex-shrink-0"
+                    title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                  >
+                    <Heart
+                      size={26}
+                      className={`transition-all ${isFav
+                        ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110'
+                        : 'text-white/40 hover:text-white hover:scale-110'
+                        }`}
+                      fill={isFav ? "currentColor" : "none"}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* Progress */}
@@ -190,20 +205,32 @@ export function MusicFullScreen() {
                 <h2 className="text-2xl font-bold text-white mb-1 truncate">{currentSong.title}</h2>
                 <p className="text-white/50 text-base truncate">{currentSong.artist}</p>
               </div>
-              <button
-                onClick={() => toggleWatchlist(currentSong)}
-                className="p-1 transition-transform active:scale-95 flex-shrink-0 ml-2"
-                title={isFav ? "Remove from Favorites" : "Add to Favorites"}
-              >
-                <Heart
-                  size={24}
-                  className={`transition-all ${isFav
-                    ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110'
-                    : 'text-white/40 hover:text-white hover:scale-110'
-                    }`}
-                  fill={isFav ? "currentColor" : "none"}
-                />
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                <button
+                  onClick={() => setShowPlaylistModal(true)}
+                  className="p-1 transition-transform active:scale-95 flex-shrink-0"
+                  title="Add to Playlist"
+                >
+                  <ListPlus
+                    size={24}
+                    className="text-white/40 hover:text-white hover:scale-110 transition-all"
+                  />
+                </button>
+                <button
+                  onClick={() => toggleWatchlist(currentSong)}
+                  className="p-1 transition-transform active:scale-95 flex-shrink-0"
+                  title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                >
+                  <Heart
+                    size={24}
+                    className={`transition-all ${isFav
+                      ? 'text-white fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)] hover:scale-110'
+                      : 'text-white/40 hover:text-white hover:scale-110'
+                      }`}
+                    fill={isFav ? "currentColor" : "none"}
+                  />
+                </button>
+              </div>
             </div>
 
             {/* Progress */}
@@ -289,6 +316,12 @@ export function MusicFullScreen() {
           )}
         </div>
       </div>
+
+      <AddToPlaylistModal 
+        isOpen={showPlaylistModal} 
+        onClose={() => setShowPlaylistModal(false)} 
+        item={currentSong} 
+      />
     </div>
   );
 }

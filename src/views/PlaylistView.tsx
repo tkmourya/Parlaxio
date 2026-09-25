@@ -3,10 +3,11 @@ import { Play, Pause, Shuffle, Loader2, Clock, ChevronLeft, Heart, Share2, MoreH
 import { useMusic } from '../lib/MusicContext';
 import { getPlaylist, getAlbum, PlaylistData, SearchResult } from '../lib/musicService';
 import { useImageColor } from '../hooks/useImageColor';
+import { getCustomPlaylistById } from '../lib/sync';
 
 interface PlaylistViewProps {
   id: string;
-  type: 'playlist' | 'album';
+  type: 'playlist' | 'album' | 'custom_playlist';
   onBack: () => void;
 }
 
@@ -38,7 +39,21 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     async function fetchDetails() {
       setLoading(true);
-      const res = type === 'playlist' ? await getPlaylist(id) : await getAlbum(id);
+      let res: PlaylistData | null = null;
+      if (type === 'custom_playlist') {
+        const custom = await getCustomPlaylistById(id);
+        if (custom) {
+          res = {
+            id: custom.$id!,
+            title: custom.name,
+            coverUrl: custom.coverUrl || '',
+            songs: custom.items,
+            creatorName: custom.creatorName
+          };
+        }
+      } else {
+        res = type === 'playlist' ? await getPlaylist(id) : await getAlbum(id);
+      }
       setData(res);
       if (res && res.title) {
         const url = new URL(window.location.href);
@@ -93,7 +108,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
 
   const handleToggleLikePlaylist = () => {
     if (!data) return;
-    toggleSavePlaylist({ id: data.id || id, title: data.title, coverUrl: data.coverUrl, type });
+    toggleSavePlaylist({ id: data.id || id, title: data.title, coverUrl: data.coverUrl, type: type === 'custom_playlist' ? 'playlist' : type });
     const nextState = !isLiked;
     showToast(nextState ? `Saved "${data.title}" to Favorites` : `Removed "${data.title}" from Favorites`);
     setShowPlaylistMenu(false);
@@ -103,7 +118,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
     const shareUrl = window.location.href;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl);
-      showToast(`${type === 'playlist' ? 'Playlist' : 'Album'} link copied!`);
+      showToast(`${type === 'album' ? 'Album' : 'Playlist'} link copied!`);
     } else {
       showToast('Link copied!');
     }
@@ -180,7 +195,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
         <p className="text-white/60 text-lg">Failed to load {type}.</p>
         <button 
           onClick={onBack} 
-          className="mt-4 px-6 py-2.5 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all font-medium border border-white/10"
+          className="mt-4 px-6 py-2.5 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all font-medium"
         >
           Go Back
         </button>
@@ -202,7 +217,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
       {/* Back Arrow Fixed at Top-Left Corner */}
       <button 
         onClick={onBack}
-        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg group"
+        className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors backdrop-blur-md shadow-lg group"
         title="Go Back"
       >
         <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
@@ -266,7 +281,13 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
 
               return (
                 <p className="text-white/60 text-sm font-medium flex flex-wrap items-center justify-center md:justify-start gap-2">
-                  <span className="text-white font-semibold capitalize">{type}</span>
+                  <span className="text-white font-semibold capitalize">{type === 'custom_playlist' ? 'Playlist' : type}</span>
+                  {data.creatorName && (
+                    <>
+                      <span>•</span>
+                      <span className="text-white font-semibold">By {data.creatorName}</span>
+                    </>
+                  )}
                   {playlistArtists && (
                     <>
                       <span>•</span>

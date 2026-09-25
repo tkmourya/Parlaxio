@@ -11,7 +11,7 @@ interface GlobalAudioPlayerProps {
 
 export function GlobalAudioPlayer({ currentTab }: GlobalAudioPlayerProps) {
   const { currentSong, isPlaying, isLoading, togglePlay, playNext, playPrev, isFullScreen, setIsFullScreen, currentTime, duration, seekTo, closePlayer } = useMusic();
-  useImageColor(isFullScreen && currentSong ? currentSong.thumbnail : null);
+  useImageColor(isFullScreen && currentSong ? currentSong.coverUrl : null);
 
   // Draggable state
   const pillRef = useRef<HTMLDivElement>(null);
