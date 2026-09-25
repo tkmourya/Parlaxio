@@ -211,7 +211,10 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen text-white selection:bg-white/30">
+    <div 
+      className="min-h-screen text-white selection:bg-white/30"
+      style={{ paddingTop: 'var(--offline-banner-height, 0px)', transition: 'padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
+    >
       {/* Top Nav for Desktop (Hidden on Player, Details, Auth, Settings/LiveTV/Legal, and Music Artist/Playlist Subviews) */}
       {!playingMedia && !detailsMedia && !hideMusicTopNav && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && currentTab !== 'privacy' && currentTab !== 'terms' && currentTab !== 'legal' && (
         <TopNav currentTab={currentTab} onChange={navigateTab} onAuthClick={navigateAuth} />
