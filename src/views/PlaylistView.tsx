@@ -237,7 +237,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div 
           className="absolute inset-0 blur-[100px] saturate-200 bg-cover bg-center opacity-30 transition-all duration-1000 scale-125"
-          style={{ backgroundImage: `url(${data.coverUrl})` }}
+          style={{ backgroundImage: `url(${data.coverUrl?.includes('default') || data.coverUrl?.includes('share-image') ? '/logo_px.jpg' : data.coverUrl})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/80 to-zinc-950" />
       </div>
@@ -247,7 +247,8 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
         <div className="pt-4 pb-8 flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-center">
           {/* Playlist Cover Image - Clean song cover art fallback + crop */}
           {(() => {
-            const cleanCover = (data.songs && data.songs.length > 0 && data.songs[0].coverUrl) ? data.songs[0].coverUrl : data.coverUrl;
+            let cleanCover = (data.songs && data.songs.length > 0 && data.songs[0].coverUrl) ? data.songs[0].coverUrl : data.coverUrl;
+            if (cleanCover?.includes('default') || cleanCover?.includes('share-image')) cleanCover = '/logo_px.jpg';
             return (
               <div className="relative group shrink-0 overflow-hidden rounded-2xl">
                 <div className="absolute -inset-1 bg-white/20 rounded-2xl blur-xl group-hover:opacity-100 opacity-50 transition duration-700" />

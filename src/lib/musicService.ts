@@ -9,7 +9,7 @@ export interface SearchResult extends Song {
 
 export async function searchSongs(query: string): Promise<SearchResult[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`);
+    const res = await fetch(`${API_BASE}/api/music/search_all?q=${encodeURIComponent(query)}`);
     if (!res.ok) throw new Error('Search failed');
     const data = await res.json();
     return data.results || [];

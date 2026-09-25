@@ -13,6 +13,7 @@ export interface Song {
   durationSec: number;
   coverUrl: string;
   encryptedUrl?: string; // from Saavn
+  type?: string;
 }
 
 export interface FollowedArtist {
@@ -202,6 +203,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setCurrentTime(0);
     setDuration(0);
     
+    isTransitioningRef.current = true;
+    
+    const cleanCover = song.coverUrl?.includes('default') || song.coverUrl?.includes('share-image') ? '/logo_px.jpg' : song.coverUrl;
+    
     // Update native notification FIRST (before audio src change) to minimize flicker
     if (Capacitor.isNativePlatform()) {
       // Update isPlaying immediately to keep notification alive
@@ -209,7 +214,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       CapacitorMusicControls.create({
         track: song.title,
         artist: song.artist || 'Unknown Artist',
-        cover: song.coverUrl || '',
+        cover: cleanCover || '',
         duration: song.durationSec || 0,
         elapsed: 0,
         hasScrubbing: true,
@@ -224,7 +229,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         nextIcon: 'media_next',
         closeIcon: 'media_close',
         notificationIcon: 'notification'
-      }).catch(e => console.error('MusicControls create error', e));
+      }).then(() => {
+        setTimeout(() => { isTransitioningRef.current = false; }, 1000);
+      }).catch(e => {
+        console.error('MusicControls create error', e);
+        isTransitioningRef.current = false;
+      });
+    } else {
+      isTransitioningRef.current = false;
     }
 
     // Setup Media Session API for background playback & lockscreen controls
@@ -234,8 +246,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         artist: song.artist || 'Unknown Artist',
         album: '',
         artwork: [
-          { src: song.coverUrl || '', sizes: '150x150', type: 'image/jpeg' },
-          { src: song.coverUrl || '', sizes: '500x500', type: 'image/jpeg' }
+          { src: cleanCover || '', sizes: '150x150', type: 'image/jpeg' },
+          { src: cleanCover || '', sizes: '500x500', type: 'image/jpeg' }
         ]
       });
     }
@@ -316,8 +328,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       });
     }
   }, [loadAndPlay]);
-  
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isTransitioningRef = useRef(false);
 
   const playNextInternal = useCallback(() => {
     const prev = currentSongRef.current;
@@ -427,11 +439,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       } else if (message === 'music-controls-previous') {
         playPrevRef.current();
       } else if (message === 'music-controls-pause') {
-        audio.pause();
+        if (!isTransitioningRef.current) audio.pause();
       } else if (message === 'music-controls-play') {
         audio.play();
       } else if (message === 'music-controls-destroy') {
-        audio.pause();
+        if (!isTransitioningRef.current) audio.pause();
+      } else if (message === 'music-controls-seek-to') {
+        const position = action.position;
+        if (position !== undefined) {
+          audio.currentTime = position;
+        }
       }
     };
 

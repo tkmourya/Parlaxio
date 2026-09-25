@@ -231,7 +231,7 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
     );
   }
 
-  const artistPhoto = ARTIST_AVATARS[artist.title] || ARTIST_AVATARS[id] || artist.coverUrl;
+  const artistPhoto = ARTIST_AVATARS[artist.title] || ARTIST_AVATARS[id] || (artist.coverUrl?.includes('artist-default') || artist.coverUrl?.includes('share-image') || artist.coverUrl?.includes('default') ? '/logo_px.jpg' : artist.coverUrl);
 
   return (
     <div className="flex-1 overflow-y-auto hide-scrollbar pb-32 min-h-screen animate-in fade-in bg-[var(--color-theme-bg)] text-white relative">

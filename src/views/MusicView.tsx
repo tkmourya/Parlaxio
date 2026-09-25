@@ -76,7 +76,7 @@ function MusicRow({
             >
               <div className={`relative w-full aspect-square mb-3 overflow-hidden shadow-lg shadow-black/20 ${isArtist ? 'rounded-full' : 'rounded-xl'}`}>
                 <ArtistAvatar
-                  src={item.coverUrl}
+                  src={item.coverUrl?.includes('default') || item.coverUrl?.includes('share-image') ? '/logo_px.jpg' : item.coverUrl}
                   name={item.title}
                   isArtist={isArtist}
                   className="w-full h-full"
@@ -256,12 +256,28 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
     const timeout = setTimeout(async () => {
       setIsSearching(true);
       saveRecentSearch(searchQuery);
+      
+      const queryLower = searchQuery.toLowerCase();
+      const customMatches = publicPlaylists
+        .filter(p => p.name.toLowerCase().includes(queryLower) || p.creatorName?.toLowerCase().includes(queryLower))
+        .map(p => ({
+          id: p.$id || '',
+          title: p.name,
+          type: 'custom_playlist',
+          artist: p.creatorName || 'Parlaxio Community',
+          coverUrl: p.coverUrl || (p.items && p.items.length > 0 ? p.items[0].coverUrl : '/logo_px.jpg'),
+          duration: '',
+          durationSec: 0
+        } as SearchResult));
+
       const results = await searchSongs(searchQuery);
-      setSearchResults(results);
+      
+      // Combine custom playlists matches at the top (max 2)
+      setSearchResults([...customMatches.slice(0, 2), ...results]);
       setIsSearching(false);
     }, 400);
     return () => clearTimeout(timeout);
-  }, [searchQuery, saveRecentSearch]);
+  }, [searchQuery, saveRecentSearch, publicPlaylists]);
   
   // Persist artist, playlist/album and title in URL query string cleanly without redundant ptype
   const [activeArtistId, setActiveArtistId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('artist'));
@@ -487,6 +503,27 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
     }
   };
 
+  const handleSearchResultClick = (item: SearchResult) => {
+    if (item.type === 'artist') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('artist', item.id);
+      newUrl.searchParams.set('title', item.title);
+      window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+      setActiveTitle(item.title);
+      setActiveArtistId(item.id);
+    } else if (item.type === 'playlist' || item.type === 'album' || item.type === 'custom_playlist') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set(item.type, item.id);
+      newUrl.searchParams.set('title', item.title);
+      window.history.pushState({ musicSubView: true }, '', newUrl.toString());
+      setActiveTitle(item.title);
+      setActivePlaylistType(item.type);
+      setActivePlaylistId(item.id);
+    } else {
+      handlePlaySongWithAutoplay(item, searchResults.filter(s => !s.type || s.type === 'song'));
+    }
+  };
+
   const isCurrentSong = (id: string) => currentSong?.id === id;
   const formatDuration = (dur: string | undefined) => dur || '3:45';
   const showSearchResults = searchQuery.trim().length > 0;
@@ -654,7 +691,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                         Recent Searches
                       </span>
                       <button
-                        onClick={clearRecentSearches}
+                        onMouseDown={(e) => { e.preventDefault(); clearRecentSearches(e); }}
                         className="text-[11px] font-semibold text-white/40 hover:text-white transition-colors flex items-center gap-1"
                       >
                         <Trash2 size={12} /> Clear All
@@ -664,7 +701,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                       {recentSearches.map((item) => (
                         <div
                           key={item}
-                          onClick={() => handleSuggestionClick(item)}
+                          onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(item); }}
                           className="px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -672,7 +709,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                             <span className="text-sm font-medium truncate">{item}</span>
                           </div>
                           <button
-                            onClick={(e) => removeSingleRecentSearch(item, e)}
+                            onMouseDown={(e) => { e.preventDefault(); removeSingleRecentSearch(item, e); }}
                             className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
                             title="Remove search"
                           >
@@ -694,7 +731,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {HOT_SEARCH_TAGS.map((tag) => (
                       <button
                         key={tag}
-                        onClick={() => handleSuggestionClick(tag)}
+                        onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(tag); }}
                         className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white/90 hover:text-white border border-white/10 transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                       >
                         <Flame size={12} className="text-white/60 shrink-0" />
@@ -713,7 +750,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {TRENDING_SEARCHES.map((suggestion) => (
                       <div
                         key={suggestion}
-                        onClick={() => handleSuggestionClick(suggestion)}
+                        onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(suggestion); }}
                         className="px-3 py-2 rounded-xl text-white/80 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center gap-2.5 text-sm font-medium"
                       >
                         <SearchIcon size={14} className="text-white/40" />
@@ -741,7 +778,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                 searchResults.map((song, index) => (
                   <div
                     key={song.id}
-                    onClick={() => handlePlaySongWithAutoplay(song, searchResults)}
+                    onMouseDown={(e) => { e.preventDefault(); handleSearchResultClick(song); }}
                     className={`flex items-center gap-4 px-5 py-3 cursor-pointer transition-colors group ${
                       isCurrentSong(song.id) ? 'bg-white/10' : 'hover:bg-white/[0.05]'
                     } ${index < searchResults.length - 1 ? 'border-b border-white/[0.04]' : ''}`}
@@ -751,13 +788,21 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     }`}>
                       {isCurrentSong(song.id) ? <Disc3 size={16} className="animate-spin mx-auto" /> : index + 1}
                     </span>
-                    <Play className="text-white w-7 hidden group-hover:block" size={14} fill="currentColor" />
-                    <img src={song.coverUrl} alt={song.title} className="w-11 h-11 rounded-md object-cover" />
+                    {(song.type === 'playlist' || song.type === 'album' || song.type === 'artist') ? (
+                      <div className="w-7 hidden group-hover:flex items-center justify-center">
+                         <span className="text-white text-[10px] uppercase font-bold tracking-wider">{song.type === 'artist' ? 'Art' : 'Mix'}</span>
+                      </div>
+                    ) : (
+                      <Play className="text-white w-7 hidden group-hover:block" size={14} fill="currentColor" />
+                    )}
+                    <img src={song.coverUrl?.includes('artist-default') || song.coverUrl?.includes('share-image') || song.coverUrl?.includes('default') ? '/logo_px.jpg' : song.coverUrl} alt={song.title} className={`w-11 h-11 object-cover ${song.type === 'artist' ? 'rounded-full bg-white/5 p-1' : 'rounded-md'}`} />
                     <div className="flex-1 min-w-0">
                       <h4 className={`text-sm font-medium truncate ${isCurrentSong(song.id) ? 'text-white' : 'text-white/90'}`}>{song.title}</h4>
-                      <p className="text-white/40 text-xs truncate">{song.artist}</p>
+                      <p className="text-white/40 text-xs truncate capitalize">{song.type && song.type !== 'song' ? `${song.type} • ` : ''}{song.artist}</p>
                     </div>
-                    <span className="text-white/30 text-xs font-medium">{formatDuration((song as SearchResult).duration)}</span>
+                    {(!song.type || song.type === 'song') && (
+                      <span className="text-white/30 text-xs font-medium">{formatDuration((song as SearchResult).duration)}</span>
+                    )}
                   </div>
                 ))
               )}
@@ -950,7 +995,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                         Recent Searches
                       </span>
                       <button
-                        onClick={clearRecentSearches}
+                        onMouseDown={(e) => { e.preventDefault(); clearRecentSearches(e); }}
                         className="text-[11px] font-semibold text-white/40 hover:text-white transition-colors flex items-center gap-1"
                       >
                         <Trash2 size={12} /> Clear All
@@ -960,7 +1005,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                       {recentSearches.map((item) => (
                         <div
                           key={item}
-                          onClick={() => handleSuggestionClick(item)}
+                          onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(item); }}
                           className="px-3 py-2 rounded-xl text-white/90 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -968,7 +1013,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                             <span className="text-sm font-medium truncate">{item}</span>
                           </div>
                           <button
-                            onClick={(e) => removeSingleRecentSearch(item, e)}
+                            onMouseDown={(e) => { e.preventDefault(); removeSingleRecentSearch(item, e); }}
                             className="p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
                             title="Remove search"
                           >
@@ -990,7 +1035,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {HOT_SEARCH_TAGS.map((tag) => (
                       <button
                         key={tag}
-                        onClick={() => handleSuggestionClick(tag)}
+                        onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(tag); }}
                         className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-white/90 hover:text-white border border-white/10 transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                       >
                         <Flame size={12} className="text-white/60 shrink-0" />
@@ -1009,7 +1054,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                     {TRENDING_SEARCHES.map((suggestion) => (
                       <div
                         key={suggestion}
-                        onClick={() => handleSuggestionClick(suggestion)}
+                        onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(suggestion); }}
                         className="px-3 py-2 rounded-xl text-white/80 hover:bg-white/10 hover:text-white cursor-pointer transition-colors flex items-center gap-2.5 text-sm font-medium"
                       >
                         <SearchIcon size={14} className="text-white/40" />
@@ -1037,15 +1082,15 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                 searchResults.map(song => (
                   <div
                     key={song.id}
-                    onClick={() => handlePlaySongWithAutoplay(song, searchResults)}
+                    onMouseDown={(e) => { e.preventDefault(); handleSearchResultClick(song); }}
                     className={`flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${
                       isCurrentSong(song.id) ? 'bg-white/10' : 'active:bg-white/[0.06]'
                     }`}
                   >
-                    <img src={song.coverUrl} alt={song.title} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
+                    <img src={song.coverUrl?.includes('artist-default') || song.coverUrl?.includes('share-image') || song.coverUrl?.includes('default') ? '/logo_px.jpg' : song.coverUrl} alt={song.title} className={`w-11 h-11 object-cover flex-shrink-0 ${song.type === 'artist' ? 'rounded-full bg-white/5 p-1' : 'rounded-lg'}`} />
                     <div className="flex-1 min-w-0">
                       <h4 className={`font-medium text-sm truncate ${isCurrentSong(song.id) ? 'text-white' : 'text-white/90'}`}>{song.title}</h4>
-                      <p className="text-white/45 text-xs truncate">{song.artist}</p>
+                      <p className="text-white/45 text-xs truncate capitalize">{song.type && song.type !== 'song' ? `${song.type} • ` : ''}{song.artist}</p>
                     </div>
                     {isCurrentSong(song.id) && isPlaying && <Disc3 size={16} className="text-white animate-spin flex-shrink-0" />}
                   </div>
@@ -1122,7 +1167,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
                         isCurrentSong(song.id) ? 'bg-white/10' : 'active:bg-white/[0.06]'
                       }`}
                     >
-                      <img src={song.coverUrl} alt={song.title} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
+                      <img src={song.coverUrl?.includes('default') || song.coverUrl?.includes('share-image') ? '/logo_px.jpg' : song.coverUrl} alt={song.title} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <h4 className={`font-medium text-sm truncate ${isCurrentSong(song.id) ? 'text-white' : 'text-white/90'}`}>{song.title}</h4>
                         <p className="text-white/45 text-xs truncate">{song.artist}</p>

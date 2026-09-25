@@ -93,8 +93,8 @@ app.use('/api/music', async (req, res, next) => {
     // Layer 0: Browser Cache (Instant 0ms speed for users)
     res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     
-    // Cache Buster: Added :v3 so that old cached data is ignored and new rows are shown
-    const cacheKey = req.originalUrl + ':v3';
+    // Cache Buster: Added :v4 so that old cached data is ignored and new rows are shown
+    const cacheKey = req.originalUrl + ':v5';
     
     // Layer 2: In-Memory RAM Cache (Instant)
     const ramCached = getCache(cacheKey);
@@ -118,6 +118,8 @@ app.use('/api/music', async (req, res, next) => {
          // Globally fix broken JioSaavn default images
          let stringified = JSON.stringify(body);
          stringified = stringified.replace(/https:\/\/admin\.aws\.sg\.saavn\.com\/[^"']+/g, 'https://images.unsplash.com/photo-1614680376593-902f74ca0cd5?w=500&h=500&fit=crop');
+         stringified = stringified.replace(/https:\/\/www\.jiosaavn\.com\/_i\/3\.0\/artist-default-[^"']+/g, '/logo_px.jpg');
+         stringified = stringified.replace(/https:\/\/static\.saavncdn\.com\/_i\/share-image[^"']*/g, '/logo_px.jpg');
          body = JSON.parse(stringified);
          
          setCache(cacheKey, body);
@@ -143,6 +145,11 @@ function decryptSaavnUrl(encryptedUrl) {
     { mode: CryptoJS.mode.ECB }
   );
   return decrypted.toString(CryptoJS.enc.Utf8).replace('_96.mp4', '_320.mp4');
+}
+
+function decodeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#039;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 }
 
 // Map Saavn API response to our unified Song format
@@ -398,6 +405,98 @@ app.get('/api/music/search', async (req, res) => {
   } catch (err) {
     console.error('Search error:', err.message);
     res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+// 2.5 Search All (Autocomplete for Songs, Playlists, Artists, Albums)
+app.get('/api/music/search_all', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) return res.status(400).json({ error: 'Query "q" is required' });
+
+    const saavnRes = await fetch(`https://www.jiosaavn.com/api.php?__call=autocomplete.get&query=${encodeURIComponent(query)}&_format=json&_marker=0`);
+    const data = await saavnRes.json();
+
+    const blockedWords = ['sex', 'porn', 'fuck', 'nude', 'xnxx', 'desi bhabhi', 'bhabhi sex', 'hot video', 'adult'];
+    const isSafe = (title) => !blockedWords.some(w => title?.toLowerCase().includes(w));
+
+    let items = [];
+
+    // Top Query (often Artist or Top Song)
+    if (data.topquery?.data?.length > 0) {
+      const t = data.topquery.data[0];
+      if (isSafe(t.title)) {
+        items.push({
+          id: t.id,
+          title: decodeHtml(t.title),
+          type: t.type, // 'artist', 'song', etc.
+          coverUrl: t.image?.replace('50x50', '500x500') || '',
+          artist: t.description || t.subtitle || ''
+        });
+      }
+    }
+
+    // Artists
+    if (data.artists?.data) {
+      data.artists.data.filter(a => isSafe(a.title)).slice(0, 3).forEach(a => {
+        if (!items.some(i => i.id === a.id)) {
+          items.push({
+            id: a.id,
+            title: decodeHtml(a.title),
+            type: 'artist',
+            coverUrl: a.image?.replace('50x50', '500x500') || '',
+            artist: a.description || 'Artist'
+          });
+        }
+      });
+    }
+
+    // Playlists
+    if (data.playlists?.data) {
+      data.playlists.data.filter(p => isSafe(p.title)).slice(0, 3).forEach(p => {
+        items.push({
+          id: p.id,
+          title: decodeHtml(p.title),
+          type: 'playlist',
+          coverUrl: p.image?.replace('50x50', '500x500') || '',
+          artist: p.description || 'Playlist'
+        });
+      });
+    }
+
+    // Albums
+    if (data.albums?.data) {
+      data.albums.data.filter(a => isSafe(a.title)).slice(0, 3).forEach(a => {
+        items.push({
+          id: a.id,
+          title: decodeHtml(a.title),
+          type: 'album',
+          coverUrl: a.image?.replace('50x50', '500x500') || '',
+          artist: a.description || 'Album'
+        });
+      });
+    }
+
+    // Songs
+    if (data.songs?.data) {
+      data.songs.data.filter(s => isSafe(s.title)).slice(0, 10).forEach(s => {
+        items.push({
+          id: s.id,
+          title: decodeHtml(s.title),
+          type: 'song',
+          artist: decodeHtml(s.more_info?.singers || s.description || 'Unknown Artist'),
+          coverUrl: s.image?.replace('50x50', '500x500') || '',
+          encryptedUrl: s.more_info?.encrypted_media_url || 'dummy',
+          durationSec: 180,
+          duration: '3:00'
+        });
+      });
+    }
+
+    res.json({ results: items });
+  } catch (err) {
+    console.error('SearchAll error:', err.message);
+    res.status(500).json({ error: 'SearchAll failed' });
   }
 });
 
