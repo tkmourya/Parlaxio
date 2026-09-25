@@ -16,9 +16,18 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
   const [saved, setSaved] = useState(false);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   
+  // PWA offline image caching state
+  const [imageError, setImageError] = useState(false);
+  const [lastGoodImg, setLastGoodImg] = useState<string | null>(localStorage.getItem('parlaxio_last_hero'));
+  
   const movie = movies[activeIndex];
   const title = movie?.title || movie?.name;
   const mediaType = movie?.media_type || defaultType;
+
+  // Reset image error state when movie changes
+  useEffect(() => {
+    setImageError(false);
+  }, [movie?.id]);
 
   // Auto-slide
   useEffect(() => {
@@ -58,6 +67,14 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
     }
   };
 
+  const handleImageLoad = () => {
+    if (!imageError) {
+      const url = getImageUrl(movie.backdrop_path, 'original');
+      localStorage.setItem('parlaxio_last_hero', url);
+      setLastGoodImg(url);
+    }
+  };
+
   if (!movie) return null;
 
   return (
@@ -65,7 +82,7 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
       {/* Ambient Glow Background */}
       <div className="absolute inset-0 z-0 scale-110 blur-3xl opacity-40 mix-blend-screen pointer-events-none">
         <img 
-          src={getImageUrl(movie.backdrop_path, 'w500')} 
+          src={imageError && lastGoodImg ? lastGoodImg : getImageUrl(movie.backdrop_path, 'w500')} 
           alt="ambient"
           className="w-full h-full object-cover object-top transition-opacity duration-1000"
         />
@@ -75,10 +92,12 @@ export function Hero({ movies, onPlay, defaultType = 'movie' }: HeroProps) {
       <div className="absolute inset-0 z-10 transition-opacity duration-1000">
         <img 
           key={movie.id} // force re-render for crisp fade
-          src={getImageUrl(movie.backdrop_path, 'original')} 
+          src={imageError && lastGoodImg ? lastGoodImg : getImageUrl(movie.backdrop_path, 'original')} 
           alt={title}
           className="w-full h-full object-cover object-top md:object-[center_15%] animate-in fade-in duration-1000 text-transparent"
           referrerPolicy="no-referrer"
+          onLoad={handleImageLoad}
+          onError={() => setImageError(true)}
         />
         {/* Gradient Overlays for smooth blending into background */}
         <div className="absolute bottom-0 left-0 right-0 h-[60%] bg-gradient-to-t from-[var(--color-theme-bg)] to-transparent pointer-events-none" />

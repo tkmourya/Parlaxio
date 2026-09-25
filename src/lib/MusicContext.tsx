@@ -224,15 +224,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         nextIcon: 'media_next',
         closeIcon: 'media_close',
         notificationIcon: 'notification'
-      }).then(() => {
-        // Re-subscribe listener after create() since it resets the notification
-        CapacitorMusicControls.addListener('controlsNotification', (action: any) => {
-          const message = action.message || action;
-          if (message === 'music-controls-next') playNextRef.current();
-          else if (message === 'music-controls-previous') playPrevRef.current();
-          else if (message === 'music-controls-pause' && audioRef.current) audioRef.current.pause();
-          else if (message === 'music-controls-play' && audioRef.current) audioRef.current.play();
-        });
       }).catch(e => console.error('MusicControls create error', e));
     }
 

@@ -154,7 +154,7 @@ export function PlaylistView({ id, type, onBack }: PlaylistViewProps) {
         <div className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/5" />
         
         {/* Hero Skeleton */}
-        <div className="relative pt-[calc(env(safe-area-inset-top,0px)+6rem)] pb-12 px-6 sm:px-12 xl:px-24 flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-10">
+        <div className="relative max-w-7xl mx-auto pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2rem)] pb-8 px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row items-center md:items-center gap-6 md:gap-10">
           {/* Cover */}
           <div className="w-56 h-56 md:w-64 md:h-64 rounded-xl md:rounded-2xl bg-white/10 shadow-lg border border-white/5 shrink-0" />
           

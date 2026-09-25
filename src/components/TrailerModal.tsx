@@ -1,5 +1,7 @@
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar } from '@capacitor/status-bar';
 
 interface TrailerModalProps {
   trailerKey: string | null;
@@ -7,14 +9,34 @@ interface TrailerModalProps {
 }
 
 export function TrailerModal({ trailerKey, onClose }: TrailerModalProps) {
-  // Prevent body scroll when open
+  // Prevent body scroll and handle fullscreen status bar
   useEffect(() => {
+    const handleFullscreenChange = async () => {
+      if (Capacitor.isNativePlatform()) {
+        if (document.fullscreenElement) {
+          await StatusBar.hide().catch(() => {});
+        } else {
+          await StatusBar.show().catch(() => {});
+        }
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+
     if (trailerKey) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-    return () => { document.body.style.overflow = 'unset'; };
+    return () => { 
+      document.body.style.overflow = 'unset'; 
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      if (Capacitor.isNativePlatform()) {
+        StatusBar.show().catch(() => {});
+      }
+    };
   }, [trailerKey]);
 
   if (!trailerKey) return null;

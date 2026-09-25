@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.parlaxio.app",
+      "sha256_cert_fingerprints": [
+        "FB:63:D5:ED:89:0F:73:5D:8E:14:2C:51:33:09:AF:B6:57:E3:30:60:65:85:71:BB:AB:26:08:82:AD:F6:FC:94"
+      ]
+    }
+  }
+]

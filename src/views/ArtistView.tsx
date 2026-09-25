@@ -169,10 +169,10 @@ export function ArtistView({ id, name, onBack, onPlaylistClick }: ArtistViewProp
     return (
       <div className="flex-1 overflow-y-auto pb-32 min-h-screen bg-[var(--color-theme-bg)] animate-pulse">
         {/* Back Button Skeleton */}
-        <div className="absolute top-6 left-6 sm:left-10 z-30 w-10 h-10 rounded-full bg-white/10 border border-white/5" />
+        <div className="absolute top-[max(env(safe-area-inset-top,0px),1.25rem)] left-5 md:left-6 z-30 w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/5" />
         
         {/* Hero & Content Skeleton */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2rem)]">
           {/* Artist Hero Header Section */}
           <div className="pt-4 pb-10 flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-center">
             {/* Avatar */}

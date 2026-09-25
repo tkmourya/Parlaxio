@@ -163,30 +163,51 @@ function AppContent() {
   const processedVerification = useRef<string | null>(null);
 
   useEffect(() => {
+    // 1. Handle Web URL parameters
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('userId');
     const secret = params.get('secret');
 
-    if (userId && secret) {
-      if (params.get('verify') === 'true') {
-        if (processedVerification.current !== secret) {
-          processedVerification.current = secret;
-          completeVerification(userId, secret).then(() => {
+    const handleAuthAction = (uId: string, sec: string, action: string | null) => {
+      if (action === 'true') {
+        if (processedVerification.current !== sec) {
+          processedVerification.current = sec;
+          completeVerification(uId, sec).then(() => {
             setVerificationToast({ message: 'Email successfully verified! You now have the VIP badge.', isError: false });
             setTimeout(() => setVerificationToast(null), 3000);
             window.history.replaceState({}, '', window.location.pathname);
           }).catch((e: any) => {
-            // Ignore error if it's already verified recently (token invalid)
             if (!e.message?.includes('Invalid token')) {
               setVerificationToast({ message: 'Verification failed: ' + e.message, isError: true });
               setTimeout(() => setVerificationToast(null), 5000);
             }
           });
         }
-      } else if (params.get('reset') === 'true') {
-        setResetData({ userId, secret });
+      } else if (action === 'reset') {
+        setResetData({ userId: uId, secret: sec });
         window.history.replaceState({}, '', window.location.pathname);
       }
+    };
+
+    if (userId && secret) {
+      handleAuthAction(userId, secret, params.get('verify') === 'true' ? 'true' : (params.get('reset') === 'true' ? 'reset' : null));
+    }
+
+    // 2. Handle Native Deep Links (App Links)
+    if (Capacitor.isNativePlatform()) {
+      const listener = CapApp.addListener('appUrlOpen', (event) => {
+        try {
+          const url = new URL(event.url);
+          const uId = url.searchParams.get('userId');
+          const sec = url.searchParams.get('secret');
+          if (uId && sec) {
+            handleAuthAction(uId, sec, url.searchParams.get('verify') === 'true' ? 'true' : (url.searchParams.get('reset') === 'true' ? 'reset' : null));
+          }
+        } catch (e) {
+          console.error('Deep link parse error', e);
+        }
+      });
+      return () => { listener.then(l => l.remove()); };
     }
   }, [completeVerification]);
 
@@ -210,11 +231,43 @@ function AppContent() {
     navigatePlay(id, type, season, episode);
   };
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as any;
+      
+      // For window/document scrolling
+      if (target === document || target === window) {
+        setIsScrolled(window.scrollY > 20);
+        return;
+      }
+
+      // For specific scrollable containers (like DetailsView)
+      if (target.scrollTop !== undefined) {
+        setIsScrolled(target.scrollTop > 20);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+    return () => window.removeEventListener('scroll', handleScroll, { capture: true });
+  }, []);
+
   return (
     <div 
       className="min-h-screen text-white selection:bg-white/30"
       style={{ paddingTop: 'var(--offline-banner-height, 0px)', transition: 'padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
     >
+      {/* Mobile Status Bar Frosted Overlay (Smooth Fade) */}
+      {!playingMedia && (
+        <div 
+          className={`md:hidden fixed top-0 left-0 right-0 z-[70] pointer-events-none backdrop-blur-md transition-opacity duration-300 ${isScrolled ? 'opacity-100' : 'opacity-0'}`} 
+          style={{
+            height: 'calc(env(safe-area-inset-top, 0px) + 24px)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)'
+          }}
+        />
+      )}
       {/* Top Nav for Desktop (Hidden on Player, Details, Auth, Settings/LiveTV/Legal, and Music Artist/Playlist Subviews) */}
       {!playingMedia && !detailsMedia && !hideMusicTopNav && currentTab !== 'auth' && currentTab !== 'settings' && currentTab !== 'livetv' && currentTab !== 'privacy' && currentTab !== 'terms' && currentTab !== 'legal' && (
         <TopNav currentTab={currentTab} onChange={navigateTab} onAuthClick={navigateAuth} />

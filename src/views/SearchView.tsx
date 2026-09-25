@@ -174,7 +174,7 @@ export function SearchView({ onPlay }: { onPlay: (id: number, type: 'movie' | 't
               ref={inputRef}
               type="search"
               enterKeyHint="search"
-              className="w-full bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full py-4 pl-12 pr-10 focus:outline-none focus:border-white/50 focus:bg-white/20 shadow-lg text-lg transition-all placeholder:text-white/50"
+              className="w-full bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-full py-3.5 pl-12 pr-10 focus:outline-none focus:border-white/50 focus:bg-white/20 shadow-lg text-[15px] sm:text-base transition-all placeholder:text-white/50"
               placeholder="Search for movies, TV shows..."
               value={query}
               onFocus={() => setIsFocused(true)}
