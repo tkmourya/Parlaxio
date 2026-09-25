@@ -37,60 +37,57 @@ export function WatchlistView({
   const isList = layout === 'list' || hideHeader;
 
   return (
-    <div className={`${hideHeader ? '' : 'px-4 md:px-12 pt-24 md:pt-36 pb-32 min-h-screen'} animate-in fade-in w-full`}>
+    <div className={`${hideHeader ? '' : 'px-4 md:px-12 pt-[calc(env(safe-area-inset-top,0px)+5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+7rem)] pb-32 min-h-screen'} animate-in fade-in w-full`}>
       <div className="w-full mx-auto max-w-7xl">
         {!hideHeader && (
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-12 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500 shadow-[0_0_12px_rgba(255,255,255,0.3)]"></div>
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/10 text-zinc-400">
-                <Bookmark size={24} />
-              </div>
+              <div className="w-1 h-7 md:h-8 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500"></div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">My Library</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">My Library</h1>
                 {/* <p className="text-xs text-white/50 mt-0.5">Your saved videos, favorite playlists, songs, and followed artists</p> */}
               </div>
             </div>
 
             {/* Category Tabs / Filter Pills */}
-            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-white/[0.06] border border-white/10 rounded-full backdrop-blur-xl overflow-x-auto hide-scrollbar max-w-full shadow-2xl shrink-0">
+            <div className="flex items-center gap-1 p-1 bg-white/[0.06] border border-white/10 rounded-full backdrop-blur-xl overflow-x-auto hide-scrollbar max-w-full shrink-0">
               <button
                 onClick={() => setActiveTab('movies')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 whitespace-nowrap ${
-                  activeTab === 'movies' ? 'bg-white text-black shadow-lg shadow-white/10 font-bold' : 'text-white/70 hover:text-white hover:bg-white/10'
+                className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[12px] md:text-[13px] transition-all shrink-0 whitespace-nowrap ${
+                  activeTab === 'movies' ? 'bg-white text-black font-semibold shadow-sm' : 'text-white/60 font-medium hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Film size={15} />
+                <Film size={13} />
                 <span>Videos ({movies.length})</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('songs')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 whitespace-nowrap ${
-                  activeTab === 'songs' ? 'bg-white text-black shadow-lg shadow-white/10 font-bold' : 'text-white/70 hover:text-white hover:bg-white/10'
+                className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[12px] md:text-[13px] transition-all shrink-0 whitespace-nowrap ${
+                  activeTab === 'songs' ? 'bg-white text-black font-semibold shadow-sm' : 'text-white/60 font-medium hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Music size={15} />
+                <Music size={13} />
                 <span>Saved Songs ({watchlist.length})</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('playlists')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 whitespace-nowrap ${
-                  activeTab === 'playlists' ? 'bg-white text-black shadow-lg shadow-white/10 font-bold' : 'text-white/70 hover:text-white hover:bg-white/10'
+                className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[12px] md:text-[13px] transition-all shrink-0 whitespace-nowrap ${
+                  activeTab === 'playlists' ? 'bg-white text-black font-semibold shadow-sm' : 'text-white/60 font-medium hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Disc3 size={15} />
+                <Disc3 size={13} />
                 <span>Playlists ({savedPlaylists.length})</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('artists')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 whitespace-nowrap ${
-                  activeTab === 'artists' ? 'bg-white text-black shadow-lg shadow-white/10 font-bold' : 'text-white/70 hover:text-white hover:bg-white/10'
+                className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[12px] md:text-[13px] transition-all shrink-0 whitespace-nowrap ${
+                  activeTab === 'artists' ? 'bg-white text-black font-semibold shadow-sm' : 'text-white/60 font-medium hover:text-white hover:bg-white/10'
                 }`}
               >
-                <UserCheck size={15} />
+                <UserCheck size={13} />
                 <span>Artists ({followedArtists.length})</span>
               </button>
             </div>
@@ -241,9 +238,9 @@ export function WatchlistView({
               {savedPlaylists.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-3 flex flex-col transition-all duration-300 hover:-translate-y-1 group cursor-pointer"
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl pb-3 flex flex-col transition-all duration-300 hover:-translate-y-1 group cursor-pointer overflow-hidden"
                 >
-                  <div className="relative w-full aspect-square mb-3 overflow-hidden rounded-xl border border-white/10 shadow-xl">
+                  <div className="relative w-full aspect-square mb-3 overflow-hidden shadow-xl">
                     <img
                       src={item.coverUrl}
                       alt={item.title}
@@ -261,8 +258,10 @@ export function WatchlistView({
                     </button>
                   </div>
 
-                  <h4 className="font-bold text-sm text-white truncate w-full mb-0.5">{item.title}</h4>
-                  <p className="text-xs text-white/50 capitalize font-medium">{item.type || 'Playlist'}</p>
+                  <div className="px-3">
+                    <h4 className="font-bold text-sm text-white truncate w-full mb-0.5">{item.title}</h4>
+                    <p className="text-xs text-white/50 capitalize font-medium">{item.type || 'Playlist'}</p>
+                  </div>
                 </div>
               ))}
             </div>

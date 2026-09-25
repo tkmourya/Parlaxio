@@ -95,7 +95,7 @@ export function MovieRow({ title, movies, fetchFn, onPlay, defaultType = 'movie'
   return (
     <div className="relative mb-8 md:mb-12 group/row">
       <div className="flex items-center gap-3 mb-4 px-4 md:px-12 lg:px-16">
-        <div className="w-1 h-8 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500 shadow-[0_0_12px_rgba(255,255,255,0.3)]"></div>
+        <div className="w-1 h-8 rounded-full bg-gradient-to-b from-white via-zinc-200 to-zinc-500"></div>
         <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
           {title}
         </h2>

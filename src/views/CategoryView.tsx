@@ -32,7 +32,7 @@ export function CategoryView({ title, items, onBack, onItemClick }: CategoryView
 
   return (
     <div className="flex-1 overflow-y-auto hide-scrollbar pb-32 min-h-screen animate-in fade-in zoom-in-95 duration-300 bg-[var(--color-theme-bg)]">
-      <div className="pt-6 md:pt-8 px-6 lg:px-12 pb-6 flex items-center gap-4 sticky top-0 bg-[var(--color-theme-bg)] backdrop-blur-xl z-20 border-b border-white/[0.04]">
+      <div className="pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] px-6 lg:px-12 pb-6 flex items-center gap-4 sticky top-0 bg-[var(--color-theme-bg)] backdrop-blur-xl z-20 border-b border-white/[0.04]">
         <button 
           onClick={onBack}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-colors border border-white/10 backdrop-blur-md shadow-lg"

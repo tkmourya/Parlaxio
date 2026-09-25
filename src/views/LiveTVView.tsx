@@ -146,7 +146,7 @@ export function LiveTVView({ onBack, onRequireAuth }: LiveTVViewProps) {
           }}
         />
       )}
-      <div className={`px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-7xl mx-auto w-full ${playingChannel ? 'hidden' : ''}`}>
+      <div className={`px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-7xl mx-auto w-full ${playingChannel ? 'hidden' : ''}`}>
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
 

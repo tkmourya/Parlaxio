@@ -23,11 +23,16 @@ interface SettingsViewProps {
 
 export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate }: SettingsViewProps) {
   // Navigation: null = settings list, 'watchlist' = opened watchlist, 'history' = opened history, 'profile' = profile editor, 'profile-view' = profile view
-  const [subView, setSubView] = useState<'watchlist' | 'history' | 'profile' | 'profile-view' | null>(null);
+  const [subView, setSubView] = useState<'library' | 'watchlist' | 'history' | 'profile' | 'profile-view' | null>(null);
   const [historyLayout, setHistoryLayout] = useState<'list' | 'grid'>('list');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [appVersion, setAppVersion] = useState<string>(packageJson.version || '1.0.0');
+
+  useEffect(() => {
+    // Scroll to top when subView changes to prevent zoom-in/scroll jump effects
+    window.scrollTo(0, 0);
+  }, [subView]);
 
   useEffect(() => {
     const fetchVersion = async () => {
@@ -42,6 +47,32 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
     };
     fetchVersion();
   }, []);
+
+  // Handle hardware back button for subViews by pushing to browser history
+  useEffect(() => {
+    const handlePopState = () => {
+      if (subView) {
+        setSubView(null);
+      }
+    };
+
+    if (subView) {
+      window.history.pushState({ isSettingsSubView: true }, '', window.location.pathname);
+      window.addEventListener('popstate', handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [subView]);
+
+  const handleSubViewClose = () => {
+    if (window.history.state?.isSettingsSubView) {
+      window.history.back();
+    } else {
+      setSubView(null);
+    }
+  };
 
   // Notify parent (App.tsx) when a subview opens/closes to hide navbars
   useEffect(() => {
@@ -122,7 +153,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
     setIsUpdatingProfile(true);
     try {
       await updateProfile(profileName);
-      setSubView(null);
+      handleSubViewClose();
     } catch (error) {
       console.error(error);
     } finally {
@@ -175,13 +206,30 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
     </div>
   );
 
+  // If user tapped "My Library", render Watchlist component which is basically the library
+  if (subView === 'library') {
+    return (
+      <div className="relative min-h-screen text-white animate-in fade-in duration-300 w-full">
+        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+1.5rem)] left-4 md:left-12 z-50">
+          <button
+            onClick={handleSubViewClose}
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
+          >
+            <ArrowLeft size={18} />
+          </button>
+        </div>
+        <WatchlistView onPlay={onPlay} />
+      </div>
+    );
+  }
+
   // If user tapped "My Watchlist", render Watchlist in list layout with clean back button
   if (subView === 'watchlist') {
     return (
       <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => setSubView(null)}
+            onClick={handleSubViewClose}
             className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
           >
             <ArrowLeft size={18} />
@@ -200,7 +248,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
       <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => setSubView(null)}
+            onClick={handleSubViewClose}
             className="inline-flex items-center justify-center text-zinc-400 hover:text-white w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer shrink-0"
           >
             <ArrowLeft size={18} />
@@ -353,7 +401,7 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
       <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-12 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full flex flex-col justify-start">
         <div className="mb-8 flex items-center gap-4">
           <button
-            onClick={() => setSubView(null)}
+            onClick={handleSubViewClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
           >
             <ArrowLeft size={18} />
@@ -608,6 +656,24 @@ export function SettingsView({ onPlay, onAuthClick, onSubViewChange, onNavigate 
             Library
           </span>
           <div className="bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md">
+            {/* My Library Button */}
+            <button
+              onClick={() => setSubView('library')}
+              className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left border-b border-white/5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-zinc-400 flex items-center justify-center">
+                  <Bookmark size={16} />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-white block">My Library</span>
+                  <span className="text-[11px] text-zinc-400">Videos, songs, playlists & artists</span>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-zinc-500" />
+            </button>
+
+            {/* My Watchlist Button */}
             <button
               onClick={() => setSubView('watchlist')}
               className="w-full flex items-center justify-between p-3.5 hover:bg-white/[0.04] transition cursor-pointer text-left"

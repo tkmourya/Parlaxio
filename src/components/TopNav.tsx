@@ -20,7 +20,10 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
         style={{ backdropFilter: 'blur(8px)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)', maskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)' }}
       ></div>
 
-      <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 justify-center">
+      <div 
+        className="hidden md:flex fixed left-1/2 -translate-x-1/2 z-50 px-4 justify-center"
+        style={{ top: 'calc(1rem + var(--offline-banner-height, 0px))', transition: 'top 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
+      >
         <header className="bg-black/25 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-4 py-2 rounded-full flex items-center gap-3 transition-all">
           <div className="flex items-center gap-3">
             <div className="flex items-center cursor-pointer pr-3.5 border-r border-white/10 select-none" onClick={() => onChange('home')}>
@@ -104,7 +107,10 @@ export function TopNav({ currentTab, onChange, onAuthClick }: TopNavProps) {
         </header>
       </div>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-[var(--color-theme-bg)] to-transparent pointer-events-none opacity-90" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div 
+        className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-[var(--color-theme-bg)] to-transparent pointer-events-none opacity-90" 
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + var(--offline-banner-height, 0px))', transition: 'padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
+      >
         <div className="flex items-center justify-between p-4 pointer-events-auto">
           <div className="flex items-center cursor-pointer select-none" onClick={() => onChange('home')}>
             <span className="font-brand-stylish font-black text-2xl tracking-[0.14em] uppercase bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">

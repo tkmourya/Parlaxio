@@ -3,6 +3,9 @@ import { Download, RefreshCw, X } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 export function PWAPrompt() {
+  // Check if running natively inside Android/iOS APK via Capacitor
+  const isCapacitor = !!(window as any).Capacitor?.isNative;
+
   // Service Worker Update State
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -62,6 +65,22 @@ export function PWAPrompt() {
     // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null);
   };
+
+  // Force unregister Service Worker if running natively (so updates happen instantly via APK)
+  useEffect(() => {
+    if (isCapacitor && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+  }, [isCapacitor]);
+
+  // DO NOT show any PWA prompts inside the Native APK
+  if (isCapacitor) {
+    return null;
+  }
 
   // If there's an update, show Update Prompt
   if (needRefresh) {

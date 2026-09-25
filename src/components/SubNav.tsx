@@ -5,10 +5,10 @@ export function SubNav({ filters, current, onChange }: { filters: {id: string, l
         <button
           key={f.id}
           onClick={() => onChange(f.id)}
-          className={`snap-start whitespace-nowrap px-5 py-2 rounded-full font-medium transition-colors ${
+          className={`snap-start whitespace-nowrap px-4 py-2 md:px-5 md:py-2.5 rounded-full transition-all text-[13px] md:text-sm ${
             current === f.id
-              ? 'bg-white/20 text-white shadow-inner'
-              : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
+              ? 'bg-white/20 text-white font-semibold shadow-inner'
+              : 'bg-white/5 text-white/60 font-medium hover:text-white hover:bg-white/10'
           }`}
         >
           {f.label}

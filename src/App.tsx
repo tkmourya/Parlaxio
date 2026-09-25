@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { StatusBar } from '@capacitor/status-bar';
 import { HomeView } from './views/HomeView';
 import { SearchView } from './views/SearchView';
@@ -158,6 +158,7 @@ function AppContent() {
   }, [playingMedia, user, loading]);
 
   const { completeVerification } = useAuth();
+  const processedVerification = useRef<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -166,15 +167,21 @@ function AppContent() {
 
     if (userId && secret) {
       if (params.get('verify') === 'true') {
-        completeVerification(userId, secret).then(() => {
-          alert('Email successfully verified! You now have the VIP badge.');
-          window.history.replaceState({}, '', '/');
-        }).catch((e: any) => {
-          alert('Verification failed: ' + e.message);
-        });
+        if (processedVerification.current !== secret) {
+          processedVerification.current = secret;
+          completeVerification(userId, secret).then(() => {
+            alert('Email successfully verified! You now have the VIP badge.');
+            window.history.replaceState({}, '', window.location.pathname);
+          }).catch((e: any) => {
+            // Ignore error if it's already verified recently (token invalid)
+            if (!e.message?.includes('Invalid token')) {
+              alert('Verification failed: ' + e.message);
+            }
+          });
+        }
       } else if (params.get('reset') === 'true') {
         setResetData({ userId, secret });
-        window.history.replaceState({}, '', '/');
+        window.history.replaceState({}, '', window.location.pathname);
       }
     }
   }, [completeVerification]);

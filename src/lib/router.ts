@@ -122,8 +122,12 @@ export function useRouter() {
   const navigateTab = (tab: TabType) => {
     const targetUrl = tab === 'home' ? '/' : `/${tab}`;
     if (window.location.pathname !== targetUrl) {
-      // Use replaceState instead of pushState for main tabs to prevent history bloat
-      window.history.replaceState(null, '', targetUrl);
+      if (['privacy', 'terms', 'legal'].includes(tab)) {
+        window.history.pushState({ prevPath: window.location.pathname }, '', targetUrl);
+      } else {
+        // Use replaceState instead of pushState for main tabs to prevent history bloat
+        window.history.replaceState(null, '', targetUrl);
+      }
     }
     setRoute({ tab, detailsMedia: null, playingMedia: null, authMode: 'login' });
     window.scrollTo({ top: 0, behavior: 'smooth' });

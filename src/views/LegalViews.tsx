@@ -8,7 +8,7 @@ interface LegalPageProps {
 
 function LegalPageLayout({ title, onBack, children }: LegalPageProps) {
   return (
-    <div className="px-4 md:px-8 lg:px-12 pt-6 md:pt-8 pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
+    <div className="px-4 md:px-8 lg:px-12 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)] pb-36 min-h-screen text-white animate-in fade-in duration-300 max-w-4xl mx-auto w-full">
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={onBack}
