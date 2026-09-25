@@ -18,6 +18,18 @@ export async function searchSongs(query: string): Promise<SearchResult[]> {
     return [];
   }
 }
+
+export async function searchOnlySongs(query: string): Promise<SearchResult[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/music/search?q=${encodeURIComponent(query)}`);
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.error('Music search error:', err);
+    return [];
+  }
+}
 export async function getSongDetails(id: string): Promise<SearchResult | null> {
   try {
     const res = await fetch(`${API_BASE}/api/music/song?id=${encodeURIComponent(id)}`);

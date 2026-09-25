@@ -94,7 +94,7 @@ app.use('/api/music', async (req, res, next) => {
     res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     
     // Cache Buster: Added :v4 so that old cached data is ignored and new rows are shown
-    const cacheKey = req.originalUrl + ':v5';
+    const cacheKey = req.originalUrl + ':v7';
     
     // Layer 2: In-Memory RAM Cache (Instant)
     const ramCached = getCache(cacheKey);
@@ -120,6 +120,12 @@ app.use('/api/music', async (req, res, next) => {
          stringified = stringified.replace(/https:\/\/admin\.aws\.sg\.saavn\.com\/[^"']+/g, 'https://images.unsplash.com/photo-1614680376593-902f74ca0cd5?w=500&h=500&fit=crop');
          stringified = stringified.replace(/https:\/\/www\.jiosaavn\.com\/_i\/3\.0\/artist-default-[^"']+/g, '/logo_px.jpg');
          stringified = stringified.replace(/https:\/\/static\.saavncdn\.com\/_i\/share-image[^"']*/g, '/logo_px.jpg');
+         stringified = stringified.replace(/\bJioSaavn\b/gi, 'Parlaxio');
+         stringified = stringified.replace(/\bSaavn Editors?\b/gi, 'Parlaxio Editor');
+         stringified = stringified.replace(/\bSaavn\b/gi, 'Parlaxio');
+         // Fix any broken URLs
+         stringified = stringified.replace(/www\.Parlaxio\.com/gi, 'www.jiosaavn.com');
+         stringified = stringified.replace(/Parlaxiocdn\.com/gi, 'saavncdn.com');
          body = JSON.parse(stringified);
          
          setCache(cacheKey, body);

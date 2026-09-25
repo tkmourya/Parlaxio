@@ -230,6 +230,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         closeIcon: 'media_close',
         notificationIcon: 'notification'
       }).then(() => {
+        if (audioRef.current && audioRef.current.paused) {
+          audioRef.current.play().catch(console.error);
+        }
         setTimeout(() => { isTransitioningRef.current = false; }, 1000);
       }).catch(e => {
         console.error('MusicControls create error', e);
@@ -255,9 +258,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     // Start playing after notification is updated
     if (audioRef.current) {
       audioRef.current.src = getAudioUrl(song.id);
-      audioRef.current.play().catch(e => {
-        console.error('Playback failed', e);
-      });
+      audioRef.current.load(); // Ensure new src is fetched
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.error('Playback failed synchronously, retrying...', e);
+          setTimeout(() => {
+            if (audioRef.current) audioRef.current.play().catch(console.error);
+          }, 500);
+        });
+      }
     }
   }, [addToRecentlyPlayed]);
 
@@ -370,6 +380,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const audio = new Audio();
     audio.preload = 'auto';
+    audio.autoplay = true;
     audioRef.current = audio;
 
     // Set initial audio src if last song was loaded from localStorage
@@ -392,6 +403,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       });
       navigator.mediaSession.setActionHandler('previoustrack', () => {
         playPrevRef.current();
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined && audioRef.current) {
+          audioRef.current.currentTime = details.seekTime;
+        }
       });
     }
 
@@ -432,8 +448,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
 
     // Native App Controls Listener
-    const handleNativeControls = (action: any) => {
-      const message = action.message || action;
+    const handleNativeControls = (rawAction: any) => {
+      let actionObj = rawAction;
+      if (typeof rawAction === 'string') {
+        try {
+          actionObj = JSON.parse(rawAction);
+        } catch (e) {
+          actionObj = { message: rawAction };
+        }
+      }
+      const message = actionObj.message || actionObj;
       if (message === 'music-controls-next') {
         playNextRef.current();
       } else if (message === 'music-controls-previous') {
@@ -445,7 +469,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       } else if (message === 'music-controls-destroy') {
         if (!isTransitioningRef.current) audio.pause();
       } else if (message === 'music-controls-seek-to') {
-        const position = action.position;
+        const position = actionObj.position;
         if (position !== undefined) {
           audio.currentTime = position;
         }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Search as SearchIcon, ChevronRight, ChevronLeft, Loader2, Disc3, ChevronDown, X, ArrowLeft, Clock, Flame, Trash2 } from 'lucide-react';
 import { useMusic, Song } from '../lib/MusicContext';
-import { searchSongs, SearchResult, getHomeRows, getRecommendations, HomeRow, PlaylistItem, getSongDetails } from '../lib/musicService';
+import { searchSongs, searchOnlySongs, SearchResult, getHomeRows, getRecommendations, HomeRow, PlaylistItem, getSongDetails } from '../lib/musicService';
 import { PlaylistView } from './PlaylistView';
 import { CategoryView } from './CategoryView';
 import { ArtistView } from './ArtistView';
@@ -469,7 +469,7 @@ export function MusicView({ onSubViewChange }: MusicViewProps = {}) {
   const handleMoodChip = async (chip: any) => {
     setActiveChip(chip.id);
     setVisibleMoodCount(16);
-    const results = await searchSongs(chip.query);
+    const results = await searchOnlySongs(chip.query);
     setMoodResults(results);
   };
 
